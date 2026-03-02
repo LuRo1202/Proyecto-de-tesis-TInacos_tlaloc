@@ -75,6 +75,29 @@ Route::get('/gracias', function () {
     ->name('gracias')
     ->middleware([NoCachePublicPages::class]);  // 👈 ASÍ SE USA
 
+// ===== RUTAS PARA USUARIOS (ADMIN/GERENTE/VENDEDOR) =====
+Route::prefix('usuario')->name('usuario.')->group(function () {
+    // RESET PASSWORD - SOLICITUD (GET - formulario para pedir email)
+    Route::get('/reset-password', function () {
+        return view('pages.auth.usuario-reset-password');
+    })->name('reset')
+        ->middleware([NoCachePublicPages::class]);
+    
+    // RESET PASSWORD - ENVIAR CORREO (POST)
+    Route::post('/reset-password', [App\Http\Controllers\Auth\UsuarioForgotPasswordController::class, 'sendResetLinkEmail'])
+        ->name('reset.send')
+        ->middleware([NoCachePublicPages::class]);
+    
+    // RESET PASSWORD - FORMULARIO CON TOKEN (GET)
+    Route::get('/reset-password/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'showResetForm'])
+        ->name('reset.form')
+        ->middleware([NoCachePublicPages::class]);
+    
+    // RESET PASSWORD - ACTUALIZAR CONTRASEÑA (POST) - MISMA URL DEL TOKEN
+    Route::post('/reset-password/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])
+        ->name('reset.update')
+        ->middleware([NoCachePublicPages::class]);
+});
 // ===== RUTAS PÚBLICAS DE REGISTRO Y RESET PASSWORD (CON NO-CACHE) =====
 Route::prefix('cliente')->name('cliente.')->group(function () {
     // REGISTRO
@@ -87,11 +110,10 @@ Route::prefix('cliente')->name('cliente.')->group(function () {
     Route::post('/registro', [App\Http\Controllers\ClienteAuthController::class, 'register'])
         ->name('register.store');
     
-    // RESET PASSWORD - SOLICITUD (GET)
+    // RESET PASSWORD - SOLICITUD (GET - formulario para pedir email)
     Route::get('/reset-password', function () {
         return view('pages.auth.reset-password');
-    })
-        ->name('reset')
+    })->name('reset')
         ->middleware([NoCachePublicPages::class]);
     
     // RESET PASSWORD - ENVIAR CORREO (POST)
@@ -104,8 +126,8 @@ Route::prefix('cliente')->name('cliente.')->group(function () {
         ->name('reset.form')
         ->middleware([NoCachePublicPages::class]);
     
-    // RESET PASSWORD - ACTUALIZAR CONTRASEÑA (POST)
-    Route::post('/reset-password/update', [App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])
+    // RESET PASSWORD - ACTUALIZAR CONTRASEÑA (POST) - MISMA URL DEL TOKEN
+    Route::post('/reset-password/{token}', [App\Http\Controllers\Auth\ResetPasswordController::class, 'reset'])
         ->name('reset.update')
         ->middleware([NoCachePublicPages::class]);
 });

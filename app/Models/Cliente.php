@@ -1,5 +1,4 @@
 <?php
-// app/Models/Cliente.php
 
 namespace App\Models;
 
@@ -7,7 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Notifications\ClienteResetPassword; // 👈 IMPORTAR LA NOTIFICACIÓN
+use App\Notifications\ResetPasswordNotification; // 👈 IMPORTAR LA NOTIFICACIÓN UNIFICADA
 
 class Cliente extends Authenticatable
 {
@@ -45,13 +44,11 @@ class Cliente extends Authenticatable
 
     /**
      * Enviar notificación de restablecimiento de contraseña
-     * 
-     * @param string $token
-     * @return void
      */
     public function sendPasswordResetNotification($token)
     {
-        $this->notify(new ClienteResetPassword($token));
+        // 👈 CAMBIADO: Ahora usa la notificación unificada con tipo 'cliente'
+        $this->notify(new ResetPasswordNotification($token, 'cliente'));
     }
 
     // Obtener pedidos recientes

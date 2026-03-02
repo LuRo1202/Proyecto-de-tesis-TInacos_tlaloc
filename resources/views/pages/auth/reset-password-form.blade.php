@@ -313,6 +313,34 @@
             color: #28a745;
             margin-right: 8px;
         }
+
+        /* Estilo para el botón generador (agregar al final del <style>) */
+        .input-group .btn-outline-secondary {
+            border-color: #dee2e6;
+            background: white;
+            padding: 12px 16px;
+            z-index: 5;
+        }
+
+        .input-group .btn-outline-secondary:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .input-group .btn-outline-secondary i {
+            font-size: 1rem;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(15deg); }
+            75% { transform: rotate(-15deg); }
+        }
+
+        .input-group .btn-outline-secondary:active i {
+            animation: shake 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -340,23 +368,32 @@
                     <small>Crea una contraseña segura para tu cuenta</small>
                 </div>
                 
-                <form method="POST" action="{{ route('cliente.reset.update') }}" id="formReset">
+                <form method="POST" action="{{ request()->url() }}" id="formReset">
                     @csrf
                     
                     <input type="hidden" name="token" value="{{ $token }}">
                     <input type="hidden" name="email" value="{{ $email }}">
                     
                     <!-- Nueva Contraseña -->
+                    
                     <div class="mb-3">
                         <label class="form-label">Nueva contraseña *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
                             <input type="password" 
-                                   name="password" 
-                                   id="password"
-                                   class="form-control" 
-                                   placeholder="Mínimo 8 caracteres"
-                                   required>
+                                name="password" 
+                                id="password"
+                                class="form-control" 
+                                placeholder="Mínimo 8 caracteres"
+                                required>
+                            <!-- 👇 BOTÓN GENERADOR (NUEVO) -->
+                            <button type="button" 
+                                    class="btn btn-outline-secondary" 
+                                    onclick="generarContraseña()"
+                                    title="Generar contraseña segura"
+                                    style="border: 1px solid #dee2e6; border-left: none; border-right: none; border-radius: 0;">
+                                <i class="fas fa-key"></i>
+                            </button>
                             <span class="input-group-text password-toggle" onclick="togglePassword('password')">
                                 <i class="fas fa-eye" id="togglePasswordIcon"></i>
                             </span>
@@ -477,12 +514,12 @@
                 noSequential: !/(?:012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i.test(password)
             };
             
-            updateRequirement('req-length', validations.length, '8+ caracteres ✓', '8+ caracteres');
-            updateRequirement('req-number', validations.number, 'números ✓', 'números');
-            updateRequirement('req-uppercase', validations.uppercase, 'mayúsculas ✓', 'mayúsculas');
-            updateRequirement('req-lowercase', validations.lowercase, 'minúsculas ✓', 'minúsculas');
-            updateRequirement('req-special', validations.special, '1 carácter especial ✓', '1 carácter especial');
-            updateRequirement('req-no-sequential', validations.noSequential, 'Sin secuencias ✓', 'Sin secuencias');
+            updateRequirement('req-length', validations.length, '8+ caracteres ', '8+ caracteres');
+            updateRequirement('req-number', validations.number, 'números ', 'números');
+            updateRequirement('req-uppercase', validations.uppercase, 'mayúsculas ', 'mayúsculas');
+            updateRequirement('req-lowercase', validations.lowercase, 'minúsculas ', 'minúsculas');
+            updateRequirement('req-special', validations.special, '1 carácter especial ', '1 carácter especial');
+            updateRequirement('req-no-sequential', validations.noSequential, 'Sin secuencias ', 'Sin secuencias');
             
             // Calcular fortaleza
             const score = Object.values(validations).filter(v => v).length;
@@ -556,6 +593,64 @@
             document.getElementById('btnReset').classList.add('btn-loading');
             document.getElementById('btnReset').disabled = true;
         });
+
+        // Generador de contraseñas seguras
+        function generarContraseña() {
+            // Configuración
+            const longitud = 12;
+            const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const minusculas = 'abcdefghijklmnopqrstuvwxyz';
+            const numeros = '0123456789';
+            const especiales = '!@#$%^&*_+-=';
+            
+            let contraseña = '';
+            
+            // Asegurar al menos uno de cada tipo
+            contraseña += mayusculas[Math.floor(Math.random() * mayusculas.length)];
+            contraseña += minusculas[Math.floor(Math.random() * minusculas.length)];
+            contraseña += numeros[Math.floor(Math.random() * numeros.length)];
+            contraseña += especiales[Math.floor(Math.random() * especiales.length)];
+            
+            // Completar el resto aleatoriamente
+            const todos = mayusculas + minusculas + numeros + especiales;
+            for (let i = contraseña.length; i < longitud; i++) {
+                contraseña += todos[Math.floor(Math.random() * todos.length)];
+            }
+            
+            // Mezclar la contraseña
+            contraseña = contraseña.split('').sort(() => Math.random() - 0.5).join('');
+            
+            // Asignar a los campos
+            const passwordInput = document.getElementById('password');
+            const confirmInput = document.getElementById('password_confirmation');
+            
+            passwordInput.value = contraseña;
+            confirmInput.value = contraseña;
+            
+            // Disparar eventos de validación
+            passwordInput.dispatchEvent(new Event('input'));
+            confirmInput.dispatchEvent(new Event('input'));
+            
+            // Mostrar mensaje de éxito
+            Swal.fire({
+                icon: 'success',
+                title: '¡Contraseña generada!',
+                html: `
+                    <p>Hemos generado una contraseña segura para ti:</p>
+                    <div class="alert alert-info" style="font-family: monospace; font-size: 1.2rem; padding: 10px; background: #e9ecef;">
+                        ${contraseña}
+                    </div>
+                    <p class="text-muted small">La contraseña se ha copiado al portapapeles</p>
+                `,
+                confirmButtonColor: '#7fad39',
+                confirmButtonText: 'Listo'
+            });
+            
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(contraseña).catch(() => {
+                // Si no se puede copiar, ignorar
+            });
+        }
 
         // Mostrar errores con SweetAlert
         @if($errors->any())

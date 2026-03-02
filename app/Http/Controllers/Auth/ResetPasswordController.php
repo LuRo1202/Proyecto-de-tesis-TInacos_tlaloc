@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
+use App\Models\Cliente;
+use App\Models\Usuario;
+use DB; // 👈 IMPORTANTE
 
 class ResetPasswordController extends Controller
 {
@@ -17,6 +20,16 @@ class ResetPasswordController extends Controller
      */
     public function showResetForm(Request $request, $token = null)
     {
+        // 👈 VERIFICAR SI EL TOKEN EXISTE ANTES DE MOSTRAR EL FORMULARIO
+        $tokenExists = DB::table('password_reset_tokens')
+                        ->where('email', $request->email)
+                        ->exists();
+
+        if (!$tokenExists) {
+            return redirect()->route('login')
+                ->with('error', 'El enlace de recuperación ya ha sido utilizado o ha expirado.');
+        }
+
         return view('pages.auth.reset-password-form')->with([
             'token' => $token,
             'email' => $request->email
@@ -24,7 +37,7 @@ class ResetPasswordController extends Controller
     }
 
     /**
-     * Resetear la contraseña
+     * Resetear la contraseña (UNIVERSAL - detecta automáticamente)
      */
     public function reset(Request $request)
     {
@@ -39,8 +52,23 @@ class ResetPasswordController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        // Intentar resetear la contraseña
-        $status = Password::broker('clientes')->reset(
+        // Detectar automáticamente qué broker usar
+        $cliente = Cliente::where('email', $request->email)->first();
+        $usuario = Usuario::where('email', $request->email)->first();
+
+        if (!$cliente && !$usuario) {
+            return back()->withErrors(['email' => 'No encontramos un usuario con ese correo electrónico.']);
+        }
+
+        // Usar el broker correspondiente
+        if ($cliente) {
+            $broker = 'clientes';
+        } else {
+            $broker = 'users';
+        }
+
+        // Intentar resetear la contraseña con el broker detectado
+        $status = Password::broker($broker)->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->password = Hash::make($password);
@@ -53,7 +81,9 @@ class ResetPasswordController extends Controller
 
         // Verificar resultado
         if ($status === Password::PASSWORD_RESET) {
-            // 👈 MENSAJE DE ÉXITO CON REDIRECCIÓN A LOGIN
+            // 👈 ELIMINAR EL TOKEN MANUALMENTE (por si acaso)
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            
             return redirect()->route('login')->with('status', '¡Tu contraseña ha sido restablecida correctamente!');
         }
 

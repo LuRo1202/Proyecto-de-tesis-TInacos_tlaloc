@@ -367,7 +367,7 @@
                     <small>Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</small>
                 </div>
                 
-                <form method="POST" action="{{ route('cliente.reset.send') }}" id="formReset">
+                <form method="POST" action="{{ url()->current() }}" id="formReset">
                     @csrf
                     
                     <!-- Email -->

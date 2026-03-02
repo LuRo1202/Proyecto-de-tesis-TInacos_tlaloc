@@ -8,6 +8,7 @@ use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
+use App\Notifications\ResetPasswordNotification; // 👈 IMPORTAR LA NOTIFICACIÓN UNIFICADA
 
 class Usuario extends Authenticatable
 {
@@ -60,11 +61,11 @@ class Usuario extends Authenticatable
         }
     }
 
-    // 👇 Método requerido para reset password
+    // 👇 Método requerido para reset password (CORREGIDO)
     public function sendPasswordResetNotification($token)
     {
-        // Por ahora usaremos el sistema por defecto
-        // Después podemos personalizarlo
+        // 👈 AHORA USA LA NOTIFICACIÓN UNIFICADA CON TIPO 'usuario'
+        $this->notify(new ResetPasswordNotification($token, 'usuario'));
     }
 
     public function verificarPassword($password): bool
