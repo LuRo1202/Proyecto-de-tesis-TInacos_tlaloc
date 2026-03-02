@@ -363,6 +363,43 @@
             font-size: 0.875rem;
             margin-top: 5px;
         }
+
+                /* Estilo para el enlace de reset password */
+        .reset-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .reset-link a {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            padding: 5px 0;
+            display: inline-block;
+        }
+
+        .reset-link a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .reset-link i {
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+
+        /* Separador opcional entre enlaces */
+        .reset-link::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 1px;
+            background: var(--light-gray);
+            margin: 15px auto 0;
+        }
     </style>
 </head>
 <body>
@@ -373,25 +410,28 @@
                     <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tanques Tláloc">
                 </div>
                 <h1 class="login-title">Tanques Tláloc</h1>
-                <p class="login-subtitle">Sistema de Gestión</p>
+                <p class="login-subtitle">Tu cuenta, tus pedidos, tu historial</p>
             </div>
             
             <div class="login-body">
                 <livewire:auth.login />
                 
                 <div class="register-link">
-                    ¿Eres cliente y no tienes cuenta? 
+                    ¿Aún no estás registrado?  
                     <a href="{{ route('cliente.registro') }}">Regístrate aquí</a>
+                </div>
+
+                <div class="reset-link">
+                    <a href="{{ route('cliente.reset') }}">
+                        <i class="fas fa-lock me-1"></i>¿Olvidaste tu contraseña?
+                    </a>
                 </div>
                 
                 <a href="{{ route('home') }}" class="back-link">
-                    <i class="fas fa-arrow-left me-1"></i>Volver a la tienda
+                    <i class="fas fas fa-home me-1"></i>Volver a la tienda
                 </a>
                 
-                <p class="form-text">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Acceso para personal y clientes registrados
-                </p>
+                
             </div>
         </div>
     </div>

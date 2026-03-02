@@ -3,7 +3,7 @@
         @csrf
         
         <div class="mb-4">
-            <label for="usuario" class="form-label">Usuario o Email</label>
+            <label for="usuario" class="form-label">Email</label>
             <div class="input-group">
                 <span class="input-group-text">
                     <i class="fas fa-user"></i>
@@ -12,7 +12,7 @@
                        class="form-control @error('usuario') is-invalid @enderror" 
                        id="usuario" 
                        wire:model="usuario"
-                       placeholder="Ingrese su usuario o email"
+                       placeholder="Ingrese su email"
                        required
                        autofocus>
             </div>

@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Hash;
 
 class Usuario extends Authenticatable
 {
+    use Notifiable, CanResetPassword;
+
     protected $table = 'usuarios';
     
     protected $fillable = [
@@ -30,16 +34,25 @@ class Usuario extends Authenticatable
         'fecha_creacion' => 'datetime'
     ];
 
-    // 👇 MÉTODO OBLIGATORIO
+    // 👇 Laravel espera un campo 'password' por defecto
     public function getAuthPassword()
     {
         return $this->contrasena_hash;
     }
 
-    // 👇 MODIFICAR ESTE MÉTODO - Verificar si ya está hasheado
+    // 👇 Para que Laravel encuentre el campo password
+    public function getPasswordAttribute()
+    {
+        return $this->contrasena_hash;
+    }
+
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['contrasena_hash'] = $value;
+    }
+
     public function setContrasenaHashAttribute($value)
     {
-        // Si el valor no parece un hash Bcrypt (no empieza con $2y$), lo hasheamos
         if (!str_starts_with($value, '$2y$') && !str_starts_with($value, '$2a$')) {
             $this->attributes['contrasena_hash'] = Hash::make($value);
         } else {
@@ -47,13 +60,19 @@ class Usuario extends Authenticatable
         }
     }
 
-    // Verificar contraseña
+    // 👇 Método requerido para reset password
+    public function sendPasswordResetNotification($token)
+    {
+        // Por ahora usaremos el sistema por defecto
+        // Después podemos personalizarlo
+    }
+
     public function verificarPassword($password): bool
     {
         return Hash::check($password, $this->contrasena_hash);
     }
 
-    // El resto de tus métodos igual...
+    // Relaciones
     public function sucursales(): BelongsToMany
     {
         return $this->belongsToMany(Sucursal::class, 'usuario_sucursal')
@@ -73,6 +92,7 @@ class Usuario extends Authenticatable
         return $this->hasMany(PedidoHistorial::class, 'usuario_id');
     }
 
+    // Roles
     public function isAdmin(): bool
     {
         return $this->rol === 'admin';
@@ -88,6 +108,7 @@ class Usuario extends Authenticatable
         return $this->rol === 'vendedor';
     }
 
+    // Scopes
     public function scopeActivos($query)
     {
         return $query->where('activo', true);
