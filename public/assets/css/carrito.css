@@ -1,0 +1,281 @@
+/* ===== ESTILOS PARA PÁGINA DE CARRITO ===== */
+
+
+.py-5 .bg-primary:not(.btn):not(a) {
+    background-color: #7fad39 !important;
+    background: linear-gradient(135deg, #7fad39 0%, #5a8c29 100%) !important;
+}
+
+.py-5 .text-primary:not(.btn):not(a) {
+    color: #7fad39 !important;
+}
+
+
+.py-5 .card-header.bg-primary,
+.py-5 .bg-primary.rounded-circle {
+    background: linear-gradient(135deg, #7fad39 0%, #5a8c29 100%) !important;
+}
+
+.py-5 .badge.bg-primary {
+    background: linear-gradient(135deg, #7fad39 0%, #5a8c29 100%) !important;
+}
+
+.py-5 .table.table-hover .table-light th,
+.py-5 .cart-table thead th {
+    background: #f8f9fa !important; 
+    color: #2c3e50 !important; 
+    border-bottom: 3px solid #dee2e6 !important; 
+}
+
+
+.py-5 .bg-primary:not(.table-light th):not(.table thead th) {
+    background: linear-gradient(135deg, #7fad39 0%, #5a8c29 100%) !important;
+}
+
+.py-5 .btn-primary,
+.py-5 .btn-primary.btn-lg,
+.py-5 a[href="checkout.php"].btn-primary.btn-lg {
+    background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%) !important;
+    border-color: #ff6b35 !important;
+    color: white !important;
+}
+
+.py-5 .btn-primary:hover,
+.py-5 .btn-primary.btn-lg:hover,
+.py-5 a[href="checkout.php"].btn-primary.btn-lg:hover {
+    background: linear-gradient(135deg, #e55a2b 0%, #d14a1b 100%) !important;
+    border-color: #e55a2b !important;
+    box-shadow: 0 7px 20px rgba(255, 107, 53, 0.3) !important;
+}
+
+.py-5 .btn-outline-primary {
+    color: #ff6b35 !important;
+    border-color: #ff6b35 !important;
+    background: transparent !important;
+}
+
+.py-5 .btn-outline-primary:hover {
+    background: #ff6b35 !important;
+    color: white !important;
+    border-color: #ff6b35 !important;
+}
+
+.py-5 .fa-barcode,
+.py-5 .fa-tint,
+.py-5 .fa-cubes,
+.py-5 .fa-check.text-success {
+    color: #7fad39 !important;
+}
+
+.py-5 .fa-trash-alt {
+    color: #dc3545 !important; 
+}
+
+
+.py-5 .bg-primary .fas,
+.py-5 .bg-primary .fa-shopping-cart,
+.py-5 .bg-primary .fa-box,
+.py-5 .bg-primary .fa-receipt {
+    color: white !important;
+}
+
+
+.py-5 .h5.mb-0.fw-bold.text-primary,
+.py-5 .h5.mb-0.fw-bold.text-success,
+.py-5 .h4.fw-bold.text-primary {
+    color: #7fad39 !important;
+}
+
+.py-5 .quantity-input {
+    border: 2px solid #7fad39 !important;
+}
+
+.cart-badge {
+    background: linear-gradient(135deg, #7fad39 0%, #5a8c29 100%) !important;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border: 2px solid white;
+    box-shadow: 0 3px 10px rgba(127, 173, 57, 0.3);
+}
+
+.shoping-cart {
+    padding: 60px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 70vh;
+}
+
+.cart-table-container {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+    border: 1px solid rgba(127, 173, 57, 0.1);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    color: #333 !important;
+    border-color: #ffc107 !important;
+}
+
+.btn-outline-danger {
+    color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.btn-outline-danger:hover {
+    background: #dc3545 !important;
+    color: white !important;
+    border-color: #dc3545 !important;
+}
+
+@media (max-width: 768px) {
+    .shoping-cart {
+        padding: 40px 0;
+    }
+    
+    .cart-table-container {
+        padding: 20px;
+        margin: 0 -15px;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+        border-top: 2px solid #7fad39;
+        border-bottom: 2px solid #7fad39;
+    }
+    
+    .py-5 .cart-table thead {
+        display: none;
+    }
+    
+    .py-5 .cart-table tbody tr {
+        display: block;
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 2px solid rgba(127, 173, 57, 0.2);
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 5px 15px rgba(127, 173, 57, 0.1);
+    }
+    
+    .py-5 .cart-table tbody td {
+        display: block;
+        padding: 10px 0;
+        border-bottom: none;
+        text-align: center;
+    }
+    
+    .py-5 .cart-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .py-5 .cart-item-img {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .py-5 .cart-buttons {
+        flex-direction: column;
+    }
+    
+    .py-5 .btn-cart-action {
+        width: 100%;
+    }
+    
+    .py-5 .cart-totals {
+        position: static;
+        margin-top: 20px;
+    }
+    
+    .py-5 .checkout-buttons {
+        flex-direction: column;
+    }
+    
+    .py-5 .btn-checkout-action {
+        width: 100%;
+    }
+    
+    .py-5 .empty-cart {
+        padding: 60px 20px;
+        margin: 0 -15px;
+        border-radius: 0;
+        box-shadow: none;
+        border-top: 2px solid #7fad39;
+    }
+}
+
+/* ===== CORRECCIONES PARA EL MENÚ DESPLEGABLE DEL USUARIO ===== */
+.navbar .dropdown-menu {
+    z-index: 9999 !important;
+    background-color: white !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    margin-top: 0.5rem !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0 !important;
+}
+
+.navbar .dropdown-menu.show {
+    display: block !important;
+}
+
+.navbar .dropdown-item {
+    padding: 0.7rem 1.5rem !important;
+    color: #333 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #f8f9fa !important;
+    color: #7fad39 !important;
+    padding-left: 2rem !important;
+}
+
+.navbar .dropdown-item i {
+    color: #7fad39 !important;
+    width: 20px !important;
+    margin-right: 8px !important;
+}
+
+.navbar .dropdown-divider {
+    margin: 0.5rem 0 !important;
+    border-top: 1px solid #e9ecef !important;
+}
+
+/* Forzar que el navbar tenga un z-index alto */
+.main-navbar {
+    z-index: 1030 !important;
+}
+
+/* Asegurar que el contenedor del dropdown tenga posición relativa */
+.navbar .dropdown {
+    position: relative !important;
+}
+
+/* Para móviles */
+@media (max-width: 991px) {
+    .navbar .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        background-color: #f8f9fa !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .navbar .dropdown-item {
+        padding: 0.7rem 2rem !important;
+    }
+}

@@ -1,0 +1,293 @@
+/* ===== SECCIÓN SUCURSALES ===== */
+.contact-sucursales {
+    background: #fff;
+}
+
+.sucursal-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    height: 100%;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.sucursal-card:hover {
+    transform: translateY(-5px);
+}
+
+.sucursal-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 25px 25px 15px;
+    text-align: center;
+    border-bottom: 2px solid #7fad39;
+}
+
+.sucursal-icon {
+    width: 60px;
+    height: 60px;
+    background: #7fad39;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    color: white;
+    font-size: 24px;
+}
+
+.sucursal-card h4 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+}
+
+.sucursal-badge {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.sucursal-badge.matriz {
+    background: #7fad39;
+    color: white;
+}
+
+.sucursal-badge.sucursal {
+    background: #17a2b8;
+    color: white;
+}
+
+.sucursal-info {
+    padding: 20px 25px;
+}
+
+.sucursal-info p {
+    color: #555;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.sucursal-info i {
+    color: #7fad39;
+    width: 20px;
+}
+
+.sucursal-mapa {
+    padding: 0 25px 20px;
+}
+
+.sucursal-mapa iframe {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.sucursal-actions {
+    padding: 0 25px 25px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* ===== FORMULARIO DE PROYECTO ===== */
+.project-form-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.project-form-card .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.project-form-card .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 15px;
+}
+
+.project-form-card .form-control:focus {
+    border-color: #7fad39;
+    box-shadow: 0 0 0 0.2rem rgba(127, 173, 57, 0.25);
+}
+
+.project-form-card textarea.form-control {
+    min-height: 150px;
+}
+
+/* Estilos para validación de formulario */
+.form-control.is-valid {
+    border-color: #28a745;
+    padding-right: calc(1.5em + .75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(.375em + .1875rem) center;
+    background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + .75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(.375em + .1875rem) center;
+    background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+}
+
+/* Para checkbox */
+.form-check.is-invalid .form-check-input {
+    border-color: #dc3545;
+}
+
+.form-check.is-invalid .form-check-label {
+    color: #dc3545;
+}
+
+/* Estilos específicos para formulario de proyecto */
+.project-form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.project-form-card .form-control {
+    border-radius: 10px;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s;
+}
+
+.project-form-card .form-control:focus {
+    border-color: #7fad39;
+    box-shadow: 0 0 0 0.25rem rgba(127, 173, 57, 0.25);
+}
+
+.project-form-card .btn-primary {
+    background-color: #7fad39;
+    border-color: #7fad39;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 15px 40px;
+    transition: all 0.3s;
+}
+
+.project-form-card .btn-primary:hover {
+    background-color: #6a9130;
+    border-color: #6a9130;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(127, 173, 57, 0.3);
+}
+
+/* Para archivos */
+input[type="file"]::file-selector-button {
+    background-color: #7fad39;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: #6a9130;
+}
+
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .sucursal-card {
+        margin-bottom: 30px;
+    }
+    
+    .project-form-card {
+        padding: 25px;
+    }
+    
+    .sucursal-actions {
+        flex-direction: column;
+    }
+    
+    .sucursal-actions .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* ===== CORRECCIONES PARA EL MENÚ DESPLEGABLE DEL USUARIO ===== */
+.navbar .dropdown-menu {
+    z-index: 9999 !important;
+    background-color: white !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    margin-top: 0.5rem !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0 !important;
+}
+
+.navbar .dropdown-menu.show {
+    display: block !important;
+}
+
+.navbar .dropdown-item {
+    padding: 0.7rem 1.5rem !important;
+    color: #333 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #f8f9fa !important;
+    color: #7fad39 !important;
+    padding-left: 2rem !important;
+}
+
+.navbar .dropdown-item i {
+    color: #7fad39 !important;
+    width: 20px !important;
+    margin-right: 8px !important;
+}
+
+.navbar .dropdown-divider {
+    margin: 0.5rem 0 !important;
+    border-top: 1px solid #e9ecef !important;
+}
+
+/* Forzar que el navbar tenga un z-index alto */
+.main-navbar {
+    z-index: 1030 !important;
+}
+
+/* Asegurar que el contenedor del dropdown tenga posición relativa */
+.navbar .dropdown {
+    position: relative !important;
+}
+
+/* Para móviles */
+@media (max-width: 991px) {
+    .navbar .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        background-color: #f8f9fa !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .navbar .dropdown-item {
+        padding: 0.7rem 2rem !important;
+    }
+}

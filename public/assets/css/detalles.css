@@ -1,0 +1,454 @@
+
+.product-details .row {
+    display: flex;
+    align-items: stretch; 
+}
+
+.product__details__pic {
+    height: 100%; 
+    display: flex;
+    flex-direction: column;
+}
+
+.product__details__pic__item {
+    flex: 1;
+    height: auto !important; 
+    min-height: 400px;
+    max-height: 500px; 
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-in;
+}
+
+.product__details__pic__item img {
+    width: 85%; 
+    height: 85%;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.product__details__text {
+    height: 100%; 
+    min-height: 400px; 
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+
+.product__details__text h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+
+.product__details__price {
+    font-size: 24px;
+    color: #7fad39;
+    font-weight: 800;
+    margin: 15px 0;
+    display: block;
+}
+
+
+/* ===== SELECTOR DE VARIANTES ===== */
+.variantes-selector {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    margin: 15px 0;
+}
+
+.variantes-selector h6 {
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Estilo para los botones de variantes */
+.btn-variante-detalle {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 65px;
+    height: 65px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    padding: 6px;
+    margin: 4px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Para variantes de color */
+.btn-variante-detalle.tipo-color {
+    background: white;
+}
+
+.btn-variante-detalle.tipo-color .variante-color {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    margin-bottom: 2px;
+    display: inline-block;
+}
+
+.btn-variante-detalle.tipo-color .variante-texto {
+    font-size: 11px;
+    font-weight: 600;
+    color: #333;
+    margin-top: 2px;
+}
+
+/* Para variantes estándar */
+.btn-variante-detalle.tipo-standard {
+    background: #f5f5f5;
+}
+
+.btn-variante-detalle.tipo-standard .variante-icono {
+    font-size: 20px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.btn-variante-detalle.tipo-standard .variante-texto {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* Botón activo */
+.btn-variante-detalle.activo {
+    border-color: #7fad39;
+    background: #f1f8e9;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(127, 173, 57, 0.2);
+}
+
+.btn-variante-detalle.activo.tipo-color .variante-color {
+    border-color: #7fad39;
+}
+
+/* Botón deshabilitado */
+.btn-variante-detalle.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    filter: grayscale(50%);
+}
+
+/* Indicador de agotado */
+.variante-agotado {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+/* Tooltip personalizado */
+.btn-variante-detalle[title] {
+    position: relative;
+}
+
+.btn-variante-detalle[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    pointer-events: none;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .btn-variante-detalle {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .btn-variante-detalle.tipo-color .variante-color {
+        width: 26px;
+        height: 26px;
+    }
+    
+    .variantes-selector {
+        padding: 10px;
+    }
+}
+
+
+
+#producto-info {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 10px 0;
+    border-left: 3px solid #7fad39;
+}
+
+#producto-info p {
+    margin: 6px 0;
+    padding: 4px 0;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+
+.compra-section {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.product__details__quantity {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.pro-qty {
+    width: 100px;
+    height: 40px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    background: white;
+}
+
+.pro-qty input {
+    width: 100%;
+    border: none;
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    background: transparent;
+}
+
+.primary-btn {
+    background: #7fad39;
+    color: white;
+    padding: 12px 25px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    height: 40px;
+}
+
+.primary-btn:hover {
+    background: #6a9130;
+}
+
+.product__details__text ul {
+    margin-top: 15px;
+    list-style: none;
+    padding-left: 0;
+    flex: 1; 
+}
+
+.product__details__text ul li {
+    font-size: 13px;
+    color: #495057;
+    padding: 5px 0;
+    display: flex;
+    align-items: flex-start;
+}
+
+.product__details__text ul li b {
+    color: #6c757d;
+    font-weight: 600;
+    min-width: 120px;
+    font-size: 12px;
+}
+
+.product__details__text ul li span {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+
+@media (max-width: 992px) {
+    .product__details__pic__item {
+        min-height: 350px;
+        max-height: 400px;
+        margin-bottom: 20px;
+    }
+    
+    .product__details__text {
+        min-height: auto; 
+        height: auto;
+    }
+    
+    .compra-section {
+        margin-top: 20px; 
+    }
+}
+
+@media (max-width: 768px) {
+    .product__details__pic__item {
+        min-height: 300px;
+        max-height: 350px;
+    }
+    
+    .product__details__text h3 {
+        font-size: 20px;
+    }
+    
+    .product__details__price {
+        font-size: 22px;
+    }
+    
+    .btn-variante-detalle {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+@media (max-width: 576px) {
+    .product__details__pic__item {
+        min-height: 250px;
+        max-height: 300px;
+    }
+    
+    .product__details__text {
+        padding: 15px;
+    }
+    
+    .product__details__text ul li {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .product__details__text ul li b {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+
+.col-lg-6.col-md-6 {
+    display: flex;
+    flex-direction: column;
+}
+
+.product__details__pic,
+.product__details__text {
+    flex: 1 0 auto; 
+}
+
+
+/* ===== CORRECCIONES PARA EL MENÚ DESPLEGABLE DEL USUARIO ===== */
+.navbar .dropdown-menu {
+    z-index: 9999 !important;
+    background-color: white !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    margin-top: 0.5rem !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0 !important;
+}
+
+.navbar .dropdown-menu.show {
+    display: block !important;
+}
+
+.navbar .dropdown-item {
+    padding: 0.7rem 1.5rem !important;
+    color: #333 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #f8f9fa !important;
+    color: #7fad39 !important;
+    padding-left: 2rem !important;
+}
+
+.navbar .dropdown-item i {
+    color: #7fad39 !important;
+    width: 20px !important;
+    margin-right: 8px !important;
+}
+
+.navbar .dropdown-divider {
+    margin: 0.5rem 0 !important;
+    border-top: 1px solid #e9ecef !important;
+}
+
+/* Forzar que el navbar tenga un z-index alto */
+.main-navbar {
+    z-index: 1030 !important;
+}
+
+/* Asegurar que el contenedor del dropdown tenga posición relativa */
+.navbar .dropdown {
+    position: relative !important;
+}
+
+/* Para móviles */
+@media (max-width: 991px) {
+    .navbar .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        background-color: #f8f9fa !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .navbar .dropdown-item {
+        padding: 0.7rem 2rem !important;
+    }
+}

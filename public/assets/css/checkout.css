@@ -1,0 +1,439 @@
+
+.checkout-hero-section {
+    background: 
+        linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.6) 100%),
+        url('../img/hero/hero-foreground.png') no-repeat center center;
+    padding: 60px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+
+.checkout-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.step.active .step-number {
+    background: #7fad39;
+    color: white;
+}
+
+.step.completed .step-number {
+    background: #28a745;
+    color: white;
+}
+
+.step-text {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.step.active .step-text {
+    color: #7fad39;
+}
+
+.step-line {
+    width: 100px;
+    height: 2px;
+    background: #dee2e6;
+    margin: 0 20px;
+}
+
+.checkout-summary-box {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.checkout-summary-box h5 {
+    color: #333;
+    border-bottom: 2px solid #7fad39;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-details p {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+
+.checkout-form-card {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+}
+
+.checkout-title {
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #7fad39;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #7fad39;
+    box-shadow: 0 0 0 0.2rem rgba(127, 173, 57, 0.25);
+}
+
+
+.checkout-terms-card {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    margin-top: 20px;
+}
+
+.checkout-terms-card h6 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.terms-content {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.terms-content ul {
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
+
+.terms-content li {
+    margin-bottom: 5px;
+}
+
+
+.order-summary-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    position: sticky;
+    top: 100px;
+}
+
+.order-title {
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #7fad39;
+}
+
+.order-items {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px dashed #dee2e6;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-item-img {
+    width: 60px;
+    height: 60px;
+    margin-right: 15px;
+}
+
+.order-item-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.order-item-info {
+    flex-grow: 1;
+}
+
+.order-item-info h6 {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.order-item-info small {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.order-item-price {
+    font-weight: 600;
+    color: #7fad39;
+}
+
+/* ===== TOTALES ===== */
+.order-totals {
+    border-top: 2px solid #e9ecef;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    color: #555;
+}
+
+.total-row.grand-total {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    border-top: 2px solid #e9ecef;
+    margin-top: 10px;
+    padding-top: 15px;
+}
+
+
+.order-actions {
+    margin-top: 25px;
+}
+
+#btn-finalizar {
+    background: linear-gradient(135deg, #7fad39 0%, #5a8c29 100%);
+    border: none;
+    padding: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+#btn-finalizar:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(127, 173, 57, 0.3);
+}
+
+
+@media (max-width: 768px) {
+    .checkout-steps {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .step-line {
+        width: 2px;
+        height: 50px;
+        margin: 10px 0;
+    }
+    
+    .order-summary-card {
+        position: static;
+        margin-top: 30px;
+    }
+    
+    .checkout-form-card, .order-summary-card {
+        padding: 20px;
+    }
+}
+
+
+/* ===== VERSIÓN HORIZONTAL PARA MÓVIL ===== */
+@media (max-width: 768px) {
+    .checkout-steps {
+        display: flex;
+        flex-direction: row !important; /* Forzar horizontal */
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        margin: 15px 0;
+        padding: 0 5px;
+        width: 100%;
+    }
+    
+    .step {
+        flex: 1;
+        min-width: 70px;
+        max-width: 80px;
+        background: none;
+        padding: 5px 0;
+        box-shadow: none;
+    }
+    
+    .step-number {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+        margin-bottom: 2px;
+    }
+    
+    .step-text {
+        font-size: 10px;
+        white-space: nowrap;
+    }
+    
+    .step-line {
+        display: block !important;
+        width: 15px;
+        height: 2px;
+        background: #dee2e6;
+        margin: 0 2px;
+    }
+    
+    /* Para pantallas muy pequeñas */
+    @media (max-width: 480px) {
+        .checkout-steps {
+            gap: 2px;
+        }
+        
+        .step {
+            min-width: 55px;
+            max-width: 65px;
+        }
+        
+        .step-number {
+            width: 25px;
+            height: 25px;
+            font-size: 10px;
+        }
+        
+        .step-text {
+            font-size: 8px;
+        }
+        
+        .step-line {
+            width: 8px;
+        }
+    }
+    
+    /* Para tablets en vertical */
+    @media (min-width: 481px) and (max-width: 768px) {
+        .step {
+            min-width: 80px;
+            max-width: 90px;
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            font-size: 13px;
+        }
+        
+        .step-text {
+            font-size: 11px;
+        }
+        
+        .step-line {
+            width: 20px;
+        }
+    }
+}
+
+/* ===== CORRECCIONES PARA EL MENÚ DESPLEGABLE DEL USUARIO ===== */
+.navbar .dropdown-menu {
+    z-index: 9999 !important;
+    background-color: white !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    margin-top: 0.5rem !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0 !important;
+}
+
+.navbar .dropdown-menu.show {
+    display: block !important;
+}
+
+.navbar .dropdown-item {
+    padding: 0.7rem 1.5rem !important;
+    color: #333 !important;
+    font-size: 0.9rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #f8f9fa !important;
+    color: #7fad39 !important;
+    padding-left: 2rem !important;
+}
+
+.navbar .dropdown-item i {
+    color: #7fad39 !important;
+    width: 20px !important;
+    margin-right: 8px !important;
+}
+
+.navbar .dropdown-divider {
+    margin: 0.5rem 0 !important;
+    border-top: 1px solid #e9ecef !important;
+}
+
+/* Forzar que el navbar tenga un z-index alto */
+.main-navbar {
+    z-index: 1030 !important;
+}
+
+/* Asegurar que el contenedor del dropdown tenga posición relativa */
+.navbar .dropdown {
+    position: relative !important;
+}
+
+/* Para móviles */
+@media (max-width: 991px) {
+    .navbar .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+        background-color: #f8f9fa !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .navbar .dropdown-item {
+        padding: 0.7rem 2rem !important;
+    }
+}
