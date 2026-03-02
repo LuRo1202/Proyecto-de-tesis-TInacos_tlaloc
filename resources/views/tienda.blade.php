@@ -373,7 +373,7 @@
                                 $enOferta = $productoPrincipal->en_oferta;
                             @endphp
                             
-                            <div class="col-xxl-3 col-lg-4 col-md-6 col-sm-6">
+                            <div class="col-xxl-3 col-lg-4 col-md-4 col-sm-2 col-6">
                                 <div class="card product-card h-100 shadow-sm border-0">
                                     <!-- Imagen del producto -->
                                     <div class="position-relative overflow-hidden rounded-top" 
