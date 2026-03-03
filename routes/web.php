@@ -139,8 +139,19 @@ Route::prefix('cliente')
     ->group(function () {
     
     Route::get('/dashboard', [App\Http\Controllers\Cliente\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/cliente/pedidos/{id}', [DashboardController::class, 'verPedido'])->name('cliente.pedido.ver');
+    // Perfil y dirección
+    Route::get('/completar-perfil', [App\Http\Controllers\Cliente\DashboardController::class, 'showCompletarPerfil'])->name('completar-perfil');
+    Route::post('/actualizar-direccion', [App\Http\Controllers\Cliente\DashboardController::class, 'actualizarDireccion'])->name('actualizar-direccion');   
+   
+    // Pedidos
+    Route::get('/pedidos', [App\Http\Controllers\Cliente\DashboardController::class, 'pedidos'])->name('pedidos');
+    Route::get('/pedido/{id}', [App\Http\Controllers\Cliente\DashboardController::class, 'verPedido'])->name('pedido.ver');
+    Route::post('/pedido/{id}/cancelar', [App\Http\Controllers\Cliente\DashboardController::class, 'cancelarPedido'])->name('pedido.cancelar');
+    Route::get('/reordenar/{id}', [App\Http\Controllers\Cliente\DashboardController::class, 'reordenarPedido'])
+    ->name('cliente.reordenar'); 
     
-    // Rutas de checkout protegidas
+    
     Route::get('/checkout', [App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout/verificar-cobertura', [CheckoutController::class, 'verificarCobertura'])->name('checkout.verificar-cobertura');
     Route::post('/checkout/procesar', [CheckoutController::class, 'procesar'])->name('checkout.procesar');
