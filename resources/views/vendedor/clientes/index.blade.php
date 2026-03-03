@@ -136,6 +136,14 @@
                             <i class="fas fa-phone-alt me-1"></i>
                             {{ $cliente->cliente_telefono }}
                         </div>
+
+                         @if(isset($cliente->email) && $cliente->email)
+                        <div class="cliente-email mt-1">
+                            <i class="fas fa-envelope me-1" style="color: #7fad39; font-size: 0.8rem;"></i>
+                            <small style="color: #666;">{{ $cliente->email }}</small>
+                        </div>
+                        @endif
+
                         <div class="cliente-badges">
                             @if($es_nuevo)
                             <span class="badge-nuevo">

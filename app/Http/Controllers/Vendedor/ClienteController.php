@@ -36,7 +36,7 @@ class ClienteController extends Controller
         // Búsqueda
         $busqueda = $request->busqueda ?? '';
 
-        // Obtener clientes según el caso
+        // Obtener clientes según el caso (CON JOIN A TABLA CLIENTES)
         $clientes = $this->getClientes($usuario_id, $sucursal_id, $tienePedidosAsignados, $busqueda);
         
         // Obtener estadísticas
@@ -54,7 +54,7 @@ class ClienteController extends Controller
 
     private function getClientes($usuario_id, $sucursal_id, $tienePedidosAsignados, $busqueda = '')
     {
-        $query = Pedido::where('sucursal_id', $sucursal_id);
+        $query = Pedido::where('pedidos.sucursal_id', $sucursal_id);
 
         if ($tienePedidosAsignados) {
             $query->whereHas('responsables', function($q) use ($usuario_id) {
@@ -62,17 +62,30 @@ class ClienteController extends Controller
             });
         }
 
-        $clientes = $query->select(
-                'cliente_nombre',
-                'cliente_telefono',
-                'cliente_direccion',
-                'cliente_ciudad',
-                'cliente_estado',
-                DB::raw('COUNT(DISTINCT id) as total_pedidos'),
-                DB::raw('SUM(CASE WHEN estado = "entregado" AND pago_confirmado = 1 THEN total ELSE 0 END) as total_comprado'),
-                DB::raw('MAX(fecha) as ultima_compra')
+        $clientes = $query->leftJoin('clientes', 'pedidos.cliente_telefono', '=', 'clientes.telefono')
+            ->select(
+                'pedidos.cliente_nombre',
+                'pedidos.cliente_telefono',
+                'pedidos.cliente_direccion',
+                'pedidos.cliente_ciudad',
+                'pedidos.cliente_estado',
+                'clientes.email',
+                'clientes.id as cliente_id',
+                'clientes.created_at as fecha_registro',
+                DB::raw('COUNT(DISTINCT pedidos.id) as total_pedidos'),
+                DB::raw('SUM(CASE WHEN pedidos.estado = "entregado" AND pedidos.pago_confirmado = 1 THEN pedidos.total ELSE 0 END) as total_comprado'),
+                DB::raw('MAX(pedidos.fecha) as ultima_compra')
             )
-            ->groupBy('cliente_telefono', 'cliente_nombre', 'cliente_direccion', 'cliente_ciudad', 'cliente_estado')
+            ->groupBy(
+                'pedidos.cliente_telefono', 
+                'pedidos.cliente_nombre', 
+                'pedidos.cliente_direccion', 
+                'pedidos.cliente_ciudad', 
+                'pedidos.cliente_estado',
+                'clientes.email',
+                'clientes.id',
+                'clientes.created_at'
+            )
             ->orderBy('total_comprado', 'desc')
             ->orderBy('total_pedidos', 'desc')
             ->get();
@@ -82,7 +95,8 @@ class ClienteController extends Controller
             $clientes = $clientes->filter(function($cliente) use ($busqueda) {
                 return stripos($cliente->cliente_nombre, $busqueda) !== false ||
                        stripos($cliente->cliente_telefono, $busqueda) !== false ||
-                       stripos($cliente->cliente_ciudad, $busqueda) !== false;
+                       stripos($cliente->cliente_ciudad, $busqueda) !== false ||
+                       ($cliente->email && stripos($cliente->email, $busqueda) !== false);
             });
         }
 
@@ -136,12 +150,17 @@ class ClienteController extends Controller
                 ->with('error', 'Cliente no encontrado.');
         }
 
+        // Obtener datos de la tabla clientes si existe
+        $clienteData = \App\Models\Cliente::where('telefono', $telefono)->first();
+
         $cliente = [
             'nombre' => $pedidos->first()->cliente_nombre,
             'telefono' => $telefono,
             'direccion' => $pedidos->first()->cliente_direccion,
             'ciudad' => $pedidos->first()->cliente_ciudad,
-            'estado' => $pedidos->first()->cliente_estado
+            'estado' => $pedidos->first()->cliente_estado,
+            'email' => $clienteData->email ?? null,
+            'fecha_registro' => $clienteData->created_at ?? null
         ];
 
         return view('vendedor.clientes.historial', compact('pedidos', 'cliente'));
