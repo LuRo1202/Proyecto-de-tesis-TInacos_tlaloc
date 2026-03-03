@@ -51,7 +51,7 @@
                         </div>
                     </div>
 
-                    <!-- Productos -->
+                    <!-- Productos con información detallada -->
                     <h6 class="border-bottom pb-2 mb-3">Productos</h6>
                     <div class="table-responsive">
                         <table class="table table-hover">
@@ -65,12 +65,54 @@
                             </thead>
                             <tbody>
                                 @foreach($pedido->items as $item)
+                                @php
+                                    // Obtener información detallada del producto si existe
+                                    $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color', 'categoria'])->find($item->producto_id) : null;
+                                    
+                                    // Determinar color, capacidad y código
+                                    $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
+                                    $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
+                                    $capacidad = $productoInfo ? $productoInfo->litros : null;
+                                    $codigo = $productoInfo ? $productoInfo->codigo : null;
+                                    
+                                    // Extraer información del código si no tenemos producto
+                                    if (!$productoInfo && $item->producto_nombre) {
+                                        // Intentar extraer información del nombre
+                                        if (preg_match('/(\d+)\s*litros?/', $item->producto_nombre, $matches)) {
+                                            $capacidad = $matches[1];
+                                        }
+                                    }
+                                @endphp
                                 <tr>
                                     <td>
-                                        <strong>{{ $item->producto_nombre }}</strong>
-                                        @if($item->producto_id)
-                                        <br><small class="text-muted">ID: {{ $item->producto_id }}</small>
-                                        @endif
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if($colorNombre)
+                                            <span class="color-dot" style="background-color: {{ $colorHex }}; width: 16px; height: 16px; border-radius: 50%; display: inline-block; border: 1px solid #ddd;"></span>
+                                            @endif
+                                            <div>
+                                                <strong>{{ $item->producto_nombre }}</strong>
+                                                <div class="small text-muted">
+                                                    @if($codigo)
+                                                        <span class="badge bg-light text-dark me-1">Código: {{ $codigo }}</span>
+                                                    @elseif($item->producto_id)
+                                                        <span class="badge bg-light text-dark me-1">ID: {{ $item->producto_id }}</span>
+                                                    @endif
+                                                    
+                                                    @if($colorNombre)
+                                                        <span class="badge bg-light text-dark me-1">
+                                                            <span class="color-dot" style="background-color: {{ $colorHex }}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 3px;"></span>
+                                                            Color: {{ $colorNombre }}
+                                                        </span>
+                                                    @endif
+                                                    
+                                                    @if($capacidad)
+                                                        <span class="badge bg-light text-dark me-1">
+                                                            <i class="fas fa-tint" style="color: #7fad39;"></i> {{ $capacidad }} litros
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-primary">{{ $item->cantidad }}</span>
@@ -341,6 +383,16 @@
         color: #721c24; 
     }
     
+    /* Color dot para variantes */
+    .color-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 1px solid #ddd;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
         .btn-estado-group {
@@ -496,6 +548,7 @@
                         Swal.showLoading();
                         this.submit();
                     }
+
                 });
             }
         });

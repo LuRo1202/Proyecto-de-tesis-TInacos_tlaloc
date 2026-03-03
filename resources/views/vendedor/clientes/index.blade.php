@@ -228,7 +228,17 @@
                         <span>WhatsApp</span>
                     </a>
                     @endif
-                    <a href="{{ route('vendedor.pedidos.create', ['cliente' => $cliente->cliente_telefono]) }}" 
+                    
+                    <!-- BOTÓN CORREGIDO - ENVÍA TODOS LOS DATOS DEL CLIENTE -->
+                    <a href="{{ route('vendedor.pedidos.create', [
+                        'cliente_id' => $cliente->cliente_id ?? '',
+                        'telefono' => $cliente->cliente_telefono,
+                        'nombre' => $cliente->cliente_nombre,
+                        'direccion' => $cliente->cliente_direccion,
+                        'ciudad' => $cliente->cliente_ciudad,
+                        'estado' => $cliente->cliente_estado,
+                        'email' => $cliente->email ?? ''
+                    ]) }}" 
                        class="btn-pedido">
                         <i class="fas fa-cart-plus"></i>
                         <span>Nuevo Pedido</span>

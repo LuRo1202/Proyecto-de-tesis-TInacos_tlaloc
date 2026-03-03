@@ -5,11 +5,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
 use App\Models\PedidoResponsable;
 use App\Models\PedidoHistorial;
 use App\Models\Producto;
+use App\Models\Cliente;
 use Carbon\Carbon;
 
 class PedidoController extends Controller
@@ -52,6 +54,9 @@ class PedidoController extends Controller
         ));
     }
 
+    /**
+     * Show the form for creating a new order
+     */
     public function create(Request $request)
     {
         $usuario = Auth::user();
@@ -63,10 +68,11 @@ class PedidoController extends Controller
                 ->with('error', 'No tienes una sucursal asignada.');
         }
         
+        // Obtener productos con existencias
         $productos = Producto::where('activo', 1)
             ->with(['sucursales' => function($query) use ($sucursal) {
                 $query->where('sucursal_id', $sucursal->id)
-                      ->select('producto_sucursal.existencias');
+                    ->select('producto_sucursal.existencias');
             }])
             ->orderBy('nombre')
             ->get();
@@ -75,28 +81,106 @@ class PedidoController extends Controller
             $producto->existencias = $producto->sucursales->first()->pivot->existencias ?? 0;
         }
         
+        // Variables para precarga desde URL
         $producto_id = $request->get('producto_id');
         $cantidad = $request->get('cantidad', 1);
+        $producto_precargado = null;
+        $precio_con_oferta = 0;
         
-        $cliente_datos = session('cliente_datos', [
+        // ===== CALCULAR OFERTA SI VIENE PRODUCTO PRECARGADO =====
+        if ($producto_id) {
+            $producto_precargado = Producto::with(['ofertas' => function($query) {
+                    $query->where('activa', 1)
+                        ->where('fecha_inicio', '<=', now())
+                        ->where('fecha_fin', '>=', now());
+                }])
+                ->where('id', $producto_id)
+                ->where('activo', 1)
+                ->first();
+            
+            if ($producto_precargado) {
+                $precio_con_oferta = $producto_precargado->precio;
+                
+                if ($producto_precargado->ofertas->isNotEmpty()) {
+                    $oferta = $producto_precargado->ofertas->first();
+                    
+                    if ($oferta->tipo == 'porcentaje') {
+                        $precio_con_oferta = $producto_precargado->precio * (1 - $oferta->valor / 100);
+                    } else {
+                        $precio_con_oferta = $producto_precargado->precio - $oferta->valor;
+                    }
+                }
+                
+                // También obtener existencias en esta sucursal
+                $productoEnSucursal = $sucursal->productos()
+                    ->where('producto_id', $producto_id)
+                    ->first();
+                    
+                $producto_precargado->existencias = $productoEnSucursal->pivot->existencias ?? 0;
+            }
+        }
+        
+        // Datos del cliente (por defecto vacíos)
+        $cliente_datos = [
             'nombre' => '',
             'telefono' => '',
+            'email' => '',
             'direccion' => '',
             'ciudad' => '',
             'estado' => '',
             'codigo_postal' => '',
             'notas' => ''
-        ]);
+        ];
+        
+        // Si viene un teléfono en la URL, buscar al cliente
+        if ($request->has('telefono') && !empty($request->telefono)) {
+            $cliente = Cliente::where('telefono', $request->telefono)->first();
+            
+            if ($cliente) {
+                $cliente_datos = [
+                    'nombre' => $cliente->nombre,
+                    'telefono' => $cliente->telefono,
+                    'email' => $cliente->email,
+                    'direccion' => $cliente->direccion,
+                    'ciudad' => $cliente->ciudad,
+                    'estado' => $cliente->estado,
+                    'codigo_postal' => $cliente->codigo_postal,
+                    'notas' => ''
+                ];
+            }
+        }
+        // Si viene un cliente_id en la URL, buscar por ID
+        elseif ($request->has('cliente_id') && !empty($request->cliente_id)) {
+            $cliente = Cliente::find($request->cliente_id);
+            
+            if ($cliente) {
+                $cliente_datos = [
+                    'nombre' => $cliente->nombre,
+                    'telefono' => $cliente->telefono,
+                    'email' => $cliente->email,
+                    'direccion' => $cliente->direccion,
+                    'ciudad' => $cliente->ciudad,
+                    'estado' => $cliente->estado,
+                    'codigo_postal' => $cliente->codigo_postal,
+                    'notas' => ''
+                ];
+            }
+        }
         
         return view('vendedor.pedidos.create', compact(
             'productos', 
             'sucursal', 
             'cliente_datos',
             'producto_id',
-            'cantidad'
+            'cantidad',
+            'producto_precargado',
+            'precio_con_oferta'
         ));
     }
 
+    /**
+     * Store a newly created order
+     */
     public function store(Request $request)
     {
         $usuario = Auth::user();
@@ -112,6 +196,7 @@ class PedidoController extends Controller
         $request->validate([
             'cliente_nombre' => 'required|string|max:100',
             'cliente_telefono' => 'required|string|max:20',
+            'cliente_email' => 'nullable|email|max:100',
             'cliente_direccion' => 'required|string',
             'cliente_ciudad' => 'required|string|max:100',
             'cliente_estado' => 'required|string|max:100',
@@ -127,6 +212,31 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
             
+            // Buscar cliente por teléfono o correo
+            $cliente = Cliente::where('telefono', $request->cliente_telefono)
+                        ->orWhere('email', $request->cliente_email)
+                        ->first();
+            
+            // Si NO existe, CREAR EL CLIENTE AUTOMÁTICAMENTE
+            if (!$cliente && !empty($request->cliente_email)) {
+                $password = $this->generateRandomPassword();
+                
+                $cliente = Cliente::create([
+                    'nombre' => $request->cliente_nombre,
+                    'email' => $request->cliente_email,
+                    'password' => Hash::make($password),
+                    'telefono' => $request->cliente_telefono,
+                    'direccion' => $request->cliente_direccion,
+                    'ciudad' => $request->cliente_ciudad,
+                    'estado' => $request->cliente_estado,
+                    'codigo_postal' => $request->codigo_postal,
+                    'activo' => true,
+                    'email_verified_at' => now()
+                ]);
+                
+                \Log::info('Cliente creado automáticamente desde pedido: ' . $cliente->id . ' - Email: ' . $cliente->email);
+            }
+            
             $fecha = date('ymd');
             $numero = str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
             $folio = 'PED-' . $fecha . '-' . $numero;
@@ -136,9 +246,17 @@ class PedidoController extends Controller
             
             foreach ($request->productos as $index => $producto_id) {
                 if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
-                    $producto = Producto::findOrFail($producto_id);
+                    // ===== IMPORTANTE: Cargar producto con OFERTAS =====
+                    $producto = Producto::with(['ofertas' => function($query) {
+                            $query->where('activa', 1)
+                                ->where('fecha_inicio', '<=', now())
+                                ->where('fecha_fin', '>=', now());
+                        }])
+                        ->findOrFail($producto_id);
+                    
                     $cantidad = $request->cantidades[$index];
                     
+                    // Verificar existencias
                     $existencias = DB::table('producto_sucursal')
                         ->where('producto_id', $producto_id)
                         ->where('sucursal_id', $sucursal->id)
@@ -148,19 +266,35 @@ class PedidoController extends Controller
                         throw new \Exception("No hay suficientes existencias de {$producto->nombre}. Disponibles: {$existencias}");
                     }
                     
-                    $subtotal = $producto->precio * $cantidad;
+                    // ===== CALCULAR PRECIO CON OFERTA =====
+                    $precioUnitario = $producto->precio;
+                    
+                    if ($producto->ofertas->isNotEmpty()) {
+                        $oferta = $producto->ofertas->first();
+                        
+                        if ($oferta->tipo == 'porcentaje') {
+                            $precioUnitario = $producto->precio * (1 - $oferta->valor / 100);
+                        } else {
+                            $precioUnitario = $producto->precio - $oferta->valor;
+                        }
+                    }
+                    
+                    $subtotal = $precioUnitario * $cantidad;
                     $total += $subtotal;
                     
                     $productos_data[] = [
                         'producto_id' => $producto_id,
                         'producto_nombre' => $producto->nombre,
                         'cantidad' => $cantidad,
-                        'precio' => $producto->precio
+                        'precio' => $precioUnitario, // PRECIO CON OFERTA
+                        'precio_original' => $producto->precio
                     ];
                 }
             }
             
+            // Crear el pedido
             $pedido = Pedido::create([
+                'cliente_id' => $cliente ? $cliente->id : null,
                 'folio' => $folio,
                 'cliente_nombre' => $request->cliente_nombre,
                 'cliente_telefono' => $request->cliente_telefono,
@@ -179,28 +313,31 @@ class PedidoController extends Controller
                 'cobertura_verificada' => 1
             ]);
             
+            // Guardar los items del pedido
             foreach ($productos_data as $item) {
                 PedidoItem::create([
                     'pedido_id' => $pedido->id,
                     'producto_id' => $item['producto_id'],
                     'producto_nombre' => $item['producto_nombre'],
                     'cantidad' => $item['cantidad'],
-                    'precio' => $item['precio']
+                    'precio' => $item['precio'] // PRECIO CON OFERTA
                 ]);
                 
+                // Reducir existencias
                 DB::table('producto_sucursal')
                     ->where('producto_id', $item['producto_id'])
                     ->where('sucursal_id', $sucursal->id)
                     ->decrement('existencias', $item['cantidad']);
             }
             
-            // El creador se asigna automáticamente
+            // Asignar responsable
             PedidoResponsable::create([
                 'pedido_id' => $pedido->id,
                 'usuario_id' => $usuario_id,
                 'fecha_asignacion' => now()
             ]);
             
+            // Registrar historial
             PedidoHistorial::create([
                 'pedido_id' => $pedido->id,
                 'usuario_id' => $usuario_id,
@@ -213,16 +350,38 @@ class PedidoController extends Controller
             
             session()->forget('cobertura_verificada_vendedor');
             
+            // Mensaje personalizado
+            if ($cliente && $cliente->wasRecentlyCreated) {
+                $mensaje = "¡Pedido #{$folio} creado exitosamente! Se ha registrado al cliente con acceso al sistema. Email: {$cliente->email}";
+            } else {
+                $mensaje = "¡Pedido #{$folio} creado exitosamente!";
+            }
+            
             return redirect()->route('vendedor.pedidos.hoy')
-                ->with('success', "¡Pedido #{$folio} creado exitosamente!");
+                ->with('success', $mensaje);
             
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            \Log::error('Error al crear pedido: ' . $e->getMessage());
             
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error al crear el pedido: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generate a random password for new clients
+     */
+    private function generateRandomPassword($length = 8)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%&';
+        $password = '';
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $password;
     }
 
     public function show($id)
@@ -733,5 +892,34 @@ class PedidoController extends Controller
             ->whereIn('estado', ['pendiente', 'confirmado'])
             ->whereDoesntHave('responsables')
             ->count();
+    }
+
+    public function verificarOferta(Request $request)
+    {
+        $producto = Producto::with(['ofertas' => function($query) {
+                $query->where('activa', 1)
+                    ->where('fecha_inicio', '<=', now())
+                    ->where('fecha_fin', '>=', now());
+            }])
+            ->find($request->producto_id);
+        
+        if ($producto && $producto->ofertas->isNotEmpty()) {
+            $oferta = $producto->ofertas->first();
+            $precioFinal = $producto->precio;
+            
+            if ($oferta->tipo == 'porcentaje') {
+                $precioFinal = $producto->precio * (1 - $oferta->valor / 100);
+            } else {
+                $precioFinal = $producto->precio - $oferta->valor;
+            }
+            
+            return response()->json([
+                'en_oferta' => true,
+                'precio_final' => $precioFinal,
+                'porcentaje' => $oferta->valor
+            ]);
+        }
+        
+        return response()->json(['en_oferta' => false]);
     }
 }

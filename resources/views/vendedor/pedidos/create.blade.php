@@ -3,6 +3,8 @@
 @section('title', 'Nuevo Pedido')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <div class="container-fluid px-4">
     <!-- Header -->
     <div class="header-bar">
@@ -22,6 +24,29 @@
             <a href="{{ route('vendedor.pedidos.hoy') }}" class="btn-custom btn-secondary-custom">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
+        </div>
+    </div>
+
+    <!-- Buscador de clientes -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5><i class="fas fa-search"></i> Buscar Cliente Registrado</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text" id="buscador-cliente" class="form-control" 
+                               placeholder="Buscar por teléfono, nombre o email...">
+                        <button class="btn btn-primary" type="button" id="btn-buscar-cliente">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                    <div id="resultados-busqueda" class="mt-2" style="display: none;">
+                        <!-- Resultados aparecerán aquí -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -98,6 +123,44 @@
                         </div>
                     </div>
                     
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="cliente_email" class="form-label">
+                                <i class="fas fa-envelope"></i>Correo electrónico *
+                            </label>
+                            <input type="email" 
+                                   class="form-control @error('cliente_email') is-invalid @enderror" 
+                                   id="cliente_email" 
+                                   name="cliente_email" 
+                                   required 
+                                   placeholder="ejemplo@correo.com"
+                                   value="{{ old('cliente_email', $cliente_datos['email'] ?? '') }}">
+                            @error('cliente_email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">El correo será usado para crear su cuenta de acceso</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="codigo_postal" class="form-label">
+                                <i class="fas fa-mail-bulk"></i>Código Postal *
+                            </label>
+                            <input type="text" 
+                                   class="form-control @error('codigo_postal') is-invalid @enderror" 
+                                   id="codigo_postal" 
+                                   name="codigo_postal" 
+                                   required 
+                                   placeholder="Ej: 55000"
+                                   maxlength="5"
+                                   value="{{ old('codigo_postal', $cliente_datos['codigo_postal'] ?? '') }}">
+                            @error('codigo_postal')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    
                     <div class="col-12">
                         <div class="form-group">
                             <label for="cliente_direccion" class="form-label">
@@ -154,22 +217,7 @@
                     </div>
                     
                     <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="codigo_postal" class="form-label">
-                                <i class="fas fa-mail-bulk"></i>Código Postal *
-                            </label>
-                            <input type="text" 
-                                   class="form-control @error('codigo_postal') is-invalid @enderror" 
-                                   id="codigo_postal" 
-                                   name="codigo_postal" 
-                                   required 
-                                   placeholder="Ej: 55000"
-                                   maxlength="5"
-                                   value="{{ old('codigo_postal', $cliente_datos['codigo_postal'] ?? '') }}">
-                            @error('codigo_postal')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <!-- Vacío para mantener grid -->
                     </div>
                     
                     <div class="col-12">
@@ -599,6 +647,21 @@
         color: var(--gray);
         font-size: 0.85rem;
     }
+
+    /* Estilos para resultados de búsqueda */
+    .list-group-item {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid var(--light-gray);
+        margin-bottom: 5px;
+        border-radius: 5px !important;
+    }
+    
+    .list-group-item:hover {
+        background-color: rgba(127, 173, 57, 0.1);
+        border-color: var(--primary);
+        transform: translateX(5px);
+    }
     
     @media (max-width: 1200px) {
         .main-content {
@@ -672,6 +735,21 @@
     const sucursalNombre = '{{ $sucursal->nombre }}';
     const radioCobertura = {{ $sucursal->radio_cobertura_km }};
 
+    // VARIABLES PARA PRODUCTO PRECARGADO CON OFERTA
+    @if(isset($producto_precargado) && $producto_precargado)
+        const productoPrecargado = {
+            id: {{ $producto_precargado->id }},
+            nombre: '{{ $producto_precargado->nombre }}',
+            precio: {{ $producto_precargado->precio }},
+            precio_final: {{ $precio_con_oferta }},
+            en_oferta: {{ $producto_precargado->ofertas->isNotEmpty() ? 'true' : 'false' }},
+            descuento: {{ $producto_precargado->ofertas->isNotEmpty() ? intval($producto_precargado->ofertas->first()->valor) : 0 }},
+            existencias: {{ $producto_precargado->existencias ?? 0 }}
+        };
+    @else
+        const productoPrecargado = null;
+    @endif
+
     // Inicializar autocomplete de Google Maps
     function initAutocomplete() {
         const direccionInput = document.getElementById('cliente_direccion');
@@ -709,6 +787,63 @@
                 }
             });
         }
+    }
+
+    // Buscar cliente
+    $('#btn-buscar-cliente').click(function() {
+        const busqueda = $('#buscador-cliente').val();
+        
+        if (busqueda.length < 3) {
+            Swal.fire('Error', 'Ingrese al menos 3 caracteres', 'error');
+            return;
+        }
+        
+        $.ajax({
+            url: '{{ route("vendedor.clientes.buscar") }}',
+            method: 'POST',
+            data: {
+                _token: csrfToken,
+                busqueda: busqueda
+            },
+            success: function(response) {
+                if (response.length > 0) {
+                    let html = '<div class="list-group">';
+                    response.forEach(cliente => {
+                        html += `
+                            <a href="#" class="list-group-item list-group-item-action" 
+                               onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre}', '${cliente.telefono}', '${cliente.email}', '${cliente.direccion}', '${cliente.ciudad}', '${cliente.estado}', '${cliente.codigo_postal}')">
+                                <strong>${cliente.nombre}</strong><br>
+                                <small>📞 ${cliente.telefono} | ✉️ ${cliente.email}</small>
+                            </a>
+                        `;
+                    });
+                    html += '</div>';
+                    $('#resultados-busqueda').html(html).show();
+                } else {
+                    $('#resultados-busqueda').html('<div class="alert alert-info">No se encontraron clientes</div>').show();
+                }
+            }
+        });
+    });
+
+    function seleccionarCliente(id, nombre, telefono, email, direccion, ciudad, estado, cp) {
+        $('#cliente_nombre').val(nombre);
+        $('#cliente_telefono').val(telefono);
+        $('#cliente_email').val(email);
+        $('#cliente_direccion').val(direccion);
+        $('#cliente_ciudad').val(ciudad);
+        $('#cliente_estado').val(estado);
+        $('#codigo_postal').val(cp);
+        
+        $('#resultados-busqueda').hide();
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Cliente seleccionado',
+            text: `Datos de ${nombre} cargados`,
+            timer: 2000,
+            showConfirmButton: false
+        });
     }
 
     // Verificar cobertura
@@ -900,6 +1035,7 @@
         calcularTotal();
     }
 
+    // Función mejorada para actualizar producto con VERIFICACIÓN DE OFERTAS
     function actualizarProducto(index) {
         const select = document.querySelector(`#producto-${index} .select-producto`);
         const precioInput = document.getElementById(`precio-${index}`);
@@ -908,35 +1044,64 @@
         const option = select.options[select.selectedIndex];
         
         if (option.value) {
-            const precio = parseFloat(option.dataset.precio);
+            const productoId = option.value;
+            const precioOriginal = parseFloat(option.dataset.precio);
             const existencias = parseInt(option.dataset.existencias);
             const nombre = option.dataset.nombre;
             
-            precioInput.value = precio.toFixed(2);
+            // Mostrar precio original mientras se verifica
+            precioInput.value = precioOriginal.toFixed(2);
             
-            if (existencias <= 5) {
-                existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
-            } else {
-                existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
-            }
-            
-            // Validar que la cantidad no exceda las existencias
-            if (parseInt(cantidadInput.value) > existencias && existencias > 0) {
-                cantidadInput.value = existencias;
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Existencia insuficiente',
-                    text: `Solo hay ${existencias} unidades disponibles de ${nombre}`,
-                    confirmButtonColor: '#7fad39',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-            }
-            
-            calcularSubtotal(index);
-            calcularTotal();
+            // VERIFICAR SI TIENE OFERTA VÍA AJAX
+            $.ajax({
+                url: '{{ route("vendedor.productos.verificar-oferta") }}',
+                method: 'POST',
+                data: {
+                    _token: csrfToken,
+                    producto_id: productoId
+                },
+                success: function(response) {
+                    if (response.en_oferta) {
+                        // USAR PRECIO CON OFERTA
+                        precioInput.value = response.precio_final.toFixed(2);
+                        
+                        // MOSTRAR BADGE DE OFERTA
+                        existenciasInfo.innerHTML = `
+                            <span class="badge bg-danger" style="font-size: 0.75rem;">
+                                <i class="fas fa-tag"></i> -${Math.round(response.porcentaje)}% OFERTA
+                            </span>
+                            <span class="ms-2 ${existencias <= 5 ? 'existencias-baja' : 'existencias-normal'}">
+                                ${existencias} disponibles
+                            </span>
+                        `;
+                    } else {
+                        // SIN OFERTA, mostrar precio normal
+                        precioInput.value = precioOriginal.toFixed(2);
+                        
+                        if (existencias <= 5) {
+                            existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
+                        } else {
+                            existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
+                        }
+                    }
+                    
+                    // Validar cantidad después de actualizar
+                    validarCantidad(index);
+                    calcularSubtotal(index);
+                },
+                error: function() {
+                    // Si hay error, usar precio original
+                    precioInput.value = precioOriginal.toFixed(2);
+                    
+                    if (existencias <= 5) {
+                        existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
+                    } else {
+                        existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
+                    }
+                    
+                    calcularSubtotal(index);
+                }
+            });
         } else {
             precioInput.value = '0.00';
             existenciasInfo.textContent = '';
@@ -1070,13 +1235,33 @@
         const productoId = urlParams.get('producto_id');
         const cantidad = urlParams.get('cantidad');
         
-        if (productoId) {
+        if (productoId && productoPrecargado) {
             setTimeout(() => {
                 const primerSelect = document.querySelector('.select-producto');
                 if (primerSelect) {
                     for (let i = 0; i < primerSelect.options.length; i++) {
                         if (primerSelect.options[i].value == productoId) {
                             primerSelect.selectedIndex = i;
+                            
+                            // Si el producto tiene oferta, actualizar el precio
+                            if (productoPrecargado.en_oferta) {
+                                const precioInput = document.getElementById('precio-0');
+                                if (precioInput) {
+                                    precioInput.value = productoPrecargado.precio_final.toFixed(2);
+                                }
+                                
+                                // Mostrar badge de oferta
+                                const existenciasInfo = document.getElementById('existencias-info-0');
+                                if (existenciasInfo) {
+                                    existenciasInfo.innerHTML = `
+                                        <span class="badge bg-danger" style="font-size: 0.75rem;">
+                                            <i class="fas fa-tag"></i> -${productoPrecargado.descuento}% OFERTA
+                                        </span>
+                                        <span class="ms-2">${productoPrecargado.existencias} disponibles</span>
+                                    `;
+                                }
+                            }
+                            
                             const event = new Event('change', { bubbles: true });
                             primerSelect.dispatchEvent(event);
                             break;
@@ -1095,13 +1280,36 @@
                     }, 100);
                 }
                 
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Producto precargado',
-                    text: 'El producto seleccionado ha sido cargado automáticamente',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                // Mostrar alerta personalizada
+                if (productoPrecargado.en_oferta) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Producto con OFERTA precargado!',
+                        html: `
+                            <p><strong>${productoPrecargado.nombre}</strong></p>
+                            <p>Cantidad: ${cantidad || 1}</p>
+                            <p>
+                                Precio normal: <span style="text-decoration: line-through; color: #999;">
+                                    $${productoPrecargado.precio.toFixed(2)}
+                                </span><br>
+                                <span style="color: #dc3545; font-weight: bold;">
+                                    Precio oferta: $${productoPrecargado.precio_final.toFixed(2)}
+                                </span>
+                                <span class="badge bg-danger ms-2">-${productoPrecargado.descuento}%</span>
+                            </p>
+                        `,
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Producto precargado',
+                        text: 'El producto seleccionado ha sido cargado automáticamente',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
             }, 500);
         }
         

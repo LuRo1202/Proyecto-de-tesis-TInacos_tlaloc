@@ -370,7 +370,13 @@
                                 $imagenPrincipal = ProductoHelper::obtenerImagenProducto($productoPrincipal->codigo);
                                 $esAccesorio = (strpos($productoPrincipal->codigo, 'ACC-') === 0);
                                 $esDispensador = ($familia === 'DISP-20');
-                                $enOferta = $productoPrincipal->en_oferta;
+                                
+                                // OBTENER PROPIEDADES DE OFERTA DEL PRODUCTO PRINCIPAL
+                                $enOferta = $productoPrincipal->en_oferta ?? false;
+                                $precioOriginal = $productoPrincipal->precio_original ?? $productoPrincipal->precio;
+                                $precioFinal = $productoPrincipal->precio_final ?? $productoPrincipal->precio;
+                                $porcentajeDescuento = $productoPrincipal->porcentaje_descuento ?? 0;
+                                $descuentoFormateado = ProductoHelper::formatoPorcentaje($porcentajeDescuento);
                             @endphp
                             
                             <div class="col-xxl-3 col-lg-4 col-md-4 col-sm-2 col-6">
@@ -388,7 +394,7 @@
                                         <div class="position-absolute top-0 start-0 m-2">
                                             @if($enOferta)
                                             <span class="badge bg-danger small">
-                                                <i class="fas fa-tag"></i> -{{ intval($productoPrincipal->porcentaje_descuento) }}%
+                                                <i class="fas fa-tag"></i> -{{ $descuentoFormateado }}%
                                             </span>
                                             @elseif($productoPrincipal->destacado)
                                             <span class="badge bg-danger small">
@@ -461,14 +467,23 @@
                                                         $claseTipo = 'tipo-' . $info['tipo'];
                                                         $claseActivo = $esPrincipal ? 'activo' : '';
                                                         $claseDisabled = $sinExistencia ? 'disabled' : '';
+                                                        
+                                                        // DATOS DE OFERTA PARA LA VARIANTE
+                                                        $varianteEnOferta = $variante->en_oferta ?? false;
+                                                        $varianteDescuento = $variante->porcentaje_descuento ?? 0;
+                                                        $varianteDescuentoFormateado = ProductoHelper::formatoPorcentaje($varianteDescuento);
                                                     @endphp
                                                     <button type="button" 
                                                             class="btn-variante btn-sm {{ $claseTipo }} {{ $claseActivo }} {{ $claseDisabled }}"
                                                             data-variante-id="{{ $variante->id }}"
                                                             data-familia="{{ $familia }}"
-                                                            data-imagen="{{ $variante->imagen }}"
+                                                            data-imagen="{{ ProductoHelper::obtenerImagenProducto($variante->codigo) }}"
                                                             data-codigo="{{ $variante->codigo }}"
                                                             data-precio="{{ $variante->precio }}"
+                                                            data-precio-final="{{ $variante->precio_final ?? $variante->precio }}"
+                                                            data-en-oferta="{{ $varianteEnOferta ? 'true' : 'false' }}"
+                                                            data-descuento="{{ $varianteDescuento }}"
+                                                            data-descuento-formateado="{{ $varianteDescuentoFormateado }}"
                                                             data-stock="{{ $variante->pivot->existencias }}"
                                                             data-color="{{ $info['nombre'] }}"
                                                             data-color-hex="{{ $info['hex'] }}"
@@ -482,6 +497,7 @@
                                                         <i class="{{ $info['icono'] }} small"></i>
                                                         @endif
                                                         
+                                                        
                                                         @if($sinExistencia)
                                                         <span class="variante-agotado">✗</span>
                                                         @endif
@@ -494,19 +510,19 @@
                                         <!-- Precio y stock -->
                                         <div class="mt-auto">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <div>
+                                                <div id="price-container-{{ $familia }}">
                                                     @if($enOferta)
                                                     <div class="d-flex flex-column">
                                                         <span class="text-muted text-decoration-line-through small">
-                                                            ${{ number_format($productoPrincipal->precio, 2) }}
+                                                            {{ ProductoHelper::formatoPrecio($precioOriginal) }}
                                                         </span>
                                                         <h5 class="text-danger fw-bold mb-0" id="precio-{{ $familia }}">
-                                                            ${{ number_format($productoPrincipal->precio_final, 2) }}
+                                                            {{ ProductoHelper::formatoPrecio($precioFinal) }}
                                                         </h5>
                                                     </div>
                                                     @else
                                                     <h5 class="text-success fw-bold mb-0" id="precio-{{ $familia }}">
-                                                        {{ ProductoHelper::formatoPrecio($productoPrincipal->precio) }}
+                                                        {{ ProductoHelper::formatoPrecio($precioOriginal) }}
                                                     </h5>
                                                     @endif
                                                 </div>
@@ -642,6 +658,16 @@
 
     <!-- JS de tienda (incluido directamente) -->
     <script>
+        // Función para formatear porcentaje
+        function formatoPorcentajeJS(valor) {
+            return Math.round(parseFloat(valor));
+        }
+
+        // Función para formatear precio
+        function formatoPrecioJS(precio) {
+            return '$' + parseFloat(precio).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
         // Función para cambiar variante
         window.cambiarVariante = function(boton, familia) {
             const $boton = $(boton);
@@ -660,27 +686,41 @@
                 
                 // 2. Cambiar imagen
                 const $img = $(`#img-${familia}`);
-                const nuevaImagen = varianteEncontrada.imagen || '/assets/img/productos/' + varianteEncontrada.codigo + '.jpg';
+                const nuevaImagen = $boton.data('imagen') || varianteEncontrada.imagen || '/assets/img/productos/' + varianteEncontrada.codigo + '.jpg';
                 $img.fadeOut(150, function() {
                     $(this).attr('src', nuevaImagen).fadeIn(150);
                 });
                 
                 // 3. Actualizar código
-                $(`#codigo-${familia}`).text(varianteEncontrada.codigo);
+                $(`#codigo-${familia}`).text($boton.data('codigo') || varianteEncontrada.codigo);
                 
-                // 4. Actualizar precio
-                const precioFormateado = formatoPrecioJS(varianteEncontrada.precio_final || varianteEncontrada.precio);
-                $(`#precio-${familia}`).text(precioFormateado);
+                // 4. Actualizar precio (considerando oferta)
+                const precioContainer = $(`#price-container-${familia}`);
+                const precioOriginal = parseFloat($boton.data('precio') || varianteEncontrada.precio);
+                const precioFinal = parseFloat($boton.data('precio-final') || varianteEncontrada.precio_final || varianteEncontrada.precio);
+                const enOferta = $boton.data('en-oferta') === 'true' || varianteEncontrada.en_oferta;
+                
+                if (enOferta) {
+                    precioContainer.html(`
+                        <div class="d-flex flex-column">
+                            <span class="text-muted text-decoration-line-through small">${formatoPrecioJS(precioOriginal)}</span>
+                            <h5 class="text-danger fw-bold mb-0" id="precio-${familia}">${formatoPrecioJS(precioFinal)}</h5>
+                        </div>
+                    `);
+                } else {
+                    precioContainer.html(`<h5 class="text-success fw-bold mb-0" id="precio-${familia}">${formatoPrecioJS(precioOriginal)}</h5>`);
+                }
                 
                 // 5. Actualizar color
                 const colorText = $(`#color-text-${familia}`);
                 if (colorText.length) {
                     const colorNombre = $boton.data('color') || varianteEncontrada.color_nombre;
-                    colorText.html('<span class="color-dot" style="background-color: ' + $boton.data('color-hex') + '; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px;"></span> Color: ' + colorNombre);
+                    const colorHex = $boton.data('color-hex') || '#ccc';
+                    colorText.html('<span class="color-dot" style="background-color: ' + colorHex + '; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px;"></span> Color: ' + colorNombre);
                 }
                 
                 // 6. Actualizar stock
-                const stock = varianteEncontrada.pivot?.existencias || 0;
+                const stock = parseInt($boton.data('stock') || varianteEncontrada.pivot?.existencias || 0);
                 const $stock = $(`#stock-${familia}`);
                 if (stock <= 0) {
                     $stock.html('<span class="badge bg-danger p-1 small"><i class="fas fa-times-circle"></i> Agotado</span>');
@@ -690,17 +730,22 @@
                     $stock.html('<span class="badge bg-success p-1 small"><i class="fas fa-check-circle"></i> ' + stock + ' disp.</span>');
                 }
                 
-                // 7. Actualizar input
+                // 7. Actualizar input y link
                 $(`#input-${familia}`).val(varianteEncontrada.id);
-                
-                // 8. Actualizar link de ver detalles
                 $(`#link-${familia}`).attr('href', '/producto/' + varianteEncontrada.id);
+                
+                // 8. Actualizar badge de oferta
+                const badgeOferta = $(`#imagen-${familia}`).find('.badge.bg-danger.small:first');
+                if (badgeOferta.length) {
+                    if (enOferta) {
+                        const descuento = $boton.data('descuento-formateado') || formatoPorcentajeJS($boton.data('descuento') || 0);
+                        badgeOferta.html(`<i class="fas fa-tag"></i> -${descuento}%`);
+                        badgeOferta.show();
+                    } else {
+                        badgeOferta.hide();
+                    }
+                }
             }
-        };
-
-        // Función para formatear precio
-        window.formatoPrecioJS = function(precio) {
-            return '$' + parseFloat(precio).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         };
 
         // Actualizar badge del carrito
@@ -767,7 +812,7 @@
                                     actualizarBadgeCarrito(response.cartCount);
                                 }
                                 
-                                // ===== ALERTA DE ÉXITO ELEGANTE =====
+                                // ALERTA DE ÉXITO
                                 Swal.fire({
                                     icon: 'success',
                                     title: '¡Producto Agregado!',
@@ -803,11 +848,9 @@
                                 let mensaje = 'No se pudo agregar el producto';
                                 let titulo = 'Error';
                                 
-                                // Si el servidor devolvió un mensaje
                                 if (xhr.responseJSON && xhr.responseJSON.message) {
                                     mensaje = xhr.responseJSON.message;
                                     
-                                    // Personalizar título si es error de stock
                                     if (mensaje.toLowerCase().includes('stock') || 
                                         mensaje.toLowerCase().includes('unidades') ||
                                         mensaje.toLowerCase().includes('disponibles')) {
@@ -832,7 +875,7 @@
                 });
             });
             
-            // Validar filtros de precio - UNA SOLA VEZ
+            // Validar filtros de precio
             $('form[action="{{ route('tienda') }}"]').submit(function() {
                 let precioMin = $(this).find('input[name="precio_min"]').val();
                 let precioMax = $(this).find('input[name="precio_max"]').val();
@@ -859,7 +902,5 @@
         });
     </script>
     @endif
-
-
 </body>
 </html>

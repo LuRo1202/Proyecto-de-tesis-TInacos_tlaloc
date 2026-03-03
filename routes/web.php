@@ -321,7 +321,11 @@ Route::prefix('vendedor')
     Route::get('/pedidos/{id}/seguimiento', [App\Http\Controllers\Vendedor\PedidoController::class, 'seguimiento'])->name('pedidos.seguimiento');
     Route::put('/pedidos/{id}', [App\Http\Controllers\Vendedor\PedidoController::class, 'update'])->name('pedidos.update');
     Route::post('/pedidos/{id}/guardar-seguimiento', [App\Http\Controllers\Vendedor\PedidoController::class, 'guardarSeguimiento'])->name('pedidos.guardar-seguimiento');
-    
+    Route::post('/clientes/buscar', [App\Http\Controllers\Vendedor\ClienteController::class, 'buscar'])->name('clientes.buscar'); // ← NUEVA RUTA
+
+    Route::post('/productos/verificar-oferta', [App\Http\Controllers\Vendedor\PedidoController::class, 'verificarOferta'])
+        ->name('productos.verificar-oferta'); 
+        
     // COBERTURA
     Route::post('/cobertura/verificar', [App\Http\Controllers\Vendedor\CoberturaController::class, 'verificar'])->name('cobertura.verificar');
     Route::post('/cobertura/limpiar', [App\Http\Controllers\Vendedor\CoberturaController::class, 'limpiar'])->name('cobertura.limpiar');

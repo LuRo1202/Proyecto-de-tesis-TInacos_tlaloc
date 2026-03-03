@@ -29,6 +29,7 @@
             <div class="product-container">
                 <div class="product-image-container">
                     <div class="product-image-zoom-container" id="zoomContainer">
+                        
                         <img class="product-zoom-image" 
                              src="{{ App\Helpers\ProductoHelper::obtenerImagenProducto($producto->codigo) }}" 
                              alt="{{ $producto->nombre }}" 
@@ -119,8 +120,27 @@
                     {{ $producto->nombre }}
                 </h1>
                 
-                <div class="product-price" id="producto-precio">
-                    {{ App\Helpers\ProductoHelper::formatoPrecio($producto->precio) }}
+                <div class="product-price-container">
+                    @if($en_oferta)
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="precio-original" id="producto-precio-original">
+                            {{ App\Helpers\ProductoHelper::formatoPrecio($precio_original) }}
+                        </span>
+                        <span class="badge bg-danger" id="producto-descuento">
+                            -{{ App\Helpers\ProductoHelper::formatoPorcentaje($producto->porcentaje_descuento) }}%
+                        </span>
+                    </div>
+                    <div class="product-price" id="producto-precio-final">
+                        {{ App\Helpers\ProductoHelper::formatoPrecio($precio_final) }}
+                    </div>
+                    <small class="text-success">
+                        <i class="fas fa-tag me-1"></i>Precio con oferta
+                    </small>
+                    @else
+                    <div class="product-price" id="producto-precio">
+                        {{ App\Helpers\ProductoHelper::formatoPrecio($precio_original) }}
+                    </div>
+                    @endif
                 </div>
                 
                 <!-- Selector de variantes -->
@@ -130,7 +150,7 @@
                         <i class="fas fa-list-alt me-2"></i>
                         Opciones disponibles:
                     </h6>
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2" id="variantes-container">
                         @foreach($variantes as $variante)
                             @php
                                 $activo = ($variante->id == $producto->id);
@@ -142,13 +162,34 @@
                                 $sinExistencia = ($existenciasVariante <= 0);
                                 $info = App\Helpers\ProductoHelper::obtenerInfoVariantePorCodigo($variante->codigo);
                                 $imagenVariante = App\Helpers\ProductoHelper::obtenerImagenProducto($variante->codigo);
+                                
+                                // Verificar si esta variante tiene oferta
+                                $varianteEnOferta = false;
+                                $variantePrecioOriginal = $variante->precio;
+                                $variantePrecioFinal = $variante->precio;
+                                $varianteDescuento = 0;
+                                
+                                if ($variante->ofertas->isNotEmpty()) {
+                                    $varianteEnOferta = true;
+                                    $ofertaVar = $variante->ofertas->first();
+                                    if ($ofertaVar->tipo == 'porcentaje') {
+                                        $variantePrecioFinal = $variante->precio * (1 - $ofertaVar->valor / 100);
+                                        $varianteDescuento = $ofertaVar->valor;
+                                    } else {
+                                        $variantePrecioFinal = $variante->precio - $ofertaVar->valor;
+                                        $varianteDescuento = round(($ofertaVar->valor / $variante->precio) * 100);
+                                    }
+                                }
                             @endphp
                             <button type="button" 
                                     class="btn-variante-detalle tipo-{{ $info['tipo'] }} {{ $activo ? 'activo' : '' }} {{ $sinExistencia ? 'disabled' : '' }}"
                                     data-variante-id="{{ $variante->id }}"
                                     data-codigo="{{ $variante->codigo }}"
                                     data-nombre="{{ $variante->nombre }}"
-                                    data-precio="{{ $variante->precio }}"
+                                    data-precio-original="{{ $variante->precio }}"
+                                    data-precio-final="{{ $variantePrecioFinal }}"
+                                    data-en-oferta="{{ $varianteEnOferta ? 'true' : 'false' }}"
+                                    data-descuento="{{ $varianteDescuento }}"
                                     data-existencias="{{ $existenciasVariante }}"
                                     data-litros="{{ $variante->litros }}"
                                     data-imagen="{{ $imagenVariante }}"
@@ -166,6 +207,10 @@
                                     <small class="d-block text-muted">+ Diámetro</small>
                                     @endif
                                 </span>
+                                
+                                @if($varianteEnOferta)
+                                <span class="variante-oferta">🔥 -{{ App\Helpers\ProductoHelper::formatoPorcentaje($varianteDescuento) }}%</span>
+                                @endif
                                 
                                 @if($sinExistencia)
                                 <span class="variante-agotado">✗</span>
@@ -327,11 +372,13 @@
         border-radius: 10px;
         padding: 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        position: relative;
     }
     
     .product-image-container {
         padding: 15px;
         border-bottom: 1px solid var(--light-gray);
+        position: relative;
     }
     
     .product-image-zoom-container {
@@ -340,6 +387,13 @@
         cursor: zoom-in;
         background: #f8f9fa;
         border-radius: 6px;
+    }
+    
+    .oferta-badge-absolute {
+        position: absolute;
+        top: 25px;
+        left: 25px;
+        z-index: 10;
     }
     
     .product-zoom-image {
@@ -412,11 +466,23 @@
         line-height: 1.3;
     }
     
+    .product-price-container {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+    
+    .precio-original {
+        font-size: 1rem;
+        color: var(--gray);
+        text-decoration: line-through;
+    }
+    
     .product-price {
         font-size: 1.6rem;
         font-weight: 700;
         color: var(--primary);
-        margin-bottom: 15px;
     }
     
     .variantes-selector {
@@ -439,13 +505,14 @@
         border: 2px solid #ddd;
         border-radius: 6px;
         background: white;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 6px;
         transition: all 0.2s ease;
         font-weight: 500;
         cursor: pointer;
         font-size: 0.8rem;
+        position: relative;
     }
     
     .btn-variante-detalle:hover {
@@ -470,6 +537,15 @@
         border-radius: 50%;
         display: inline-block;
         border: 1px solid #ddd;
+    }
+    
+    .variante-oferta {
+        background: #dc3545;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        margin-left: 5px;
     }
     
     .variante-agotado {
@@ -667,27 +743,56 @@
         const varianteId = element.dataset.varianteId;
         const codigo = element.dataset.codigo;
         const nombre = element.dataset.nombre;
-        const precio = element.dataset.precio;
+        const precioOriginal = element.dataset.precioOriginal;
+        const precioFinal = element.dataset.precioFinal;
+        const enOferta = element.dataset.enOferta === 'true';
+        const descuento = element.dataset.descuento;
         const existencias = element.dataset.existencias;
         const litros = element.dataset.litros;
         const imagen = element.dataset.imagen;
         
         productoIdActual = varianteId;
         
+        // Actualizar clases activas
         document.querySelectorAll('.btn-variante-detalle').forEach(btn => {
             btn.classList.remove('activo');
         });
         element.classList.add('activo');
         
+        // Actualizar nombre
         document.getElementById('producto-nombre').textContent = nombre;
-        document.getElementById('producto-precio').textContent = '$' + parseFloat(precio).toLocaleString('es-MX', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
         document.getElementById('producto-codigo').textContent = codigo;
         document.getElementById('info-litros').textContent = litros + ' litros';
         document.getElementById('producto-litros').innerHTML = '<i class="fas fa-tint me-1"></i>' + litros + ' litros';
         
+        // Actualizar precios según oferta
+        const priceContainer = document.querySelector('.product-price-container');
+        if (enOferta) {
+            priceContainer.innerHTML = `
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="precio-original" id="producto-precio-original">
+                        $${parseFloat(precioOriginal).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    </span>
+                    <span class="badge bg-danger" id="producto-descuento">
+                        -${descuento}%
+                    </span>
+                </div>
+                <div class="product-price" id="producto-precio-final">
+                    $${parseFloat(precioFinal).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </div>
+                <small class="text-success">
+                    <i class="fas fa-tag me-1"></i>Precio con oferta
+                </small>
+            `;
+        } else {
+            priceContainer.innerHTML = `
+                <div class="product-price" id="producto-precio">
+                    $${parseFloat(precioOriginal).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </div>
+            `;
+        }
+        
+        // Actualizar stock
         let stockClass = '';
         let stockText = '';
         
@@ -723,6 +828,7 @@
             textoExistencias.textContent = stockText;
         }
         
+        // Actualizar imagen
         const imgElement = document.getElementById('producto-imagen');
         imgElement.src = imagen;
         imgElement.alt = nombre;
@@ -731,6 +837,7 @@
             inicializarZoom();
         };
         
+        // Actualizar cantidad máxima
         const cantidadInput = document.getElementById('producto-cantidad');
         cantidadInput.max = existencias;
         if (parseInt(existencias) > 0) {
@@ -746,7 +853,9 @@
             text: nombre,
             icon: 'success',
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
         });
     }
 
@@ -779,7 +888,9 @@
                         text: 'La cantidad máxima disponible es ' + maxCantidad,
                         icon: 'info',
                         timer: 2000,
-                        showConfirmButton: false
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
                     });
                 }
                 
@@ -815,7 +926,8 @@
                 }
                 
                 const nombreProducto = document.getElementById('producto-nombre').textContent;
-                const precio = document.getElementById('producto-precio').textContent;
+                const precioElement = document.getElementById('producto-precio-final') || document.getElementById('producto-precio');
+                const precio = precioElement.textContent;
                 
                 Swal.fire({
                     title: '¿Crear pedido?',
