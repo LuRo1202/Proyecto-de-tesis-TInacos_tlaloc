@@ -152,7 +152,30 @@ class ProductoController extends Controller
         $categorias = Categoria::orderBy('nombre')->get();
         $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
         
-        return view('admin.productos.create', compact('categorias', 'sucursales', 'sucursal_id'));
+        // CREAR VARIABLE PARA LA VISTA CON EL NOMBRE CORRECTO
+        $sucursal_seleccionada = $sucursal_id;
+        
+        // Obtener productos con sus existencias en la sucursal seleccionada
+        $productos = Producto::where('activo', true)
+            ->orderBy('nombre')
+            ->get()
+            ->map(function($producto) use ($sucursal_id) {
+                $existencias = DB::table('producto_sucursal')
+                    ->where('producto_id', $producto->id)
+                    ->where('sucursal_id', $sucursal_id)
+                    ->value('existencias') ?? 0;
+                
+                $producto->existencias = $existencias;
+                return $producto;
+            });
+        
+        return view('admin.productos.create', compact(
+            'categorias', 
+            'sucursales', 
+            'sucursal_id',
+            'sucursal_seleccionada',
+            'productos'
+        ));
     }
 
     /**
@@ -223,9 +246,9 @@ class ProductoController extends Controller
 
             DB::commit();
 
-            // Redirigir manteniendo la sucursal seleccionada
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
             return redirect()->route('admin.productos', ['sucursal_id' => $validated['sucursal_id']])
-                ->with('swal', [
+                ->with('swal_producto', [
                     'type' => 'success',
                     'title' => '¡Producto creado!',
                     'message' => "El producto {$producto->nombre} ha sido creado correctamente."
@@ -235,9 +258,10 @@ class ProductoController extends Controller
             DB::rollBack();
             Log::error('Error al crear producto: ' . $e->getMessage());
             
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
             return redirect()->back()
                 ->withInput()
-                ->with('swal', [
+                ->with('swal_producto', [
                     'type' => 'error',
                     'title' => 'Error',
                     'message' => 'Error al crear el producto: ' . $e->getMessage()
@@ -432,9 +456,9 @@ class ProductoController extends Controller
 
             DB::commit();
 
-            // Redirigir a la misma página de productos manteniendo los filtros
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
             return redirect()->route('admin.productos', $queryParams)
-                ->with('swal', [
+                ->with('swal_producto', [
                     'type' => 'success',
                     'title' => '¡Producto actualizado!',
                     'message' => "El producto {$producto->nombre} ha sido actualizado correctamente."
@@ -444,9 +468,10 @@ class ProductoController extends Controller
             DB::rollBack();
             Log::error('Error al actualizar producto: ' . $e->getMessage());
             
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
             return redirect()->back()
                 ->withInput()
-                ->with('swal', [
+                ->with('swal_producto', [
                     'type' => 'error',
                     'title' => 'Error',
                     'message' => 'Error al actualizar el producto: ' . $e->getMessage()

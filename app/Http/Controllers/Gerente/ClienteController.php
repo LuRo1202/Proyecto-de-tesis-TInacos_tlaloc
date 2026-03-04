@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Pedido;
 use App\Models\Sucursal;
+use App\Models\Cliente;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -116,12 +117,12 @@ class ClienteController extends Controller
         }
 
         // Obtener datos del cliente
-        $cliente = Pedido::select('cliente_nombre', 'cliente_telefono', 'cliente_direccion', 'cliente_ciudad', 'cliente_estado')
+        $clienteData = Pedido::select('cliente_nombre', 'cliente_telefono', 'cliente_direccion', 'cliente_ciudad', 'cliente_estado')
             ->where('cliente_telefono', $telefono)
             ->where('sucursal_id', $this->sucursalId)
             ->first();
 
-        if (!$cliente) {
+        if (!$clienteData) {
             return redirect()->route('gerente.clientes')
                 ->with('swal', [
                     'type' => 'error',
@@ -130,9 +131,23 @@ class ClienteController extends Controller
                 ]);
         }
 
-        // Obtener historial de pedidos del cliente
+        // Buscar email en tabla clientes
+        $clienteEmail = Cliente::where('telefono', $telefono)->first();
+        
+        $cliente = (object)[
+            'nombre' => $clienteData->cliente_nombre,
+            'telefono' => $clienteData->cliente_telefono,
+            'direccion' => $clienteData->cliente_direccion,
+            'ciudad' => $clienteData->cliente_ciudad,
+            'estado' => $clienteData->cliente_estado,
+            'email' => $clienteEmail->email ?? null,
+            'fecha_registro' => $clienteEmail->created_at ?? null
+        ];
+
+        // Obtener historial de pedidos del cliente - SIN responsables para evitar errores
         $pedidos = Pedido::where('cliente_telefono', $telefono)
             ->where('sucursal_id', $this->sucursalId)
+            ->with(['items']) // ← SOLO items, NO responsables
             ->orderBy('fecha', 'DESC')
             ->get()
             ->map(function($pedido) {
@@ -249,6 +264,11 @@ class ClienteController extends Controller
             ->get()
             ->map(function($cliente) {
                 $cliente->ultimo_pedido = $cliente->ultimo_pedido ? Carbon::parse($cliente->ultimo_pedido) : null;
+                
+                // Buscar email en tabla clientes
+                $clienteEmail = Cliente::where('telefono', $cliente->cliente_telefono)->first();
+                $cliente->email = $clienteEmail->email ?? null;
+                
                 return $cliente;
             });
 

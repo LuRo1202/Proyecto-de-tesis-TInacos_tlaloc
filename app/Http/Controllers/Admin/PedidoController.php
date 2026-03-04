@@ -79,201 +79,6 @@ class PedidoController extends Controller
     }
 
     /**
-     * Muestra el formulario para crear un nuevo pedido
-     */
-    public function create(Request $request)
-    {
-        $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')->count();
-        $productos_bajos_count = DB::table('producto_sucursal')
-            ->where('existencias', '<=', 5)
-            ->distinct('producto_id')
-            ->count('producto_id');
-
-        session([
-            'pedidos_pendientes_count' => $pedidos_pendientes_count,
-            'productos_bajos_count' => $productos_bajos_count
-        ]);
-
-        $productos = Producto::where('activo', true)
-            ->orderBy('nombre')
-            ->get();
-
-        $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
-
-        $cliente_datos = [
-            'nombre' => $request->get('cliente', ''),
-            'telefono' => $request->get('telefono', ''),
-            'ciudad' => $request->get('ciudad', ''),
-            'estado' => $request->get('estado', ''),
-            'direccion' => '',
-            'codigo_postal' => '',
-            'notas' => ''
-        ];
-
-        return view('admin.pedidos.create', compact(
-            'productos',
-            'sucursales',
-            'cliente_datos'
-        ));
-    }
-
-    /**
-     * Guarda un nuevo pedido en la base de datos
-     */
-    public function store(Request $request)
-    {
-        Log::info('=== INICIO CREACIÓN DE PEDIDO ===');
-        
-        $validated = $request->validate([
-            'cliente_nombre' => 'required|string|max:100',
-            'cliente_telefono' => 'required|string|max:20',
-            'cliente_direccion' => 'required|string|max:255',
-            'cliente_ciudad' => 'required|string|max:100',
-            'cliente_estado' => 'required|string|max:100',
-            'codigo_postal' => 'required|string|max:5',
-            'notas' => 'nullable|string|max:500',
-            'productos' => 'required|array|min:1',
-            'productos.*' => 'required|integer|exists:productos,id',
-            'cantidades' => 'required|array',
-            'cantidades.*' => 'required|integer|min:1',
-            'sucursal_id' => 'required|exists:sucursales,id',
-            'distancia_km' => 'nullable|numeric'
-        ]);
-
-        $productos_data = [];
-        $total = 0;
-        $error_existencias = false;
-        $productosError = [];
-
-        foreach ($request->productos as $index => $producto_id) {
-            if (!empty($producto_id) && isset($request->cantidades[$index])) {
-                $cantidad = (int)$request->cantidades[$index];
-                
-                if ($cantidad > 0) {
-                    $producto = Producto::find($producto_id);
-                    
-                    if ($producto) {
-                        $existencias = DB::table('producto_sucursal')
-                            ->where('producto_id', $producto_id)
-                            ->where('sucursal_id', $request->sucursal_id)
-                            ->value('existencias') ?? 0;
-                        
-                        if ($existencias < $cantidad) {
-                            $error_existencias = true;
-                            $productosError[] = "{$producto->nombre} (Disponibles: {$existencias})";
-                        }
-                        
-                        $subtotal = $producto->precio * $cantidad;
-                        $total += $subtotal;
-                        
-                        $productos_data[] = [
-                            'producto_id' => $producto_id,
-                            'producto_nombre' => $producto->nombre,
-                            'cantidad' => $cantidad,
-                            'precio' => $producto->precio,
-                            'subtotal' => $subtotal
-                        ];
-                    }
-                }
-            }
-        }
-
-        if ($error_existencias) {
-            $mensaje = 'No hay suficientes existencias para: ' . implode(', ', $productosError);
-            return redirect()->back()
-                ->withInput()
-                ->with('swal', [
-                    'type' => 'error',
-                    'title' => 'Error de inventario',
-                    'message' => $mensaje
-                ]);
-        }
-
-        if (empty($productos_data)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('swal', [
-                    'type' => 'error',
-                    'title' => 'Error',
-                    'message' => 'Debe agregar al menos un producto válido'
-                ]);
-        }
-
-        $folio = 'PED-' . date('Ymd') . '-' . rand(1000, 9999);
-
-        try {
-            DB::beginTransaction();
-
-            $pedido = Pedido::create([
-                'folio' => $folio,
-                'cliente_nombre' => $request->cliente_nombre,
-                'cliente_telefono' => $request->cliente_telefono,
-                'cliente_direccion' => $request->cliente_direccion,
-                'cliente_ciudad' => $request->cliente_ciudad,
-                'cliente_estado' => $request->cliente_estado,
-                'codigo_postal' => $request->codigo_postal,
-                'sucursal_id' => $request->sucursal_id,
-                'distancia_km' => $request->distancia_km ?? 0,
-                'cobertura_verificada' => true,
-                'total' => $total,
-                'notas' => $request->notas,
-                'estado' => 'pendiente',
-                'metodo_pago' => 'manual',
-                'pago_confirmado' => false
-            ]);
-
-            foreach ($productos_data as $producto) {
-                PedidoItem::create([
-                    'pedido_id' => $pedido->id,
-                    'producto_id' => $producto['producto_id'],
-                    'producto_nombre' => $producto['producto_nombre'],
-                    'cantidad' => $producto['cantidad'],
-                    'precio' => $producto['precio']
-                ]);
-
-                DB::table('producto_sucursal')
-                    ->where('producto_id', $producto['producto_id'])
-                    ->where('sucursal_id', $request->sucursal_id)
-                    ->decrement('existencias', $producto['cantidad']);
-            }
-
-            $usuario_id = auth()->check() ? auth()->id() : 1;
-            if (!is_numeric($usuario_id)) {
-                $usuario_id = 1;
-            }
-
-            PedidoHistorial::create([
-                'pedido_id' => $pedido->id,
-                'usuario_id' => (int)$usuario_id,
-                'accion' => 'creado',
-                'detalles' => 'Pedido creado manualmente',
-                'fecha' => now()
-            ]);
-
-            DB::commit();
-
-            return redirect()->route('admin.pedidos')
-                ->with('swal', [
-                    'type' => 'success',
-                    'title' => '¡Pedido creado!',
-                    'message' => "Pedido {$folio} creado correctamente"
-                ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error al crear pedido: ' . $e->getMessage());
-            
-            return redirect()->back()
-                ->withInput()
-                ->with('swal', [
-                    'type' => 'error',
-                    'title' => 'Error',
-                    'message' => 'Error al crear el pedido'
-                ]);
-        }
-    }
-
-    /**
      * Muestra los detalles de un pedido específico
      */
     public function show($id)
@@ -443,8 +248,9 @@ class PedidoController extends Controller
             'fecha' => now()
         ]);
 
+        // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
         return redirect()->route('admin.pedidos.ver', $id)
-            ->with('swal', [
+            ->with('swal_pedido', [
                 'type' => 'success',
                 'title' => '¡Pedido actualizado!',
                 'message' => 'El pedido ha sido actualizado correctamente.'
@@ -481,8 +287,9 @@ class PedidoController extends Controller
             
             DB::commit();
             
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos')
-                ->with('swal', [
+                ->with('swal_pedido', [
                     'type' => 'success',
                     'title' => 'Pedido eliminado',
                     'message' => "El pedido #{$folio} ha sido eliminado correctamente."
@@ -491,8 +298,9 @@ class PedidoController extends Controller
             DB::rollBack();
             Log::error('Error al eliminar pedido: ' . $e->getMessage());
             
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos')
-                ->with('swal', [
+                ->with('swal_pedido', [
                     'type' => 'error',
                     'title' => 'Error',
                     'message' => 'No se pudo eliminar el pedido.'
@@ -517,7 +325,7 @@ class PedidoController extends Controller
         
         if (!array_key_exists($accion, $acciones_permitidas)) {
             return redirect()->route('admin.pedidos.ver', $id)
-                ->with('swal', [
+                ->with('swal_pedido', [  // ✅ CORREGIDO
                     'type' => 'error',
                     'title' => 'Error',
                     'message' => 'Acción no válida'
@@ -575,8 +383,9 @@ class PedidoController extends Controller
             
             DB::commit();
             
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos.ver', $id)
-                ->with('swal', [
+                ->with('swal_pedido', [
                     'type' => 'success',
                     'title' => '¡Procesado!',
                     'message' => $mensaje
@@ -586,8 +395,9 @@ class PedidoController extends Controller
             DB::rollBack();
             Log::error('Error al procesar pedido: ' . $e->getMessage());
             
+            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos.ver', $id)
-                ->with('swal', [
+                ->with('swal_pedido', [
                     'type' => 'error',
                     'title' => 'Error',
                     'message' => 'No se pudo procesar la acción'

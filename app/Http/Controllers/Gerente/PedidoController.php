@@ -10,6 +10,7 @@ use App\Models\PedidoHistorial;
 use App\Models\Producto;
 use App\Models\Usuario;
 use App\Models\Sucursal;
+use App\Models\Cliente;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -316,6 +317,15 @@ class PedidoController extends Controller
                 return $producto;
             });
 
+        // ✅ OBTENER VENDEDORES DE LA SUCURSAL (NUEVO)
+        $vendedores = Usuario::where('rol', 'vendedor')
+            ->where('activo', true)
+            ->whereHas('sucursales', function($q) {
+                $q->where('sucursal_id', $this->sucursalId);
+            })
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'usuario']);
+
         // Datos del cliente desde sesión o request
         $cliente_datos = [
             'nombre' => $request->get('cliente', ''),
@@ -327,9 +337,52 @@ class PedidoController extends Controller
             'notas' => $request->get('notas', '')
         ];
 
+        // Variables para producto precargado
+        $producto_id = $request->get('producto_id');
+        $cantidad = $request->get('cantidad', 1);
+        $producto_precargado = null;
+        $precio_con_oferta = 0;
+
+        if ($producto_id) {
+            $producto_precargado = Producto::with(['ofertas' => function($query) {
+                    $query->where('activa', 1)
+                        ->where('fecha_inicio', '<=', now())
+                        ->where('fecha_fin', '>=', now());
+                }])
+                ->where('id', $producto_id)
+                ->where('activo', 1)
+                ->first();
+            
+            if ($producto_precargado) {
+                $precio_con_oferta = $producto_precargado->precio;
+                
+                if ($producto_precargado->ofertas->isNotEmpty()) {
+                    $oferta = $producto_precargado->ofertas->first();
+                    
+                    if ($oferta->tipo == 'porcentaje') {
+                        $precio_con_oferta = $producto_precargado->precio * (1 - $oferta->valor / 100);
+                    } else {
+                        $precio_con_oferta = $producto_precargado->precio - $oferta->valor;
+                    }
+                }
+                
+                // Obtener existencias en la sucursal
+                $existencias = DB::table('producto_sucursal')
+                    ->where('producto_id', $producto_id)
+                    ->where('sucursal_id', $this->sucursalId)
+                    ->value('existencias') ?? 0;
+                
+                $producto_precargado->existencias = $existencias;
+            }
+        }
+
         return view('gerente.pedidos.create', compact(
             'productos',
-            'cliente_datos'
+            'cliente_datos',
+            'vendedores', // ✅ NUEVO
+            'producto_precargado',
+            'precio_con_oferta',
+            'cantidad'
         ));
     }
 
@@ -1150,4 +1203,50 @@ class PedidoController extends Controller
             return response()->json(['error' => 'Error al remover responsable'], 500);
         }
     }
+    
+    public function verificarOferta(Request $request)
+    {
+        $producto = Producto::with(['ofertas' => function($query) {
+                $query->where('activa', 1)
+                    ->where('fecha_inicio', '<=', now())
+                    ->where('fecha_fin', '>=', now());
+            }])
+            ->find($request->producto_id);
+        
+        if ($producto && $producto->ofertas->isNotEmpty()) {
+            $oferta = $producto->ofertas->first();
+            $precioFinal = $producto->precio;
+            
+            if ($oferta->tipo == 'porcentaje') {
+                $precioFinal = $producto->precio * (1 - $oferta->valor / 100);
+            } else {
+                $precioFinal = $producto->precio - $oferta->valor;
+            }
+            
+            return response()->json([
+                'en_oferta' => true,
+                'precio_final' => $precioFinal,
+                'porcentaje' => $oferta->valor
+            ]);
+        }
+        
+        return response()->json(['en_oferta' => false]);
+    }
+    public function buscar(Request $request)
+    {
+        $busqueda = $request->get('busqueda');
+        
+        if (empty($busqueda) || strlen($busqueda) < 3) {
+            return response()->json([]);
+        }
+        
+        $clientes = Cliente::where('nombre', 'LIKE', "%{$busqueda}%")
+                    ->orWhere('telefono', 'LIKE', "%{$busqueda}%")
+                    ->orWhere('email', 'LIKE', "%{$busqueda}%")
+                    ->limit(10)
+                    ->get(['id', 'nombre', 'telefono', 'email', 'direccion', 'ciudad', 'estado', 'codigo_postal']);
+        
+        return response()->json($clientes);
+    }
+
 }

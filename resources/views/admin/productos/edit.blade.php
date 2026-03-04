@@ -850,6 +850,19 @@
             });
         });
         
+        {{-- ✅ CORREGIDO: Mensajes específicos para productos --}}
+        @if(session('swal_producto'))
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: '{{ session('swal_producto')['type'] }}',
+                title: '{{ session('swal_producto')['title'] }}',
+                text: '{{ session('swal_producto')['message'] }}',
+                confirmButtonColor: '#7fad39'
+            });
+        });
+        @endif
+
+        {{-- Mantener swal genérico solo por compatibilidad --}}
         @if(session('swal'))
         document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({

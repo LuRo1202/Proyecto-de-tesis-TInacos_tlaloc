@@ -567,7 +567,9 @@
                 <a href="{{ route('gerente.dashboard') }}" class="btn-custom btn-secondary-custom">
                     <i class="fas fa-arrow-left"></i> Volver
                 </a>
-
+                <button onclick="generarReporteClientes()" class="btn-custom btn-success-custom">
+                    <i class="fas fa-file-excel"></i> Reporte Excel
+                </button>
             </div>
         </div>
 
@@ -712,11 +714,16 @@
                                             if(strlen($iniciales) >= 2) break;
                                         }
                                     }
+                                    
+                                    // Color aleatorio pero consistente por teléfono
+                                    $colors = ['#7fad39', '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
+                                    $colorIndex = abs(crc32($cliente->cliente_telefono)) % count($colors);
+                                    $avatarColor = $colors[$colorIndex];
                                 @endphp
                                 <tr onclick="verHistorialCliente('{{ $cliente->cliente_telefono }}')">
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="cliente-avatar">
+                                            <div class="cliente-avatar" style="background: linear-gradient(135deg, {{ $avatarColor }}, {{ $avatarColor }}dd);">
                                                 {{ $iniciales ?: 'C' }}
                                             </div>
                                             <div>
@@ -733,6 +740,12 @@
                                             <i class="fas fa-phone fa-xs me-1 text-muted"></i>
                                             {{ $cliente->cliente_telefono }}
                                         </div>
+                                        @if($cliente->email ?? false)
+                                        <div>
+                                            <i class="fas fa-envelope fa-xs me-1 text-muted"></i>
+                                            <small>{{ $cliente->email }}</small>
+                                        </div>
+                                        @endif
                                     </td>
                                     <td>
                                         <div>
@@ -766,7 +779,7 @@
                                                     onclick="verHistorialCliente('{{ $cliente->cliente_telefono }}')">
                                                 <i class="fas fa-history"></i>
                                             </button>
-                                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $cliente->cliente_telefono) }}?text=Hola%20{{ urlencode($cliente->cliente_nombre) }}%2C%20te%20contacto%20de%20Tinacos%20Tláloc%20-%20Sucursal%20{{ urlencode(session('sucursal_nombre')) }}"
+                                            <a href="https://wa.me/52{{ preg_replace('/[^0-9]/', '', $cliente->cliente_telefono) }}?text=Hola%20{{ urlencode($cliente->cliente_nombre) }}%2C%20te%20contacto%20de%20Tinacos%20Tláloc%20-%20Sucursal%20{{ urlencode(session('sucursal_nombre')) }}"
                                                class="btn-action btn-whatsapp" 
                                                target="_blank"
                                                title="Contactar WhatsApp">

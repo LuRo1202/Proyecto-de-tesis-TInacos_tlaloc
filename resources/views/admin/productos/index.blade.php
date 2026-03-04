@@ -1146,5 +1146,18 @@
             });
         }
     </script>
+    @if(session('swal_producto'))
+    <script>
+        Swal.fire({
+            title: '{{ session('swal_producto.title') }}',
+            text: '{{ session('swal_producto.message') }}',
+            icon: '{{ session('swal_producto.type') }}',
+            confirmButtonColor: '#7fad39',
+            confirmButtonText: 'Aceptar',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        });
+    </script>
+    @endif
 </body>
 </html>

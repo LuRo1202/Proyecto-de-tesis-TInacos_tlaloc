@@ -210,13 +210,7 @@
         </h3>
         
         <div class="actions-grid">
-            <a href="{{ route('admin.pedidos.nuevo') }}" class="action-card">
-                <div class="action-icon">
-                    <i class="fas fa-plus-circle"></i>
-                </div>
-                <span class="action-text">Nuevo Pedido</span>
-            </a>
-            
+                       
             <a href="{{ route('admin.productos.nuevo') }}" class="action-card">
                 <div class="action-icon">
                     <i class="fas fa-box"></i>

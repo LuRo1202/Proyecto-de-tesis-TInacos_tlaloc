@@ -152,6 +152,39 @@
             color: white;
         }
         
+        /* Selector de Vendedor */
+        .vendedor-selector {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--light-gray);
+            border-left: 4px solid var(--info);
+        }
+        
+        .vendedor-selector label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .vendedor-selector label i {
+            color: var(--info);
+        }
+        
+        .vendedor-selector .form-select {
+            border: 2px solid var(--light-gray);
+            transition: all 0.2s ease;
+        }
+        
+        .vendedor-selector .form-select:focus {
+            border-color: var(--info);
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+        }
+        
         /* Verificar Cobertura Botón */
         .verificar-cobertura-btn {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -374,6 +407,18 @@
             color: var(--success);
         }
         
+        /* Badge de Oferta */
+        .oferta-badge {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
         /* Resumen del Pedido */
         .resumen-pedido {
             background: linear-gradient(135deg, var(--light) 0%, #e9ecef 100%);
@@ -396,6 +441,30 @@
             border: 1px solid var(--light-gray);
             color: var(--gray);
             font-size: 0.85rem;
+        }
+
+        /* Estilos para resultados de búsqueda de clientes */
+        .list-group-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--light-gray);
+            margin-bottom: 5px;
+            border-radius: 5px !important;
+        }
+        
+        .list-group-item:hover {
+            background-color: rgba(127, 173, 57, 0.1);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        #resultados-busqueda {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 5px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 5px;
         }
         
         /* Responsive Design */
@@ -502,6 +571,60 @@
             @csrf
             <input type="hidden" name="sucursal_id" id="sucursal_id" value="{{ session('sucursal_id') }}">
             <input type="hidden" name="sucursal_nombre" id="sucursal_nombre" value="{{ session('sucursal_nombre') }}">
+            
+            <!-- SELECTOR DE VENDEDOR (NUEVO) -->
+            @if(isset($vendedores) && $vendedores->count() > 0)
+            <div class="vendedor-selector">
+                <label for="vendedor_responsable">
+                    <i class="fas fa-user-tie"></i> Asignar pedido a vendedor
+                </label>
+                <select class="form-select" name="vendedor_responsable" id="vendedor_responsable" required>
+                    <option value="">-- Seleccionar vendedor --</option>
+                    @foreach($vendedores as $vendedor)
+                        <option value="{{ $vendedor->id }}" {{ old('vendedor_responsable') == $vendedor->id ? 'selected' : '' }}>
+                            {{ $vendedor->nombre }} ({{ $vendedor->usuario }})
+                        </option>
+                    @endforeach
+                </select>
+                <small class="text-muted mt-2 d-block">
+                    <i class="fas fa-info-circle"></i> El pedido será asignado al vendedor seleccionado
+                </small>
+            </div>
+            @else
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No hay vendedores disponibles en esta sucursal. El pedido quedará sin asignar.
+                <input type="hidden" name="vendedor_responsable" value="">
+            </div>
+            @endif
+
+            <!-- BUSCADOR DE CLIENTES REGISTRADOS (NUEVO) -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-search"></i> Buscar Cliente Registrado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" id="buscador-cliente" class="form-control" 
+                                       placeholder="Buscar por teléfono, nombre o email...">
+                                <button class="btn btn-primary" type="button" id="btn-buscar-cliente">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                            <div id="resultados-busqueda" class="mt-2" style="display: none;">
+                                <!-- Resultados aparecerán aquí -->
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-info-circle"></i> Busca por teléfono, nombre o email
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Información del Cliente y Cobertura -->
             <div class="card">
@@ -673,7 +796,7 @@
                 </div>
             </div>
 
-            <!-- Productos del Pedido -->
+            <!-- Productos del Pedido (CON VERIFICACIÓN DE OFERTAS) -->
             <div class="card">
                 <div class="card-header">
                     <h5><i class="fas fa-boxes"></i> Productos del Pedido</h5>
@@ -730,6 +853,21 @@
         const sucursalId = '{{ session('sucursal_id') }}';
         const sucursalNombre = '{{ session('sucursal_nombre') }}';
 
+        // Variables para producto precargado (desde URL)
+        @if(isset($producto_precargado) && $producto_precargado)
+        const productoPrecargado = {
+            id: {{ $producto_precargado->id }},
+            nombre: '{{ $producto_precargado->nombre }}',
+            precio: {{ $producto_precargado->precio }},
+            precio_final: {{ $precio_con_oferta ?? $producto_precargado->precio }},
+            en_oferta: {{ ($producto_precargado->ofertas->isNotEmpty() ?? false) ? 'true' : 'false' }},
+            descuento: {{ ($producto_precargado->ofertas->first()->valor ?? 0) }},
+            existencias: {{ $producto_precargado->existencias ?? 0 }}
+        };
+        @else
+        const productoPrecargado = null;
+        @endif
+
         // Inicializar autocomplete de Google Maps
         function initAutocomplete() {
             const direccionInput = document.getElementById('cliente_direccion');
@@ -769,6 +907,116 @@
             }
         }
 
+        // BUSCAR CLIENTE REGISTRADO (NUEVO)
+        $('#btn-buscar-cliente').click(function() {
+            const busqueda = $('#buscador-cliente').val().trim();
+            
+            if (busqueda.length < 3) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Búsqueda muy corta',
+                    text: 'Ingrese al menos 3 caracteres para buscar',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return;
+            }
+            
+            const btn = $(this);
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Buscando...');
+            btn.prop('disabled', true);
+            
+            $.ajax({
+                url: '{{ route("gerente.clientes.buscar") }}',
+                method: 'POST',
+                data: {
+                    _token: csrfToken,
+                    busqueda: busqueda
+                },
+                success: function(response) {
+                    if (response.length > 0) {
+                        let html = '<div class="list-group">';
+                        response.forEach(cliente => {
+                            html += `
+                                <a href="#" class="list-group-item list-group-item-action" 
+                                   onclick="seleccionarCliente('${cliente.nombre.replace(/'/g, "\\'")}', '${cliente.telefono}', '${cliente.email || ''}', '${cliente.direccion || ''}', '${cliente.ciudad || ''}', '${cliente.estado || ''}', '${cliente.codigo_postal || ''}')">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${cliente.nombre}</strong><br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-phone"></i> ${cliente.telefono}
+                                                ${cliente.email ? ` | <i class="fas fa-envelope"></i> ${cliente.email}` : ''}
+                                            </small>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-primary"></i>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                        html += '</div>';
+                        $('#resultados-busqueda').html(html).show();
+                    } else {
+                        $('#resultados-busqueda').html(`
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle"></i> No se encontraron clientes con "${busqueda}"
+                            </div>
+                        `).show();
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo completar la búsqueda',
+                        confirmButtonColor: '#7fad39'
+                    });
+                },
+                complete: function() {
+                    btn.html('<i class="fas fa-search"></i> Buscar');
+                    btn.prop('disabled', false);
+                }
+            });
+        });
+
+        // Función para seleccionar cliente y llenar el formulario (NUEVO)
+        window.seleccionarCliente = function(nombre, telefono, email, direccion, ciudad, estado, cp) {
+            $('#cliente_nombre').val(nombre);
+            $('#cliente_telefono').val(telefono);
+            
+            // Buscar campo de email si existe en tu formulario
+            const emailInput = $('input[name="cliente_email"]');
+            if (emailInput.length > 0) {
+                emailInput.val(email);
+            }
+            
+            $('#cliente_direccion').val(direccion);
+            $('#cliente_ciudad').val(ciudad);
+            $('#cliente_estado').val(estado);
+            $('#codigo_postal').val(cp);
+            
+            $('#resultados-busqueda').hide();
+            $('#buscador-cliente').val('');
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Cliente cargado',
+                html: `Datos de <strong>${nombre}</strong> cargados correctamente`,
+                timer: 2000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        };
+
+        // Enter en el campo de búsqueda (NUEVO)
+        $('#buscador-cliente').keypress(function(e) {
+            if (e.which == 13) {
+                e.preventDefault();
+                $('#btn-buscar-cliente').click();
+            }
+        });
+
         // Verificar cobertura
         $('#verificar-cobertura').click(function() {
             const direccion = $('#cliente_direccion').val().trim();
@@ -792,7 +1040,7 @@
                 url: '{{ route("gerente.cobertura.verificar") }}',
                 type: 'POST',
                 data: {
-                    _token: '{{ csrf_token() }}',
+                    _token: csrfToken,
                     direccion: direccion,
                     ciudad: ciudad,
                     estado: estado,
@@ -866,7 +1114,7 @@
             $('input[name="distancia_km"]').remove();
         });
 
-        // Funciones de productos
+        // Funciones de productos (CON VERIFICACIÓN DE OFERTAS)
         function agregarProducto() {
             const container = document.getElementById('productos-container');
             const index = productoCount++;
@@ -954,35 +1202,65 @@
             const option = select.options[select.selectedIndex];
             
             if (option.value) {
-                const precio = parseFloat(option.dataset.precio);
+                const productoId = option.value;
+                const precioOriginal = parseFloat(option.dataset.precio);
                 const existencias = parseInt(option.dataset.existencias);
                 const nombre = option.dataset.nombre;
                 
-                precioInput.value = precio.toFixed(2);
+                // Mostrar precio original mientras se verifica
+                precioInput.value = precioOriginal.toFixed(2);
+                existenciasInfo.innerHTML = '<span class="text-info">Verificando oferta...</span>';
                 
-                if (existencias <= 5) {
-                    existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
-                } else {
-                    existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
-                }
-                
-                // Validar que la cantidad no exceda las existencias
-                if (parseInt(cantidadInput.value) > existencias && existencias > 0) {
-                    cantidadInput.value = existencias;
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Existencia insuficiente',
-                        text: `Solo hay ${existencias} unidades disponibles de ${nombre}`,
-                        confirmButtonColor: '#7fad39',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
-                }
-                
-                calcularSubtotal(index);
-                calcularTotal();
+                // VERIFICAR SI TIENE OFERTA VÍA AJAX
+                $.ajax({
+                    url: '{{ route("gerente.productos.verificar-oferta") }}',
+                    method: 'POST',
+                    data: {
+                        _token: csrfToken,
+                        producto_id: productoId
+                    },
+                    success: function(response) {
+                        if (response.en_oferta) {
+                            // USAR PRECIO CON OFERTA
+                            precioInput.value = response.precio_final.toFixed(2);
+                            
+                            // MOSTRAR BADGE DE OFERTA
+                            existenciasInfo.innerHTML = `
+                                <span class="badge bg-danger" style="font-size: 0.75rem;">
+                                    <i class="fas fa-tag"></i> -${Math.round(response.porcentaje)}% OFERTA
+                                </span>
+                                <span class="ms-2 ${existencias <= 5 ? 'existencias-baja' : 'existencias-normal'}">
+                                    ${existencias} disponibles
+                                </span>
+                            `;
+                        } else {
+                            // SIN OFERTA, mostrar precio normal
+                            precioInput.value = precioOriginal.toFixed(2);
+                            
+                            if (existencias <= 5) {
+                                existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
+                            } else {
+                                existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
+                            }
+                        }
+                        
+                        // Validar cantidad después de actualizar
+                        validarCantidad(index);
+                        calcularSubtotal(index);
+                    },
+                    error: function() {
+                        // Si hay error, usar precio original
+                        precioInput.value = precioOriginal.toFixed(2);
+                        
+                        if (existencias <= 5) {
+                            existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
+                        } else {
+                            existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
+                        }
+                        
+                        calcularSubtotal(index);
+                    }
+                });
             } else {
                 precioInput.value = '0.00';
                 existenciasInfo.textContent = '';
@@ -1082,7 +1360,7 @@
                     text: 'Debe verificar la cobertura antes de crear el pedido',
                     confirmButtonColor: '#7fad39'
                 });
-                return;
+                return false;
             }
             
             // Verificar que haya al menos un producto
@@ -1098,11 +1376,26 @@
                     text: 'Debe agregar al menos un producto al pedido',
                     confirmButtonColor: '#7fad39'
                 });
-                return;
+                return false;
             }
+            
+            // Verificar que se haya seleccionado un vendedor (si hay vendedores disponibles)
+            const vendedorSelect = $('#vendedor_responsable');
+            if (vendedorSelect.length > 0 && vendedorSelect.val() === '') {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Vendedor no seleccionado',
+                    text: 'Debe asignar el pedido a un vendedor',
+                    confirmButtonColor: '#7fad39'
+                });
+                return false;
+            }
+            
+            return true;
         });
 
-        // Inicializar
+        // Auto-seleccionar producto desde URL (para precarga)
         $(document).ready(function() {
             if (typeof google !== 'undefined') {
                 initAutocomplete();
@@ -1110,6 +1403,89 @@
             
             // Agregar primer producto automáticamente
             agregarProducto();
+            
+            // Verificar si viene un producto desde detalles
+            const urlParams = new URLSearchParams(window.location.search);
+            const productoId = urlParams.get('producto_id');
+            const cantidad = urlParams.get('cantidad');
+            
+            if (productoId && productoPrecargado) {
+                setTimeout(() => {
+                    const primerSelect = document.querySelector('.select-producto');
+                    if (primerSelect) {
+                        for (let i = 0; i < primerSelect.options.length; i++) {
+                            if (primerSelect.options[i].value == productoId) {
+                                primerSelect.selectedIndex = i;
+                                
+                                // Si el producto tiene oferta, actualizar el precio
+                                if (productoPrecargado.en_oferta) {
+                                    const precioInput = document.getElementById('precio-0');
+                                    if (precioInput) {
+                                        precioInput.value = productoPrecargado.precio_final.toFixed(2);
+                                    }
+                                    
+                                    // Mostrar badge de oferta
+                                    const existenciasInfo = document.getElementById('existencias-info-0');
+                                    if (existenciasInfo) {
+                                        existenciasInfo.innerHTML = `
+                                            <span class="badge bg-danger" style="font-size: 0.75rem;">
+                                                <i class="fas fa-tag"></i> -${productoPrecargado.descuento}% OFERTA
+                                            </span>
+                                            <span class="ms-2">${productoPrecargado.existencias} disponibles</span>
+                                        `;
+                                    }
+                                }
+                                
+                                const event = new Event('change', { bubbles: true });
+                                primerSelect.dispatchEvent(event);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (cantidad) {
+                        setTimeout(() => {
+                            const primerCantidad = document.getElementById('cantidad-0');
+                            if (primerCantidad) {
+                                primerCantidad.value = cantidad;
+                                const event = new Event('change', { bubbles: true });
+                                primerCantidad.dispatchEvent(event);
+                            }
+                        }, 100);
+                    }
+                    
+                    // Mostrar alerta personalizada
+                    if (productoPrecargado.en_oferta) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Producto con OFERTA precargado!',
+                            html: `
+                                <p><strong>${productoPrecargado.nombre}</strong></p>
+                                <p>Cantidad: ${cantidad || 1}</p>
+                                <p>
+                                    Precio normal: <span style="text-decoration: line-through; color: #999;">
+                                        $${productoPrecargado.precio.toFixed(2)}
+                                    </span><br>
+                                    <span style="color: #dc3545; font-weight: bold;">
+                                        Precio oferta: $${productoPrecargado.precio_final.toFixed(2)}
+                                    </span>
+                                    <span class="badge bg-danger ms-2">-${Math.round(productoPrecargado.descuento)}%</span>
+                                </p>
+                            `,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Producto precargado',
+                            text: 'El producto seleccionado ha sido cargado automáticamente',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                }, 500);
+            }
             
             // Si hay errores de validación del servidor, mostrar alerta
             @if($errors->any())

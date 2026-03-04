@@ -172,7 +172,7 @@
             color: var(--dark);
         }
         
-        /* Tabla Compacta */
+        /* Tabla Compacta con detalles de producto */
         .table {
             font-size: 0.85rem;
             margin-bottom: 0;
@@ -184,6 +184,7 @@
             border-bottom: 2px solid #eee;
             padding: 10px 12px;
             white-space: nowrap;
+            background: #fafafa;
         }
         
         .table td {
@@ -194,6 +195,16 @@
         
         .table-hover tbody tr:hover {
             background-color: rgba(127, 173, 57, 0.05);
+        }
+        
+        /* Color dot para variantes */
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         /* Badges Compactos */
@@ -282,6 +293,106 @@
         
         .card-title i {
             color: var(--primary);
+        }
+        
+        /* Código de producto */
+        .product-code {
+            background: var(--light);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        /* Badge para responsable */
+        .badge-responsable {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .pedido-responsable {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        /* Badge producto */
+        .badge-producto {
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin: 2px 0;
+        }
+        
+        /* Selector de Responsable */
+        .responsable-selector {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--light-gray);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .selector-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .usuario-card {
+            border: 1px solid var(--light-gray);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .usuario-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 6px rgba(127, 173, 57, 0.1);
+        }
+        
+        .usuario-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(127, 173, 57, 0.05);
+        }
+        
+        .badge-rol {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+        
+        .badge-vendedor {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .badge-gerente {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
         }
         
         /* Total Resumen Compacto */
@@ -407,95 +518,6 @@
             background: var(--light);
             color: var(--dark);
             border-color: var(--gray);
-        }
-        
-        /* Código de producto */
-        .product-code {
-            background: var(--light);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            color: var(--gray);
-        }
-        
-        /* Selector de Responsable */
-        .responsable-selector {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid var(--light-gray);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .selector-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--light-gray);
-        }
-        
-        .usuario-card {
-            border: 1px solid var(--light-gray);
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .usuario-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 2px 6px rgba(127, 173, 57, 0.1);
-        }
-        
-        .usuario-card.selected {
-            border-color: var(--primary);
-            background-color: rgba(127, 173, 57, 0.05);
-        }
-        
-        .badge-rol {
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-        }
-        
-        .badge-vendedor {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-        }
-        
-        .badge-gerente {
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            color: white;
-        }
-        
-        /* Badge para responsable */
-        .badge-responsable {
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .pedido-responsable {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 5px;
         }
         
         /* Responsive Design */
@@ -703,10 +725,142 @@
 
         <!-- Contenido para imprimir (oculto en vista normal) -->
         <div class="print-content" style="display: none;">
-            <!-- ... contenido de impresión (igual que tu original) ... -->
+            <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #333;">
+                <h2 style="color: #333; margin-bottom: 5px;">Tanques Tláloc</h2>
+                <h4 style="color: #555; margin-bottom: 5px;">Pedido: {{ $pedido->folio }}</h4>
+                <p style="font-size: 12px; color: #666; margin-bottom: 5px;">
+                    Sucursal: {{ $pedido->sucursal->nombre ?? 'N/A' }}
+                    @if($responsable)
+                    | Responsable: {{ $responsable->nombre }}
+                    @endif
+                </p>
+                <p style="font-size: 11px; color: #666;">
+                    Fecha: {{ Carbon::parse($pedido->fecha)->format('d/m/Y H:i') }} | 
+                    Estado: {{ ucfirst($pedido->estado) }}
+                    @if($pedido->pago_confirmado)
+                        | Pago Confirmado
+                    @else
+                        | Pago Pendiente
+                    @endif
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                <h5 style="color: #333; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Información del Cliente</h5>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 4px 8px; width: 120px; font-weight: bold;">Nombre:</td>
+                        <td style="padding: 4px 8px;">{{ $pedido->cliente_nombre }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 8px; font-weight: bold;">Teléfono:</td>
+                        <td style="padding: 4px 8px;">{{ $pedido->cliente_telefono }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                <h5 style="color: #333; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Dirección de Entrega</h5>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 4px 8px; width: 120px; font-weight: bold;">Dirección:</td>
+                        <td style="padding: 4px 8px;">{{ $pedido->cliente_direccion }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 8px; font-weight: bold;">Ciudad:</td>
+                        <td style="padding: 4px 8px;">{{ $pedido->cliente_ciudad }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 8px; font-weight: bold;">Estado:</td>
+                        <td style="padding: 4px 8px;">{{ $pedido->cliente_estado }}</td>
+                    </tr>
+                    @if($pedido->codigo_postal)
+                    <tr>
+                        <td style="padding: 4px 8px; font-weight: bold;">C.P.:</td>
+                        <td style="padding: 4px 8px;">{{ $pedido->codigo_postal }}</td>
+                    </tr>
+                    @endif
+                </table>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <h5 style="color: #333; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Productos del Pedido</h5>
+                <table style="width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px;">
+                    <thead>
+                        <tr style="background-color: #f5f5f5;">
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">#</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Producto</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Código</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Color</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Capacidad</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">Cantidad</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Precio</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($items as $index => $item)
+                        @php
+                            $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color'])->find($item->producto_id) : null;
+                            $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
+                            $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
+                            $codigo = $productoInfo ? $productoInfo->codigo : ($item->codigo ?? 'N/A');
+                            $litros = $productoInfo ? $productoInfo->litros : ($item->litros ?? null);
+                        @endphp
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 6px;">{{ $index + 1 }}</td>
+                            <td style="border: 1px solid #ddd; padding: 6px;">
+                                {{ $item->producto_nombre }}
+                            </td>
+                            <td style="border: 1px solid #ddd; padding: 6px;">{{ $codigo }}</td>
+                            <td style="border: 1px solid #ddd; padding: 6px;">
+                                @if($colorNombre)
+                                <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ $colorHex }}; border-radius: 50%; margin-right: 5px; border: 1px solid #ddd;"></span>
+                                {{ $colorNombre }}
+                                @else
+                                -
+                                @endif
+                            </td>
+                            <td style="border: 1px solid #ddd; padding: 6px;">
+                                @if($litros)
+                                {{ $litros }} L
+                                @else
+                                -
+                                @endif
+                            </td>
+                            <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">{{ $item->cantidad }}</td>
+                            <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${{ number_format($item->precio, 2) }}</td>
+                            <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${{ number_format($item->cantidad * $item->precio, 2) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color: #f9f9f9; font-weight: bold;">
+                            <td colspan="5" style="border: 1px solid #ddd; padding: 8px; text-align: right;">Total:</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ $pedido->total_items }}</td>
+                            <td colspan="2" style="border: 1px solid #ddd; padding: 8px; text-align: right; font-size: 13px;">
+                                ${{ number_format($pedido->total, 2) }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            @if($pedido->notas)
+            <div style="margin-bottom: 15px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
+                <h5 style="color: #333; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Notas del Pedido</h5>
+                <p style="font-size: 12px; line-height: 1.4;">{{ nl2br(e($pedido->notas)) }}</p>
+            </div>
+            @endif
+            
+            <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #666;">
+                Documento generado el {{ Carbon::now()->format('d/m/Y H:i:s') }} | 
+                Sucursal: {{ $pedido->sucursal->nombre ?? 'N/A' }} | 
+                Tanques Tláloc - Sistema de Gestión de Pedidos
+            </div>
         </div>
 
-        <!-- Encabezado del Pedido (Vista normal) - CAMBIO 1 -->
+        <!-- Encabezado del Pedido (Vista normal) -->
         <div class="card no-print">
             <div class="header-pedido">
                 <div class="row align-items-center">
@@ -799,7 +953,7 @@
                         </div>
                     </div>
                     
-                    <!-- Información de Entrega y Responsable - CAMBIO 2 -->
+                    <!-- Información de Entrega y Responsable -->
                     <div class="col-lg-4 col-md-12 mb-3">
                         <div class="info-box">
                             <h6 class="mb-3"><i class="fas fa-truck me-2"></i>Entrega y Responsable</h6>
@@ -866,7 +1020,7 @@
             </div>
         </div>
 
-        <!-- Selector de Responsable - CAMBIO 3 -->
+        <!-- Selector de Responsable -->
         @if($pedido->sucursal)
         <div class="responsable-selector no-print">
             <div class="selector-header">
@@ -936,7 +1090,7 @@
         </div>
         @endif
 
-        <!-- Productos del Pedido -->
+        <!-- Productos del Pedido - VERSIÓN MEJORADA CON DETALLES -->
         <div class="card no-print">
             <div class="card-header">
                 <h5 class="card-title">
@@ -955,6 +1109,8 @@
                                 <th width="40">#</th>
                                 <th>Producto</th>
                                 <th>Código</th>
+                                <th>Color</th>
+                                <th>Capacidad</th>
                                 <th class="text-center">Cantidad</th>
                                 <th class="text-end">Precio</th>
                                 <th class="text-end">Subtotal</th>
@@ -962,18 +1118,41 @@
                         </thead>
                         <tbody>
                             @foreach($items as $index => $item)
+                            @php
+                                $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color'])->find($item->producto_id) : null;
+                                $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
+                                $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
+                                $codigo = $productoInfo ? $productoInfo->codigo : ($item->codigo ?? 'N/A');
+                                $litros = $productoInfo ? $productoInfo->litros : ($item->litros ?? null);
+                            @endphp
                             <tr>
                                 <td class="fw-medium">{{ $index + 1 }}</td>
                                 <td>
                                     <div class="fw-semibold" style="font-size: 0.9rem;">
                                         {{ $item->producto_nombre }}
                                     </div>
-                                    @if($item->litros)
-                                    <small class="text-muted">{{ $item->litros }} litros</small>
+                                </td>
+                                <td>
+                                    <span class="product-code">{{ $codigo }}</span>
+                                </td>
+                                <td>
+                                    @if($colorNombre)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="color-dot" style="background-color: {{ $colorHex }};"></span>
+                                        <span>{{ $colorNombre }}</span>
+                                    </div>
+                                    @else
+                                    <span class="text-muted">—</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="product-code">{{ $item->codigo ?? 'N/A' }}</span>
+                                    @if($litros)
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-tint" style="color: var(--primary);"></i> {{ $litros }} L
+                                    </span>
+                                    @else
+                                    <span class="text-muted">—</span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-primary">{{ $item->cantidad }}</span>
@@ -1134,6 +1313,19 @@
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    {{-- ✅ CORREGIDO: Mensajes específicos para pedidos --}}
+    @if(session('swal_pedido'))
+        <script>
+            Swal.fire({
+                icon: '{{ session('swal_pedido')['type'] }}',
+                title: '{{ session('swal_pedido')['title'] }}',
+                text: '{{ session('swal_pedido')['message'] }}',
+                confirmButtonColor: '#7fad39'
+            });
+        </script>
+    @endif
+
+    {{-- Mantener swal genérico por compatibilidad --}}
     @if(session('swal'))
         <script>
             Swal.fire({

@@ -213,6 +213,7 @@
             border-bottom: 2px solid #eee;
             padding: 10px 12px;
             white-space: nowrap;
+            background: #fafafa;
         }
         
         .table td {
@@ -448,6 +449,16 @@
             color: var(--gray);
         }
         
+        /* Color dot para variantes */
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
         /* Botón Tienda */
         .btn-store {
             background: white;
@@ -482,6 +493,31 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+        }
+        
+        /* Info Sucursal en el detalle */
+        .sucursal-info-badge {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        /* Badge producto */
+        .badge-producto {
+            background: #e9ecef;
+            color: #495057;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin: 2px 0;
         }
         
         /* Responsive Design */
@@ -662,20 +698,6 @@
                 size: A4;
             }
         }
-        
-        /* Info Sucursal en el detalle */
-        .sucursal-info-badge {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
     </style>
 </head>
 <body>
@@ -693,8 +715,10 @@
                 </h1>
                 <div class="header-subtitle">
                     Gerente: {{ auth()->user()->nombre ?? 'Gerente' }}
-                    @if($responsable)
-                    | Responsable: {{ $responsable->nombre }}
+                    @if($esResponsable ?? false)
+                    | <span class="badge-responsable">
+                        <i class="fas fa-user-check"></i> Eres responsable
+                    </span>
                     @endif
                 </div>
             </div>
@@ -703,7 +727,7 @@
                 <a href="{{ route('gerente.pedidos') }}" class="btn-custom btn-secondary-custom">
                     <i class="fas fa-arrow-left"></i> Volver
                 </a>
-                @if($puede_editar)
+                @if($puede_editar ?? false)
                 <a href="{{ route('gerente.pedidos.editar', $pedido->id) }}" class="btn-custom btn-primary-custom">
                     <i class="fas fa-edit"></i> Editar
                 </a>
@@ -723,8 +747,8 @@
                 <h2 style="color: #333; margin-bottom: 5px;">Tanques Tláloc</h2>
                 <h4 style="color: #555; margin-bottom: 5px;">Pedido: {{ $pedido->folio }}</h4>
                 <p style="font-size: 12px; color: #666; margin-bottom: 5px;">
-                    Sucursal: {{ $pedido->sucursal_asignada }}
-                    @if($responsable)
+                    Sucursal: {{ $pedido->sucursal->nombre ?? session('sucursal_nombre') }}
+                    @if($responsable ?? false)
                     | Responsable: {{ $responsable->nombre }}
                     @endif
                 </p>
@@ -785,22 +809,38 @@
                             <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">#</th>
                             <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Producto</th>
                             <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Código</th>
+                            <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">Color</th>
                             <th style="border: 1px solid #ddd; padding: 6px; text-align: center;">Cantidad</th>
                             <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Precio</th>
                             <th style="border: 1px solid #ddd; padding: 6px; text-align: right;">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($items as $index => $item)
+                        @foreach($items ?? $pedido->items as $index => $item)
+                        @php
+                            $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color'])->find($item->producto_id) : null;
+                            $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
+                            $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
+                            $codigo = $productoInfo ? $productoInfo->codigo : ($item->producto_codigo ?? 'N/A');
+                            $litros = $productoInfo ? $productoInfo->litros : null;
+                        @endphp
                         <tr>
                             <td style="border: 1px solid #ddd; padding: 6px;">{{ $index + 1 }}</td>
                             <td style="border: 1px solid #ddd; padding: 6px;">
                                 {{ $item->producto_nombre }}
-                                @if($item->producto && $item->producto->litros)
-                                <br><small>({{ $item->producto->litros }} litros)</small>
+                                @if($litros)
+                                <br><small>({{ $litros }} litros)</small>
                                 @endif
                             </td>
-                            <td style="border: 1px solid #ddd; padding: 6px;">{{ $item->producto->codigo ?? 'N/A' }}</td>
+                            <td style="border: 1px solid #ddd; padding: 6px;">{{ $codigo }}</td>
+                            <td style="border: 1px solid #ddd; padding: 6px;">
+                                @if($colorNombre)
+                                <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ $colorHex }}; border-radius: 50%; margin-right: 5px; border: 1px solid #ddd;"></span>
+                                {{ $colorNombre }}
+                                @else
+                                -
+                                @endif
+                            </td>
                             <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">{{ $item->cantidad }}</td>
                             <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${{ number_format($item->precio, 2) }}</td>
                             <td style="border: 1px solid #ddd; padding: 6px; text-align: right;">${{ number_format($item->cantidad * $item->precio, 2) }}</td>
@@ -809,8 +849,8 @@
                     </tbody>
                     <tfoot>
                         <tr style="background-color: #f9f9f9; font-weight: bold;">
-                            <td colspan="3" style="border: 1px solid #ddd; padding: 8px; text-align: right;">Total:</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ $pedido->total_items }}</td>
+                            <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">Total:</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">{{ $items ? $items->sum('cantidad') : 0 }}</td>
                             <td colspan="2" style="border: 1px solid #ddd; padding: 8px; text-align: right; font-size: 13px;">
                                 ${{ number_format($pedido->total, 2) }}
                             </td>
@@ -828,7 +868,7 @@
             
             <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #666;">
                 Documento generado el {{ Carbon::now()->format('d/m/Y H:i:s') }} | 
-                Sucursal: {{ $pedido->sucursal_asignada }} | 
+                Sucursal: {{ $pedido->sucursal->nombre ?? session('sucursal_nombre') }} | 
                 Tanques Tláloc - Sistema de Gestión de Pedidos
             </div>
         </div>
@@ -838,7 +878,7 @@
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 <div class="sucursal-info-badge">
                     <i class="fas fa-store"></i>
-                    Sucursal: {{ $pedido->sucursal_asignada }}
+                    Sucursal: {{ $pedido->sucursal->nombre ?? session('sucursal_nombre') }}
                     @if($pedido->distancia_km)
                     | <i class="fas fa-route"></i> {{ $pedido->distancia_km }} km
                     @endif
@@ -847,11 +887,11 @@
                     @endif
                 </div>
                 
-                @if($responsable)
+                @if($responsable ?? false)
                 <div class="badge-responsable">
                     <i class="fas fa-user"></i>
                     Responsable: {{ $responsable->nombre }}
-                    @if(!$puede_editar)
+                    @if(!($puede_editar ?? false))
                     <span class="ms-1"><i class="fas fa-lock"></i> Solo lectura</span>
                     @endif
                 </div>
@@ -882,8 +922,8 @@
                         </p>
                         <div class="pedido-responsable">
                             <i class="fas fa-store"></i>
-                            {{ $pedido->sucursal_asignada }}
-                            @if($responsable)
+                            {{ $pedido->sucursal->nombre ?? session('sucursal_nombre') }}
+                            @if($responsable ?? false)
                             | <i class="fas fa-user"></i> {{ $responsable->nombre }}
                             @endif
                         </div>
@@ -980,7 +1020,7 @@
                             <div class="mb-3">
                                 <div class="info-label">Responsable</div>
                                 <div class="info-value">
-                                    @if($responsable)
+                                    @if($responsable ?? false)
                                         <span class="badge-responsable">
                                             <i class="fas fa-user"></i> {{ $responsable->nombre }}
                                         </span>
@@ -1024,15 +1064,15 @@
             </div>
         </div>
 
-        <!-- Productos del Pedido -->
+        <!-- Productos del Pedido - VERSIÓN MEJORADA CON VARIANTES -->
         <div class="card no-print">
             <div class="card-header">
                 <h5 class="card-title">
                     <i class="fas fa-box"></i> Productos
-                    <span class="badge bg-primary ms-2">{{ $pedido->total_items }} unidades</span>
+                    <span class="badge bg-primary ms-2">{{ $items ? $items->sum('cantidad') : 0 }} unidades</span>
                 </h5>
                 <span class="badge bg-light text-dark">
-                    {{ $items->count() }} producto(s)
+                    {{ $items ? $items->count() : 0 }} producto(s)
                 </span>
             </div>
             <div class="card-body p-0">
@@ -1043,25 +1083,50 @@
                                 <th width="40">#</th>
                                 <th>Producto</th>
                                 <th>Código</th>
+                                <th>Color</th>
+                                <th>Capacidad</th>
                                 <th class="text-center">Cantidad</th>
                                 <th class="text-end">Precio</th>
                                 <th class="text-end">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($items as $index => $item)
+                            @foreach($items ?? $pedido->items as $index => $item)
+                            @php
+                                $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color'])->find($item->producto_id) : null;
+                                $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
+                                $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
+                                $codigo = $productoInfo ? $productoInfo->codigo : ($item->producto_codigo ?? 'N/A');
+                                $litros = $productoInfo ? $productoInfo->litros : null;
+                            @endphp
                             <tr>
                                 <td class="fw-medium">{{ $index + 1 }}</td>
                                 <td>
                                     <div class="fw-semibold" style="font-size: 0.9rem;">
                                         {{ $item->producto_nombre }}
                                     </div>
-                                    @if($item->producto && $item->producto->litros)
-                                    <small class="text-muted">{{ $item->producto->litros }} litros</small>
+                                </td>
+                                <td>
+                                    <span class="product-code">{{ $codigo }}</span>
+                                </td>
+                                <td>
+                                    @if($colorNombre)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="color-dot" style="background-color: {{ $colorHex }};"></span>
+                                        <span>{{ $colorNombre }}</span>
+                                    </div>
+                                    @else
+                                    <span class="text-muted">—</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="product-code">{{ $item->producto->codigo ?? 'N/A' }}</span>
+                                    @if($litros)
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-tint" style="color: var(--primary);"></i> {{ $litros }} L
+                                    </span>
+                                    @else
+                                    <span class="text-muted">—</span>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-primary">{{ $item->cantidad }}</span>
@@ -1084,7 +1149,7 @@
                         <div class="col-md-6">
                             <div class="mb-2">
                                 <div style="font-size: 0.9rem; color: var(--gray);">Total de Productos</div>
-                                <div style="font-size: 1.1rem; font-weight: 600;">{{ $pedido->total_items }} unidades</div>
+                                <div style="font-size: 1.1rem; font-weight: 600;">{{ $items ? $items->sum('cantidad') : 0 }} unidades</div>
                             </div>
                         </div>
                         <div class="col-md-6 text-md-end">
@@ -1118,8 +1183,8 @@
                                 <div class="d-flex justify-content-between flex-wrap">
                                     <div>
                                         <h6 class="mb-1" style="font-size: 0.95rem;">
-                                            {{ $registro->usuario_nombre }}
-                                            <small class="text-muted ms-2">({{ $registro->usuario_rol }})</small>
+                                            {{ $registro->usuario->nombre ?? 'Sistema' }}
+                                            <small class="text-muted ms-2">({{ $registro->usuario->rol ?? 'sistema' }})</small>
                                         </h6>
                                         <p class="text-muted mb-0" style="font-size: 0.85rem;">
                                             <span class="badge bg-secondary">{{ $registro->accion }}</span>
@@ -1155,7 +1220,7 @@
                     </div>
                     <div class="card-body">
                         <div class="actions-grid">
-                            @if($puede_editar)
+                            @if($puede_editar ?? false)
                             <a href="{{ route('gerente.pedidos.editar', $pedido->id) }}" class="btn-action btn-primary-action">
                                 <i class="fas fa-edit"></i> Editar Pedido
                             </a>
@@ -1165,38 +1230,38 @@
                             </button>
                             @endif
                             
-                            @if($puede_editar && $pedido->estado == 'pendiente')
+                            @if($puede_editar ?? false && $pedido->estado == 'pendiente')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'confirmar', 'id' => $pedido->id]) }}" 
                                class="btn-action btn-success-action">
                                 <i class="fas fa-check"></i> Confirmar Pedido
                             </a>
-                            @elseif($puede_editar && $pedido->estado == 'confirmado')
+                            @elseif($puede_editar ?? false && $pedido->estado == 'confirmado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'enviar', 'id' => $pedido->id]) }}" 
                                class="btn-action btn-info-action">
                                 <i class="fas fa-truck"></i> Marcar como Enviado
                             </a>
-                            @elseif($puede_editar && $pedido->estado == 'enviado')
+                            @elseif($puede_editar ?? false && $pedido->estado == 'enviado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'entregar', 'id' => $pedido->id]) }}" 
                                class="btn-action btn-success-action">
                                 <i class="fas fa-box-open"></i> Marcar como Entregado
                             </a>
                             @endif
                             
-                            @if($puede_editar && !$pedido->pago_confirmado && $pedido->estado != 'cancelado')
+                            @if($puede_editar ?? false && !$pedido->pago_confirmado && $pedido->estado != 'cancelado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'confirmar_pago', 'id' => $pedido->id]) }}" 
                                class="btn-action btn-warning-action">
                                 <i class="fas fa-money-check"></i> Confirmar Pago
                             </a>
                             @endif
                             
-                            @if($puede_editar && $pedido->estado != 'cancelado' && $pedido->estado != 'entregado')
+                            @if($puede_editar ?? false && $pedido->estado != 'cancelado' && $pedido->estado != 'entregado')
                             <button onclick="confirmarCancelacion()" class="btn-action btn-danger-action">
                                 <i class="fas fa-times"></i> Cancelar Pedido
                             </button>
                             @endif
                             
                             <!-- Botón para tomar control si no eres responsable -->
-                            @if(!$puede_editar && $responsable && $responsable->id != auth()->id())
+                            @if(!($puede_editar ?? false) && ($responsable ?? false) && $responsable->id != auth()->id())
                             <button onclick="tomarControl()" class="btn-action btn-warning-action">
                                 <i class="fas fa-hand-paper"></i> Tomar Control
                             </button>
@@ -1408,9 +1473,9 @@
             setTimeout(() => {
                 let mensaje = `Viendo pedido de la sucursal: <strong>{{ session('sucursal_nombre') }}</strong>`;
                 
-                @if($responsable)
+                @if($responsable ?? false)
                 mensaje += `<br>Responsable: <strong>{{ $responsable->nombre }}</strong>`;
-                @if(!$puede_editar)
+                @if(!($puede_editar ?? false))
                 mensaje += `<br><small class="text-warning">Tienes acceso de solo lectura.</small>`;
                 @endif
                 @else

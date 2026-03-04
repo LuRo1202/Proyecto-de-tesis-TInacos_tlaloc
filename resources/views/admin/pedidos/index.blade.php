@@ -575,9 +575,7 @@
                 <a href="{{ route('admin.dashboard') }}" class="btn-custom btn-secondary-custom">
                     <i class="fas fa-arrow-left"></i> Volver
                 </a>
-                <a href="{{ route('admin.pedidos.nuevo') }}" class="btn-custom btn-success-custom">
-                    <i class="fas fa-plus"></i> Nuevo Pedido
-                </a>
+               
                 @if(request()->has('estado') || request()->has('sucursal_id') || request()->has('fecha'))
                 <a href="{{ route('admin.pedidos') }}" class="btn-custom btn-primary-custom">
                     <i class="fas fa-times"></i> Limpiar
@@ -799,9 +797,7 @@
                                     <p>{{ request()->has('estado') || request()->has('sucursal_id') || request()->has('fecha') ? 
                                         'No hay pedidos que coincidan con los filtros aplicados.' : 
                                         'Aún no hay pedidos registrados en el sistema.' }}</p>
-                                    <a href="{{ route('admin.pedidos.nuevo') }}" class="btn-custom btn-success-custom mt-2">
-                                        <i class="fas fa-plus"></i> Crear Nuevo Pedido
-                                    </a>
+                                    
                                 </td>
                             </tr>
                             @endforelse
@@ -927,5 +923,31 @@
             });
         });
     </script>
+
+    {{-- SweetAlert para mensajes flash --}}
+    @if(session('swal_pedido'))
+    <script>
+        Swal.fire({
+            icon: '{{ session('swal_pedido')['type'] }}',
+            title: '{{ session('swal_pedido')['title'] }}',
+            text: '{{ session('swal_pedido')['message'] }}',
+            confirmButtonColor: '#7fad39',
+            confirmButtonText: 'Aceptar'
+        });
+    </script>
+    @endif
+
+    {{-- También mantener swal genérico por si acaso --}}
+    @if(session('swal'))
+    <script>
+        Swal.fire({
+            icon: '{{ session('swal')['type'] }}',
+            title: '{{ session('swal')['title'] }}',
+            text: '{{ session('swal')['message'] }}',
+            confirmButtonColor: '#7fad39',
+            confirmButtonText: 'Aceptar'
+        });
+    </script>
+    @endif
 </body>
 </html>

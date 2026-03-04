@@ -964,6 +964,32 @@
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    {{-- Mensajes específicos para pedidos --}}
+    @if(session('swal_pedido'))
+    <script>
+        Swal.fire({
+            icon: '{{ session('swal_pedido')['type'] }}',
+            title: '{{ session('swal_pedido')['title'] }}',
+            text: '{{ session('swal_pedido')['message'] }}',
+            confirmButtonColor: '#7fad39',
+            confirmButtonText: 'Aceptar'
+        });
+    </script>
+    @endif
+
+    {{-- Mantener swal genérico por compatibilidad --}}
+    @if(session('swal'))
+    <script>
+        Swal.fire({
+            icon: '{{ session('swal')['type'] }}',
+            title: '{{ session('swal')['title'] }}',
+            text: '{{ session('swal')['message'] }}',
+            confirmButtonColor: '#7fad39',
+            confirmButtonText: 'Aceptar'
+        });
+    </script>
+    @endif
+
     <script>
         // Variables globales
         let responsableSeleccionado = '{{ $responsable_actual ? $responsable_actual->id : '' }}';
@@ -1155,19 +1181,6 @@
                 });
             }
         });
-        
-        // Mensajes de sesión
-        @if(session('swal'))
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: '{{ session('swal')['title'] }}',
-                text: '{{ session('swal')['message'] }}',
-                icon: '{{ session('swal')['type'] }}',
-                confirmButtonColor: '#7fad39',
-                confirmButtonText: 'Aceptar'
-            });
-        });
-        @endif
         
         // Seleccionar responsable actual
         @if($responsable_actual)

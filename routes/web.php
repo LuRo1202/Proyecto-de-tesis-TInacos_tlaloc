@@ -177,8 +177,6 @@ Route::prefix('admin')
     
     // PEDIDOS
     Route::get('/pedidos', [App\Http\Controllers\Admin\PedidoController::class, 'index'])->name('pedidos');
-    Route::get('/pedidos/nuevo', [App\Http\Controllers\Admin\PedidoController::class, 'create'])->name('pedidos.nuevo');
-    Route::post('/pedidos', [App\Http\Controllers\Admin\PedidoController::class, 'store'])->name('pedidos.store');
     Route::get('/pedidos/{id}', [App\Http\Controllers\Admin\PedidoController::class, 'show'])->name('pedidos.ver');
     Route::get('/pedidos/{id}/editar', [App\Http\Controllers\Admin\PedidoController::class, 'edit'])->name('pedidos.editar');
     Route::put('/pedidos/{id}', [App\Http\Controllers\Admin\PedidoController::class, 'update'])->name('pedidos.update');
@@ -265,6 +263,8 @@ Route::prefix('gerente')
     Route::get('/productos/{id}/editar', [App\Http\Controllers\Gerente\ProductoController::class, 'edit'])->name('productos.editar');
     Route::put('/productos/{id}', [App\Http\Controllers\Gerente\ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/eliminar/{id}', [App\Http\Controllers\Gerente\ProductoController::class, 'destroy'])->name('productos.eliminar');
+    Route::post('/productos/verificar-oferta', [App\Http\Controllers\Gerente\PedidoController::class, 'verificarOferta'])->name('productos.verificar-oferta');
+    Route::post('/clientes/buscar', [App\Http\Controllers\Gerente\PedidoController::class, 'buscar'])->name('clientes.buscar');
 
      // OFERTAS 
     Route::get('/ofertas', [App\Http\Controllers\Gerente\OfertaController::class, 'index'])->name('ofertas');
@@ -280,6 +280,8 @@ Route::prefix('gerente')
     Route::put('/vendedores', [App\Http\Controllers\Gerente\VendedorController::class, 'update'])->name('vendedores.update');
     Route::post('/vendedores/toggle', [App\Http\Controllers\Gerente\VendedorController::class, 'toggleEstado'])->name('vendedores.toggle');
    
+
+    
     // ===== REPORTES =====
     Route::get('/reportes', [App\Http\Controllers\Gerente\ReporteController::class, 'index'])->name('reportes');
     Route::post('/reportes/exportar', [App\Http\Controllers\Gerente\ReporteController::class, 'exportarExcel'])->name('reportes.exportar');    
@@ -325,7 +327,7 @@ Route::prefix('vendedor')
 
     Route::post('/productos/verificar-oferta', [App\Http\Controllers\Vendedor\PedidoController::class, 'verificarOferta'])
         ->name('productos.verificar-oferta'); 
-        
+
     // COBERTURA
     Route::post('/cobertura/verificar', [App\Http\Controllers\Vendedor\CoberturaController::class, 'verificar'])->name('cobertura.verificar');
     Route::post('/cobertura/limpiar', [App\Http\Controllers\Vendedor\CoberturaController::class, 'limpiar'])->name('cobertura.limpiar');
