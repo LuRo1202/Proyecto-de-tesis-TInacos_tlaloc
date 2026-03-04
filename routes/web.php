@@ -173,8 +173,7 @@ Route::prefix('admin')
     
     // Dashboard
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
-    
+    Route::get('/', [App\Http\Controllers\Admin\DashboardController::class, 'index']); // ✅ Sin nombre para que no choque
     // PEDIDOS
     Route::get('/pedidos', [App\Http\Controllers\Admin\PedidoController::class, 'index'])->name('pedidos');
     Route::get('/pedidos/{id}', [App\Http\Controllers\Admin\PedidoController::class, 'show'])->name('pedidos.ver');
@@ -240,8 +239,7 @@ Route::prefix('gerente')
     
     // ===== DASHBOARD =====
     Route::get('/dashboard', [App\Http\Controllers\Gerente\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/', [App\Http\Controllers\Gerente\DashboardController::class, 'index'])->name('dashboard');
-    
+    Route::get('/', [App\Http\Controllers\Gerente\DashboardController::class, 'index']); 
     // ===== PEDIDOS =====
     Route::get('/pedidos', [App\Http\Controllers\Gerente\PedidoController::class, 'index'])->name('pedidos');
     Route::get('/pedidos/nuevo', [App\Http\Controllers\Gerente\PedidoController::class, 'create'])->name('pedidos.nuevo');
@@ -306,8 +304,7 @@ Route::prefix('vendedor')
     
     // Dashboard
     Route::get('/dashboard', [App\Http\Controllers\Vendedor\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/', [App\Http\Controllers\Vendedor\DashboardController::class, 'index'])->name('dashboard');
-    
+    Route::get('/', [App\Http\Controllers\Vendedor\DashboardController::class, 'index']); // ✅ Sin nombre
     // Asignar pedido (AJAX)
     Route::post('/pedidos/asignar', [App\Http\Controllers\Vendedor\DashboardController::class, 'asignarPedido'])->name('pedidos.asignar');
     
