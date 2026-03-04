@@ -146,9 +146,7 @@
                                     <i class="fas fa-shopping-cart"></i>
                                     <h5>No hay pedidos registrados</h5>
                                     <p>Aún no hay pedidos registrados en el sistema.</p>
-                                    <a href="{{ route('admin.pedidos.nuevo') }}" class="btn-custom btn-primary-custom">
-                                        <i class="fas fa-plus-circle me-1"></i> Crear Primer Pedido
-                                    </a>
+                                    
                                 </td>
                             </tr>
                             @endforelse
