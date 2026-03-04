@@ -174,6 +174,7 @@
         }
 
         /* ===== BADGE ESTADO ===== */
+        /* ===== BADGE ESTADO ===== */
         .estado-principal {
             display: inline-flex;
             align-items: center;
@@ -183,20 +184,33 @@
             font-weight: 600;
             font-size: 1rem;
             margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        .estado-pendiente { background: rgba(255, 193, 7, 0.15); color: #856404; border: 1px solid rgba(255, 193, 7, 0.3); }
-        .estado-confirmado { background: rgba(23, 162, 184, 0.15); color: #138496; border: 1px solid rgba(23, 162, 184, 0.3); }
-        .estado-enviado { background: rgba(127, 173, 57, 0.15); color: var(--primary); border: 1px solid rgba(127, 173, 57, 0.3); }
-        .estado-entregado { background: rgba(40, 167, 69, 0.15); color: var(--success); border: 1px solid rgba(40, 167, 69, 0.3); }
-        .estado-cancelado { background: rgba(220, 53, 69, 0.15); color: var(--danger); border: 1px solid rgba(220, 53, 69, 0.3); }
-
-        /* ===== INFO CARDS ===== */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+        .estado-pendiente { 
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            color: #856404; 
+            border-left: 3px solid #ffc107;
+        }
+        .estado-confirmado { 
+            background: linear-gradient(135deg, #d1ecf1 0%, #b6e4f0 100%);
+            color: #0c5460; 
+            border-left: 3px solid #17a2b8;
+        }
+        .estado-enviado { 
+            background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+            color: #004085; 
+            border-left: 3px solid #007bff;
+        }
+        .estado-entregado { 
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724; 
+            border-left: 3px solid #28a745;
+        }
+        .estado-cancelado { 
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+            color: #721c24; 
+            border-left: 3px solid #dc3545;
         }
 
         .info-card {
@@ -324,7 +338,7 @@
             color: var(--gray);
         }
 
-        /* ===== TABLA DE PRODUCTOS ===== */
+        /* ===== TABLA DE PRODUCTOS MEJORADA ===== */
         .table-responsive {
             border-radius: 12px;
             overflow-x: auto;
@@ -334,7 +348,7 @@
         .table {
             font-size: 0.95rem;
             margin-bottom: 0;
-            min-width: 600px;
+            min-width: 700px;
         }
 
         .table th {
@@ -355,6 +369,16 @@
             border-bottom: none;
         }
 
+        /* Color dot para variantes */
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         .producto-imagen {
             width: 50px;
             height: 50px;
@@ -365,16 +389,35 @@
             justify-content: center;
             color: var(--primary);
             font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .producto-info {
+            flex: 1;
         }
 
         .producto-nombre {
             font-weight: 600;
             color: var(--dark);
+            margin-bottom: 4px;
         }
 
         .producto-detalle {
-            font-size: 0.85rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.8rem;
             color: var(--gray);
+        }
+
+        .producto-badge {
+            background: var(--light);
+            padding: 2px 8px;
+            border-radius: 20px;
+            border: 1px solid var(--light-gray);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         /* ===== TOTALES ===== */
@@ -441,6 +484,16 @@
                 height: 24px;
                 font-size: 0.7rem;
             }
+
+            .table th, .table td {
+                padding: 12px 10px;
+                font-size: 0.85rem;
+            }
+
+            .producto-detalle {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
 
         @media (max-width: 576px) {
@@ -463,6 +516,11 @@
 
             .timeline-content {
                 padding: 12px;
+            }
+
+            .table-responsive {
+                margin: 0 -15px;
+                border-radius: 0;
             }
         }
 
@@ -722,11 +780,11 @@
                     </div>
                     <div class="header-text">
                         <h1>Pedido #{{ $pedido->folio }}</h1>
-                        <p>{{ $pedido->created_at->format('d/m/Y H:i') }}</p>
+                        <p>{{ \Carbon\Carbon::parse($pedido->fecha ?? $pedido->created_at)->format('d/m/Y H:i') }}</p>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <a href="{{ url('/cliente/pedidos') }}" class="btn-custom btn-secondary-custom">
+                    <a href="{{ route('cliente.pedidos') }}" class="btn-custom btn-secondary-custom">
                         <i class="fas fa-arrow-left"></i> Volver
                     </a>
                     <a href="{{ route('tienda') }}" class="btn-custom btn-primary-custom">
@@ -791,7 +849,7 @@
                         Método de pago
                     </div>
                     <div class="info-card-content">
-                        {{ ucfirst(str_replace('_', ' ', $pedido->metodo_pago)) }}
+                        {{ ucfirst(str_replace('_', ' ', $pedido->metodo_pago ?? 'manual')) }}
                         @if($pedido->pago_confirmado)
                             <br><small class="text-success">✓ Pago confirmado</small>
                         @else
@@ -845,7 +903,7 @@
             </div>
             @endif
 
-            <!-- Productos -->
+            <!-- Productos - VERSIÓN MEJORADA CON DETALLES DE VARIANTES -->
             <div class="info-card">
                 <div class="info-card-title">
                     <i class="fas fa-boxes"></i>
@@ -857,6 +915,9 @@
                         <thead>
                             <tr>
                                 <th>Producto</th>
+                                <th>Código</th>
+                                <th>Color</th>
+                                <th>Capacidad</th>
                                 <th class="text-center">Cantidad</th>
                                 <th class="text-end">Precio</th>
                                 <th class="text-end">Subtotal</th>
@@ -864,21 +925,65 @@
                         </thead>
                         <tbody>
                             @foreach($pedido->items as $item)
+                            @php
+                                // Obtener información detallada del producto si existe
+                                $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color'])->find($item->producto_id) : null;
+                                
+                                $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
+                                $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
+                                $codigo = $productoInfo ? $productoInfo->codigo : 'N/A';
+                                $litros = $productoInfo ? $productoInfo->litros : ($item->litros ?? null);
+                                
+                                // Si no hay productoInfo pero el item tiene producto_nombre, intentar extraer información
+                                if (!$productoInfo && $item->producto_nombre) {
+                                    // Intentar extraer código del nombre (ej: "TIN-225 - Tinaco 225 lts")
+                                    if (preg_match('/([A-Z0-9-]+)/', $item->producto_nombre, $matches)) {
+                                        $codigo = $matches[1];
+                                    }
+                                    // Intentar extraer litros
+                                    if (preg_match('/(\d+)\s*litros?/', $item->producto_nombre, $matches)) {
+                                        $litros = $matches[1];
+                                    }
+                                }
+                            @endphp
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="producto-imagen">
                                             <i class="fas fa-box"></i>
                                         </div>
-                                        <div>
+                                        <div class="producto-info">
                                             <div class="producto-nombre">{{ $item->producto_nombre }}</div>
-                                            @if($item->litros > 0)
-                                                <div class="producto-detalle">{{ $item->litros }} litros</div>
-                                            @endif
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-center">{{ $item->cantidad }}</td>
+                                <td>
+                                    <span class="producto-badge">
+                                        <i class="fas fa-barcode fa-xs me-1"></i>
+                                        {{ $codigo }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($colorNombre)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="color-dot" style="background-color: {{ $colorHex }};"></span>
+                                        <span>{{ $colorNombre }}</span>
+                                    </div>
+                                    @else
+                                    <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($litros)
+                                    <span class="producto-badge">
+                                        <i class="fas fa-tint fa-xs me-1" style="color: var(--primary);"></i>
+                                        {{ $litros }} L
+                                    </span>
+                                    @else
+                                    <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td class="text-center"><strong>{{ $item->cantidad }}</strong></td>
                                 <td class="text-end">${{ number_format($item->precio, 2) }}</td>
                                 <td class="text-end fw-bold">${{ number_format($item->cantidad * $item->precio, 2) }}</td>
                             </tr>
@@ -904,6 +1009,19 @@
                 </div>
             </div>
 
+            <!-- Notas del pedido -->
+            @if($pedido->notas)
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-sticky-note"></i>
+                    Notas del pedido
+                </div>
+                <div class="info-card-content">
+                    {{ $pedido->notas }}
+                </div>
+            </div>
+            @endif
+
             <!-- Acciones -->
             <div class="acciones-container">
                 @if($pedido->estado === 'pendiente')
@@ -918,7 +1036,7 @@
                     </button>
                 @endif
 
-                @if($pedido->estado === 'pendiente' && !$pedido->pago_confirmado)
+                @if($pedido->estado === 'pendiente' && !($pedido->pago_confirmado ?? false))
                     <a href="#" class="btn-custom btn-primary-custom">
                         <i class="fas fa-credit-card"></i> Pagar ahora
                     </a>
@@ -1052,11 +1170,11 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // ✅ Usar URL manual (ESTO FUNCIONA)
                     window.location.href = '/cliente/reordenar/' + id;
                 }
             });
         }
+        
         @if(session('success'))
         Swal.fire({
             icon: 'success',

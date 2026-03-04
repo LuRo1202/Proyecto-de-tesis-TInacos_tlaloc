@@ -282,18 +282,59 @@
             align-items: center;
         }
 
-        .badge-estado {
-            padding: 6px 15px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
+        /* ===== BADGES DE ESTADO (UNIFICADOS CON DASHBOARD) ===== */
+            .badge-estado {
+                padding: 8px 16px;
+                border-radius: 30px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                display: inline-block;
+                text-align: center;
+                min-width: 110px;
+                letter-spacing: 0.3px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
+            }
 
-        .badge-pendiente { background: rgba(255, 193, 7, 0.15); color: #856404; }
-        .badge-enviado { background: rgba(127, 173, 57, 0.15); color: var(--verde-principal); }
-        .badge-entregado { background: rgba(40, 167, 69, 0.15); color: #28a745; }
-        .badge-cancelado { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+            .badge-estado:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            }
 
+            /* Estado Pendiente */
+            .badge-pendiente {
+                background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+                color: #856404;
+                border-left: 3px solid #ffc107;
+            }
+
+            /* Estado Confirmado */
+            .badge-confirmado {
+                background: linear-gradient(135deg, #d1ecf1 0%, #b6e4f0 100%);
+                color: #0c5460;
+                border-left: 3px solid #17a2b8;
+            }
+
+            /* Estado Enviado */
+            .badge-enviado {
+                background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+                color: #004085;
+                border-left: 3px solid #007bff;
+            }
+
+            /* Estado Entregado */
+            .badge-entregado {
+                background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                color: #155724;
+                border-left: 3px solid #28a745;
+            }
+
+            /* Estado Cancelado */
+            .badge-cancelado {
+                background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+                color: #721c24;
+                border-left: 3px solid #dc3545;
+            }
         .btn-ver {
             padding: 8px 20px;
             border-radius: 30px;
@@ -734,6 +775,7 @@
                         @php
                             $badgeClass = match($pedido->estado) {
                                 'pendiente' => 'badge-pendiente',
+                                'confirmado' => 'badge-confirmado', // ← AGREGAR ESTA LÍNEA
                                 'enviado' => 'badge-enviado',
                                 'entregado' => 'badge-entregado',
                                 'cancelado' => 'badge-cancelado',

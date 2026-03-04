@@ -25,7 +25,6 @@
 
     <style>
         /* ===== SOLO ESTILOS EXCLUSIVOS DEL DASHBOARD ===== */
-        /* (NADA DEL HEADER, FOOTER O COMPONENTES GLOBALES) */
         
         /* VARIABLES GLOBALES - Solo las que necesita el dashboard */
         :root {
@@ -261,9 +260,11 @@
 
             .order-status-mobile {
                 font-size: 0.6rem;
-                padding: 3px 8px;
+                padding: 4px 10px;
                 border-radius: 30px;
                 font-weight: 600;
+                min-width: 70px;
+                text-align: center;
             }
 
             /* Account Card Móvil */
@@ -536,9 +537,9 @@
             .orders-section {
                 margin-bottom: 40px;
                 background: white;
-                border-radius: 12px;
+                border-radius: 16px;
                 padding: 25px;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
             }
 
             .section-header {
@@ -546,6 +547,8 @@
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 20px;
+                flex-wrap: wrap;
+                gap: 10px;
             }
 
             .section-header h2 {
@@ -576,6 +579,9 @@
                 border: 2px solid #7fad39;
                 border-radius: 5px;
                 transition: all 0.3s;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
             }
 
             .section-header a:hover {
@@ -585,6 +591,7 @@
 
             .table-responsive {
                 overflow-x: auto;
+                border-radius: 12px;
             }
 
             .table-custom {
@@ -593,55 +600,88 @@
             }
 
             .table-custom thead th {
-                background: #f8f9fa;
-                color: #2c3e50;
+                background: #2c3e50;
+                color: white;
                 font-weight: 700;
-                border-bottom: 2px solid #7fad39;
-                padding: 15px;
+                padding: 15px 20px;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border: none;
+            }
+
+            .table-custom tbody tr {
+                transition: all 0.2s ease;
+                border-bottom: 1px solid #edf2f7;
+            }
+
+            .table-custom tbody tr:hover {
+                background: #f8fafc;
             }
 
             .table-custom td {
-                padding: 15px;
-                border-bottom: 1px solid #ebebeb;
+                padding: 15px 20px;
+                vertical-align: middle;
+                font-size: 0.95rem;
+                color: #2d3748;
             }
 
             .folio-badge {
                 font-weight: 700;
                 color: #7fad39;
+                background: rgba(127, 173, 57, 0.1);
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                display: inline-block;
+                font-family: 'Courier New', monospace;
+                border: 1px solid rgba(127, 173, 57, 0.2);
             }
 
-            .status-badge {
-                padding: 5px 15px;
-                border-radius: 20px;
-                font-size: 0.8rem;
-                font-weight: 600;
-                display: inline-block;
+            .action-buttons {
+                display: flex;
+                gap: 8px;
+                align-items: center;
             }
 
             .btn-action-table {
-                width: 35px;
-                height: 35px;
-                border-radius: 8px;
-                border: 1px solid #ebebeb;
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+                border: none;
                 background: white;
-                color: #7f8c8d;
-                transition: all 0.3s;
+                color: #4a5568;
+                transition: all 0.2s ease;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                margin: 0 3px;
+                text-decoration: none;
+                font-size: 1rem;
+                border: 1px solid #edf2f7;
             }
 
-            .btn-action-table:hover {
-                background: #7fad39;
+            .btn-view {
+                background: #ebf8ff;
+                color: #3182ce;
+                border: 1px solid #bee3f8;
+            }
+
+            .btn-view:hover {
+                background: #3182ce;
                 color: white;
-                border-color: #7fad39;
+                border-color: #3182ce;
+            }
+
+            .btn-cancel {
+                background: #fff5f5;
+                color: #e53e3e;
+                border: 1px solid #fed7d7;
             }
 
             .btn-cancel:hover {
-                background: #dc3545;
+                background: #e53e3e;
                 color: white;
-                border-color: #dc3545;
+                border-color: #e53e3e;
             }
 
             /* Account Section Desktop */
@@ -726,6 +766,100 @@
             }
         }
 
+        /* ===== BADGES DE ESTADO MEJORADOS ===== */
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            text-align: center;
+            min-width: 110px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Estado Pendiente */
+        .status-badge.status-pendiente {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            color: #856404;
+            border-left: 3px solid #ffc107;
+        }
+
+        /* Estado Confirmado - AZUL CLARO */
+        .status-badge.status-confirmado {
+            background: linear-gradient(135deg, #7ee7aa 0%, #5ba36a 100%);
+            color: #0c5460;
+            border-left: 3px solid #17a2b8;
+        }
+
+        /* Estado Enviado - AZUL MÁS OSCURO */
+        .status-badge.status-enviado {
+            background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+            color: #004085;
+            border-left: 3px solid #007bff;
+        }
+
+        /* Estado Entregado */
+        .status-badge.status-entregado {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border-left: 3px solid #28a745;
+        }
+
+        /* Estado Cancelado */
+        .status-badge.status-cancelado {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+            color: #721c24;
+            border-left: 3px solid #dc3545;
+        }
+
+        /* Versión móvil de badges */
+        .order-status-mobile {
+            font-size: 0.6rem;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-weight: 600;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .order-status-mobile.status-pendiente {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .order-status-mobile.status-confirmado {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .order-status-mobile.status-enviado {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+
+        .order-status-mobile.status-entregado {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .order-status-mobile.status-cancelado {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
         /* Empty State compartido */
         .empty-state {
             text-align: center;
@@ -745,7 +879,7 @@
             margin-bottom: 20px;
         }
 
-        /* ===== BUSCADOR SUPERIOR - MI CUENTA TLÁLOC ===== */
+        /* ===== BUSCADOR SUPERIOR ===== */
         .top-search-section {
             background: linear-gradient(135deg, #7fad39 0%, #5d8c29 100%);
             padding: 25px 0;
@@ -754,7 +888,6 @@
             overflow: hidden;
         }
 
-        /* Efecto de brillo animado */
         .top-search-section::before {
             content: '';
             position: absolute;
@@ -774,7 +907,6 @@
             100% { transform: translateX(100%); }
         }
 
-        /* Línea decorativa inferior */
         .top-search-section::after {
             content: '';
             position: absolute;
@@ -798,7 +930,6 @@
             padding: 0 15px;
         }
 
-        /* Título principal */
         .top-search-container h4 {
             font-weight: 700;
             font-size: 2rem;
@@ -822,7 +953,6 @@
             50% { transform: translateY(-5px); }
         }
 
-        /* Subtítulo */
         .top-search-container p {
             color: rgba(255, 255, 255, 0.95);
             font-size: 1.2rem;
@@ -832,59 +962,18 @@
             letter-spacing: 0.5px;
         }
 
-        /* Responsive Móvil */
         @media (max-width: 768px) {
             .top-search-section {
                 padding: 20px 0;
             }
-            
             .top-search-container h4 {
                 font-size: 1.6rem;
             }
-            
             .top-search-container h4 i {
                 font-size: 1.6rem;
             }
-            
             .top-search-container p {
                 font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .top-search-section {
-                padding: 15px 0;
-            }
-            
-            .top-search-container h4 {
-                font-size: 1.4rem;
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .top-search-container h4 i {
-                font-size: 1.4rem;
-            }
-            
-            .top-search-container p {
-                font-size: 0.95rem;
-                padding: 0 10px;
-            }
-        }
-
-        /* Animación de entrada */
-        .top-search-section {
-            animation: fadeInDown 0.6s ease-out;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
             }
         }
 
@@ -904,7 +993,6 @@
             border-color: rgba(127, 173, 57, 0.2);
         }
 
-        /* Header de la tarjeta */
         .quick-actions-header {
             display: flex;
             align-items: center;
@@ -952,124 +1040,32 @@
             margin: 0;
         }
 
-        /* Grid de acciones (tus cards existentes) */
         .quick-actions-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
-        /* Tus cards existentes (sin cambios) */
-        .quick-action-card {
-            background: #f8f9fa;
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            position: relative;
-            height: 160px;
-            border: 1px solid #f0f0f0;
-            text-decoration: none;
-            display: block;
-        }
-
-        .quick-action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            border-color: #7fad39;
-        }
-
-        .quick-action-overlay {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background: #ffffff;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .quick-action-overlay i {
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            color: #7fad39;
-            transition: transform 0.3s ease;
-        }
-
-        .quick-action-card:hover i {
-            transform: scale(1.15);
-        }
-
-        .quick-action-overlay h4 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .quick-action-overlay p {
-            font-size: 0.8rem;
-            color: #666;
-            margin: 0;
-        }
-
-        /* Color especial para botón de salir */
-        .quick-action-card.card-salir:hover {
-            border-color: #ff7675;
-        }
-
-        .quick-action-card.card-salir i {
-            color: #ff7675;
-        }
-
-        /* Responsive para móvil */
         @media (max-width: 768px) {
-
-        
             .quick-actions-container {
                 padding: 15px;
                 margin-bottom: 20px;
             }
-            
             .quick-actions-header {
                 margin-bottom: 15px;
                 padding-bottom: 15px;
             }
-            
             .quick-actions-header .header-icon {
                 width: 40px;
                 height: 40px;
                 font-size: 1.2rem;
             }
-            
             .quick-actions-header .header-text h3 {
                 font-size: 1.2rem;
             }
-            
-            .quick-actions-header .header-text p {
-                font-size: 0.8rem;
-            }
-            
             .quick-actions-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
-            }
-            
-            .quick-action-card {
-                height: 140px;
-            }
-            
-            .quick-action-overlay i {
-                font-size: 1.8rem;
-            }
-            
-            .quick-action-overlay h4 {
-                font-size: 0.9rem;
-            }
-            
-            .quick-action-overlay p {
-                font-size: 0.7rem;
             }
         }
 
@@ -1077,124 +1073,7 @@
             .quick-actions-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .quick-action-card {
-                height: 120px;
-            }
-            
-            .quick-action-overlay {
-                flex-direction: row;
-                justify-content: flex-start;
-                gap: 15px;
-                padding: 15px;
-            }
-            
-            .quick-action-overlay i {
-                margin-bottom: 0;
-                font-size: 2rem;
-            }
-            
-            .quick-action-overlay div {
-                text-align: left;
-            }
-            
-            .quick-action-overlay h4 {
-                margin-bottom: 2px;
-            }
         }
-
-        /* ===== BADGES DE ESTADO PARA TABLA ===== */
-.status-badge {
-    padding: 6px 15px;
-    border-radius: 30px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
-    text-align: center;
-    min-width: 100px;
-}
-
-/* Estado Pendiente */
-.status-badge.status-pendiente {
-    background: rgba(255, 193, 7, 0.15);
-    color: #856404;
-    border: 1px solid rgba(255, 193, 7, 0.3);
-}
-
-/* Estado Enviado */
-.status-badge.status-enviado {
-    background: rgba(127, 173, 57, 0.15);
-    color: #7fad39;
-    border: 1px solid rgba(127, 173, 57, 0.3);
-}
-
-/* Estado Entregado */
-.status-badge.status-entregado {
-    background: rgba(40, 167, 69, 0.15);
-    color: #28a745;
-    border: 1px solid rgba(40, 167, 69, 0.3);
-}
-
-/* Estado Cancelado */
-.status-badge.status-cancelado {
-    background: rgba(220, 53, 69, 0.15);
-    color: #dc3545;
-    border: 1px solid rgba(220, 53, 69, 0.3);
-}
-
-@media (max-width: 991px) {
-    /* ... tus estilos móvil existentes ... */
-
-    /* Badges de estado en móvil */
-    .order-status-mobile {
-        font-size: 0.6rem;
-        padding: 4px 10px;
-        border-radius: 30px;
-        font-weight: 600;
-        display: inline-block;
-        min-width: 70px;
-        text-align: center;
-    }
-
-    .status-pendiente {
-        background: rgba(255, 193, 7, 0.15);
-        color: #856404;
-        border: 1px solid rgba(255, 193, 7, 0.3);
-    }
-
-    .status-enviado {
-        background: rgba(127, 173, 57, 0.15);
-        color: #7fad39;
-        border: 1px solid rgba(127, 173, 57, 0.3);
-    }
-
-    .status-entregado {
-        background: rgba(40, 167, 69, 0.15);
-        color: #28a745;
-        border: 1px solid rgba(40, 167, 69, 0.3);
-    }
-
-    .status-cancelado {
-        background: rgba(220, 53, 69, 0.15);
-        color: #dc3545;
-        border: 1px solid rgba(220, 53, 69, 0.3);
-    }
-
-    /* Mejorar el footer de la tarjeta de pedido en móvil */
-    .order-footer-mobile {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 8px;
-    }
-
-    .order-total-mobile {
-        font-weight: 700;
-        color: #7fad39;
-        font-size: 1rem;
-    }
-}
-
     </style>
 </head>
 <body>
@@ -1206,13 +1085,9 @@
                 <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tanques Tlaloc">
             </a>
             
-            <div class="d-flex align-items-center">
-
-                
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav mx-auto">
@@ -1266,7 +1141,6 @@
                     <a href="{{ route('carrito') }}" class="btn btn-primary position-relative">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-badge">{{ $cartCount ?? 0 }}</span>
-
                     </a>
                 </div>
                 
@@ -1315,8 +1189,6 @@
 
                 <!-- WELCOME CARD MÓVIL -->
                 <div class="welcome-card-mobile">
-                    <div >
-                    </div>
                     <div class="greeting-mobile">
                         ¡Hola, <span>{{ explode(' ', $cliente->nombre)[0] }}</span>!
                     </div>
@@ -1403,6 +1275,8 @@
                                     <i class="fas fa-clock"></i>
                                 @elseif($pedido->estado == 'enviado')
                                     <i class="fas fa-truck"></i>
+                                @elseif($pedido->estado == 'confirmado')
+                                    <i class="fas fa-check"></i>
                                 @else
                                     <i class="fas fa-box"></i>
                                 @endif
@@ -1417,8 +1291,10 @@
                                     @php
                                         $statusClass = match($pedido->estado) {
                                             'pendiente' => 'status-pendiente',
+                                            'confirmado' => 'status-confirmado',
                                             'enviado' => 'status-enviado',
                                             'entregado' => 'status-entregado',
+                                            'cancelado' => 'status-cancelado',
                                             default => ''
                                         };
                                     @endphp
@@ -1430,7 +1306,7 @@
                         <div class="empty-state">
                             <i class="fas fa-box-open"></i>
                             <p>Aún no tienes pedidos</p>
-                            <a href="{{ route('tienda') }}" class="btn-primary">
+                            <a href="{{ route('tienda') }}" class="btn btn-primary">
                                 <i class="fas fa-store me-2"></i>Ir a la tienda
                             </a>
                         </div>
@@ -1487,9 +1363,6 @@
 
                 <!-- WELCOME CARD DESKTOP -->
                 <div class="welcome-dashboard">
-                    <div >
-                        
-                  </div>
                     <h1>¡Hola, <span>{{ explode(' ', $cliente->nombre)[0] }}</span>!</h1>
                     <p>Bienvenido a tu panel de control. Aquí puedes gestionar todos tus pedidos y datos personales.</p>
                 </div>
@@ -1519,7 +1392,6 @@
                 </div>
 
                 <!-- ACCIONES RÁPIDAS DESKTOP -->
-               
                 <div class="quick-actions-container">
                     <div class="quick-actions-header">
                         <div class="header-icon">
@@ -1565,6 +1437,7 @@
                         </a>
                     </div>
                 </div>
+
                 <!-- PEDIDOS RECIENTES DESKTOP -->
                 <div class="orders-section">
                     <div class="section-header">
@@ -1594,18 +1467,22 @@
                                         @php
                                             $statusClass = match($pedido->estado) {
                                                 'pendiente' => 'status-pendiente',
+                                                'confirmado' => 'status-confirmado',
                                                 'enviado' => 'status-enviado',
                                                 'entregado' => 'status-entregado',
+                                                'cancelado' => 'status-cancelado',
                                                 default => ''
                                             };
                                         @endphp
                                         <span class="status-badge {{ $statusClass }}">{{ ucfirst($pedido->estado) }}</span>
                                     </td>
                                     <td>
-                                        <a href="/cliente/pedido/{{ $pedido->id }}" class="btn-action-table"><i class="fas fa-eye"></i></a>
-                                        @if($pedido->estado == 'pendiente')
-                                        <button class="btn-action-table btn-cancel" onclick="confirmarCancelacion({{ $pedido->id }})"><i class="fas fa-times"></i></button>
-                                        @endif
+                                        <div class="action-buttons">
+                                            <a href="/cliente/pedido/{{ $pedido->id }}" class="btn-action-table btn-view"><i class="fas fa-eye"></i></a>
+                                            @if($pedido->estado == 'pendiente')
+                                            <button class="btn-action-table btn-cancel" onclick="confirmarCancelacion({{ $pedido->id }})"><i class="fas fa-times"></i></button>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -1616,7 +1493,7 @@
                     <div class="empty-state">
                         <i class="fas fa-box-open"></i>
                         <p>Aún no has realizado ningún pedido</p>
-                        <a href="{{ route('tienda') }}" class="btn-primary"><i class="fas fa-store me-2"></i>Ir a la Tienda</a>
+                        <a href="{{ route('tienda') }}" class="btn btn-primary"><i class="fas fa-store me-2"></i>Ir a la Tienda</a>
                     </div>
                     @endif
                 </div>
@@ -1749,13 +1626,7 @@
                 cancelButtonText: 'Volver'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Cancelado',
-                        text: 'El pedido ha sido cancelado',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                    window.location.href = '/cliente/pedido/' + id + '/cancelar';
                 }
             });
         }
