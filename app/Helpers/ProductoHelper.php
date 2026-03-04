@@ -6,6 +6,7 @@ namespace App\Helpers;
 use App\Models\Producto;
 use App\Models\Color;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ProductoHelper
 {
@@ -151,57 +152,103 @@ class ProductoHelper
     }
 
     /**
-     * Obtiene la imagen del producto
+     * Obtiene la imagen del producto - VERSIÓN CORREGIDA PARA PRODUCCIÓN
      */
     public static function obtenerImagenProducto($codigo)
     {
+        // Limpiar el código (NO forzar mayúsculas/minúsculas)
+        $codigoOriginal = trim($codigo);
+        
         // Intentar con caché para no buscar en disco siempre
-        return Cache::remember("producto_img_{$codigo}", 3600, function() use ($codigo) {
-            $codigoLimpio = strtoupper(trim($codigo));
+        $cacheKey = "producto_img_" . md5($codigoOriginal);
+        
+        return Cache::remember($cacheKey, 3600, function() use ($codigoOriginal) {
             
-            // Rutas posibles
-            $rutas = [
-                public_path('assets/img/productos/'),
-                public_path('assets/img/products/'),
-                public_path('storage/productos/')
-            ];
+            // Ruta principal
+            $rutaPrincipal = public_path('assets/img/productos/');
             
             // Extensiones posibles
-            $extensiones = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+            $extensiones = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             
-            // Buscar imagen específica por código
-            foreach ($rutas as $ruta) {
-                foreach ($extensiones as $ext) {
-                    if (file_exists($ruta . $codigoLimpio . $ext)) {
-                        return asset('assets/img/productos/' . $codigoLimpio . $ext);
-                    }
+            // ===== 1. BUSCAR CON EL NOMBRE EXACTO (como se guardó) =====
+            foreach ($extensiones as $ext) {
+                $archivo = $rutaPrincipal . $codigoOriginal . '.' . $ext;
+                if (file_exists($archivo)) {
+                    return asset('assets/img/productos/' . $codigoOriginal . '.' . $ext);
                 }
             }
             
-            // Si no encuentra, buscar por tipo
+            // ===== 2. BUSCAR EN MAYÚSCULAS (por si acaso) =====
+            $codigoUpper = strtoupper($codigoOriginal);
+            foreach ($extensiones as $ext) {
+                $archivo = $rutaPrincipal . $codigoUpper . '.' . $ext;
+                if (file_exists($archivo)) {
+                    return asset('assets/img/productos/' . $codigoUpper . '.' . $ext);
+                }
+            }
+            
+            // ===== 3. BUSCAR EN MINÚSCULAS (por si acaso) =====
+            $codigoLower = strtolower($codigoOriginal);
+            foreach ($extensiones as $ext) {
+                $archivo = $rutaPrincipal . $codigoLower . '.' . $ext;
+                if (file_exists($archivo)) {
+                    return asset('assets/img/productos/' . $codigoLower . '.' . $ext);
+                }
+            }
+            
+            // ===== 4. BUSCAR POR TIPO (con diferentes variaciones) =====
             $tipos = [
-                'TIN-' => 'tinaco',
-                'BALA-' => 'tinaco-bala',
-                'CIS-' => 'cisterna',
-                'ACC-' => 'accesorio',
-                'DISP-' => 'dispensador',
-                'TOL-' => 'tolva'
+                'TIN-' => ['tinaco', 'TINACO', 'Tinaco'],
+                'BALA-' => ['tinaco-bala', 'BALA', 'bala', 'tinacobala'],
+                'CIS-' => ['cisterna', 'CISTERNA', 'Cisterna'],
+                'ACC-' => ['accesorio', 'ACCESORIO', 'Accesorio'],
+                'DISP-' => ['dispensador', 'DISPENSADOR', 'Dispensador'],
+                'TOL-' => ['tolva', 'TOLVA', 'Tolva']
             ];
             
-            foreach ($tipos as $prefijo => $tipo) {
-                if (strpos($codigoLimpio, $prefijo) === 0) {
-                    foreach ($rutas as $ruta) {
+            foreach ($tipos as $prefijo => $nombres) {
+                if (strpos($codigoOriginal, $prefijo) === 0 || 
+                    strpos($codigoUpper, $prefijo) === 0 || 
+                    strpos($codigoLower, $prefijo) === 0) {
+                    
+                    foreach ($nombres as $nombre) {
                         foreach ($extensiones as $ext) {
-                            if (file_exists($ruta . $tipo . $ext)) {
-                                return asset('assets/img/productos/' . $tipo . $ext);
+                            $archivo = $rutaPrincipal . $nombre . '.' . $ext;
+                            if (file_exists($archivo)) {
+                                return asset('assets/img/productos/' . $nombre . '.' . $ext);
                             }
                         }
                     }
                 }
             }
             
-            // Placeholder por defecto
-            return asset('assets/img/productos/placeholder.jpg');
+            // ===== 5. BUSCAR CUALQUIER ARCHIVO QUE CONTENGA EL CÓDIGO =====
+            if (is_dir($rutaPrincipal)) {
+                $archivos = scandir($rutaPrincipal);
+                foreach ($archivos as $archivo) {
+                    if ($archivo != '.' && $archivo != '..') {
+                        $info = pathinfo($archivo);
+                        $nombreSinExt = $info['filename'];
+                        
+                        // Si el nombre del archivo contiene parte del código
+                        if (stripos($nombreSinExt, substr($codigoOriginal, 0, 6)) !== false ||
+                            stripos($codigoOriginal, $nombreSinExt) !== false) {
+                            return asset('assets/img/productos/' . $archivo);
+                        }
+                    }
+                }
+            }
+            
+            // ===== 6. PLACEHOLDER POR DEFECTO =====
+            $placeholders = ['placeholder.jpg', 'default.jpg', 'no-image.jpg', 'producto-default.jpg'];
+            foreach ($placeholders as $placeholder) {
+                if (file_exists($rutaPrincipal . $placeholder)) {
+                    return asset('assets/img/productos/' . $placeholder);
+                }
+            }
+            
+            // Último recurso: logo de la empresa
+            return asset('assets/img/logo.jpeg');
         });
     }
 
@@ -253,8 +300,38 @@ class ProductoHelper
         return $stock >= $cantidad;
     }
 
+    /**
+     * Formatea porcentaje sin decimales
+     */
     public static function formatoPorcentaje($porcentaje)
     {
         return intval($porcentaje);
+    }
+
+    /**
+     * MÉTODO DE DIAGNÓSTICO - Solo para depuración
+     */
+    public static function diagnosticarImagen($codigo)
+    {
+        $resultado = [
+            'codigo' => $codigo,
+            'pasos' => [],
+            'archivos_encontrados' => []
+        ];
+        
+        $rutaPrincipal = public_path('assets/img/productos/');
+        $resultado['pasos'][] = "Ruta: " . $rutaPrincipal;
+        $resultado['pasos'][] = "Carpeta existe: " . (is_dir($rutaPrincipal) ? 'Sí' : 'No');
+        
+        if (is_dir($rutaPrincipal)) {
+            $archivos = scandir($rutaPrincipal);
+            foreach ($archivos as $archivo) {
+                if ($archivo != '.' && $archivo != '..') {
+                    $resultado['archivos_encontrados'][] = $archivo;
+                }
+            }
+        }
+        
+        return $resultado;
     }
 }
