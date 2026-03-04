@@ -220,28 +220,6 @@
             border-radius: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
-                }
-        
-        /* Scrollbar Personalizado -  */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--light-gray);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-    
         
         .empty-state-icon {
             font-size: 3rem;
@@ -294,6 +272,26 @@
             border: 1px solid var(--light-gray) !important;
             border-radius: 6px !important;
             padding: 0.6rem 1.5rem !important;
+        }
+        
+        /* Scrollbar Personalizado */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--light-gray);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
         }
         
         @media (max-width: 1200px) {
