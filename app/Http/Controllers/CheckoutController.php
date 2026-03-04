@@ -39,7 +39,15 @@ class CheckoutController extends Controller
         }
 
         foreach ($cart as $id => $item) {
-            $cantidad = is_array($item) ? $item['cantidad'] : $item;
+            // Verificar si el item es array (nuevo formato) o simple (formato antiguo)
+            if (is_array($item)) {
+                $cantidad = $item['cantidad'];
+                $precio = $item['precio']; // Precio ya con descuento
+            } else {
+                $cantidad = $item;
+                $precio = null; // Se obtendrá del producto
+            }
+            
             $producto = Producto::with(['categoria', 'color'])->find($id);
             
             if ($producto) {
@@ -55,12 +63,39 @@ class CheckoutController extends Controller
                         "No hay suficiente stock de {$producto->nombre}. Disponible: {$existencias}");
                 }
                 
-                $subtotal = $producto->precio * $cantidad;
+
+                $ofertaActiva = $producto->ofertas()
+                    ->where('activa', true)
+                    ->where('fecha_inicio', '<=', now())
+                    ->where('fecha_fin', '>=', now())
+                    ->first();
+
+                $tieneOferta = !is_null($ofertaActiva);
+                $precioOriginal = (float)$producto->precio;
+                $precioFinal = $precio ?? $precioOriginal;
+                $ahorro = 0;
+                $descuentoTexto = null;
+
+                if ($tieneOferta && $precioFinal < $precioOriginal) {
+                    $ahorro = $precioOriginal - $precioFinal;
+                    if ($ofertaActiva->tipo === 'porcentaje') {
+                        // 🔥 AQUÍ EL CAMBIO: round() elimina los decimales
+                        $descuentoTexto = '-' . round($ofertaActiva->valor) . '%';
+                    } else {
+                        $descuentoTexto = '-$' . number_format($ofertaActiva->valor, 0);
+                    }
+                }
+                
+                $subtotal = $precioFinal * $cantidad;
                 
                 $productosCarrito->push([
                     'id' => $producto->id,
                     'nombre' => $producto->nombre,
-                    'precio' => $producto->precio,
+                    'precio' => $precioFinal,
+                    'precio_original' => $precioOriginal,
+                    'tiene_oferta' => $tieneOferta,
+                    'descuento_texto' => $descuentoTexto,
+                    'ahorro' => $ahorro,
                     'codigo' => $producto->codigo,
                     'litros' => $producto->litros,
                     'cantidad' => $cantidad,
@@ -198,6 +233,7 @@ class CheckoutController extends Controller
         $sucursal = SucursalHelper::getSucursalActual();
         $total = 0;
 
+        // PRIMERO: Verificar stock
         foreach ($cart as $id => $item) {
             $cantidad = is_array($item) ? $item['cantidad'] : $item;
             $producto = Producto::find($id);
@@ -222,8 +258,6 @@ class CheckoutController extends Controller
                     'message' => "Stock insuficiente para {$producto->nombre}"
                 ]);
             }
-            
-            $total += $producto->precio * $cantidad;
         }
 
         try {
@@ -240,7 +274,7 @@ class CheckoutController extends Controller
                 'cliente_ciudad' => $validated['ciudad'],
                 'cliente_estado' => $validated['estado'],
                 'codigo_postal' => $validated['codigo_postal'],
-                'total' => $total,
+                'total' => $total, // Se actualizará después
                 'metodo_pago' => 'en_linea',
                 'pago_confirmado' => false,
                 'estado' => 'pendiente',
@@ -250,22 +284,37 @@ class CheckoutController extends Controller
                 'cobertura_verificada' => true
             ]);
 
+            // SEGUNDO: Crear items con el precio del carrito (ya con descuento)
             foreach ($cart as $id => $item) {
-                $cantidad = is_array($item) ? $item['cantidad'] : $item;
-                $producto = Producto::find($id);
+                // Verificar si el item es array (nuevo formato) o simple (formato antiguo)
+                if (is_array($item)) {
+                    $cantidad = $item['cantidad'];
+                    $precio = $item['precio']; // ← ESTE YA TIENE EL DESCUENTO APLICADO
+                    $producto = Producto::find($id);
+                } else {
+                    $cantidad = $item;
+                    $producto = Producto::find($id);
+                    $precio = $producto->precio; // Fallback para formato antiguo
+                }
                 
                 PedidoItem::create([
                     'pedido_id' => $pedido->id,
                     'producto_id' => $producto->id,
                     'producto_nombre' => $producto->nombre,
                     'cantidad' => $cantidad,
-                    'precio' => $producto->precio
+                    'precio' => $precio // ← USAMOS EL PRECIO DEL CARRITO
                 ]);
 
                 $sucursal->productos()->updateExistingPivot($id, [
                     'existencias' => DB::raw('existencias - ' . $cantidad)
                 ]);
+                
+                // Recalcular total
+                $total += $precio * $cantidad;
             }
+
+            // Actualizar el total del pedido
+            $pedido->update(['total' => $total]);
 
             session()->forget('carrito');
             session()->put('pedido_pendiente', [
@@ -300,7 +349,7 @@ class CheckoutController extends Controller
             ]);
         }
     }
-
+    
     public function pago()
     {
         if (!session()->has('pedido_pendiente')) {

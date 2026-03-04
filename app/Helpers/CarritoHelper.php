@@ -4,6 +4,8 @@
 namespace App\Helpers;
 
 use App\Models\Producto;
+use App\Helpers\SucursalHelper;
+use App\Helpers\ProductoHelper;
 use Illuminate\Support\Facades\Session;
 
 class CarritoHelper
@@ -21,7 +23,7 @@ class CarritoHelper
      */
     public static function formatoPrecio($precio)
     {
-        return '$' . number_format($precio, 2);
+        return '$' . number_format($precio, 2, '.', ',');
     }
 
     /**
@@ -48,6 +50,25 @@ class CarritoHelper
                 'success' => false,
                 'message' => 'Producto no encontrado'
             ];
+        }
+        
+        // Verificar si tiene oferta activa
+        $ofertaActiva = $producto->ofertas()
+            ->where('activa', true)
+            ->where('fecha_inicio', '<=', now())
+            ->where('fecha_fin', '>=', now())
+            ->first();
+        
+        $tieneOferta = !is_null($ofertaActiva);
+        $precioOriginal = (float)$producto->precio;
+        $precioFinal = $precioOriginal;
+        
+        if ($tieneOferta) {
+            if ($ofertaActiva->tipo === 'porcentaje') {
+                $precioFinal = $precioOriginal * (1 - $ofertaActiva->valor / 100);
+            } else {
+                $precioFinal = $precioOriginal - $ofertaActiva->valor;
+            }
         }
         
         // OBTENER STOCK REAL EN SUCURSAL
@@ -80,14 +101,17 @@ class CarritoHelper
                 'id' => $productoId,
                 'codigo' => $producto->codigo,
                 'nombre' => $producto->nombre,
-                'precio' => $producto->precio_final,
-                'precio_original' => $producto->precio,
+                'precio' => $precioFinal,
+                'precio_original' => $precioOriginal,
                 'cantidad' => $cantidad,
-                'color' => $variante['nombre'],
-                'color_hex' => $variante['hex'],
-                'imagen' => ProductoHelper::obtenerImagenProducto($producto->codigo),
-                'en_oferta' => $producto->en_oferta,
-                'descuento' => $producto->porcentaje_descuento,
+                'color' => $variante['nombre'] ?? 'Sin color',
+                'color_hex' => $variante['hex'] ?? '#000000',
+                'imagen' => self::obtenerImagenProducto($producto->codigo),
+                'tiene_oferta' => $tieneOferta,
+                'tipo_oferta' => $tieneOferta ? $ofertaActiva->tipo : null,
+                'valor_oferta' => $tieneOferta ? $ofertaActiva->valor : null,
+                'descuento_texto' => $tieneOferta ? 
+                    ($ofertaActiva->tipo === 'porcentaje' ? '-' . $ofertaActiva->valor . '%' : '-$' . number_format($ofertaActiva->valor, 0)) : null,
                 'litros' => $producto->litros
             ];
         }
@@ -111,7 +135,9 @@ class CarritoHelper
         $total = 0;
         
         foreach ($carrito as $item) {
-            $total += $item['precio'] * $item['cantidad'];
+            $precio = $item['precio'] ?? 0;
+            $cantidad = $item['cantidad'] ?? 0;
+            $total += $precio * $cantidad;
         }
         
         return $total;
@@ -169,56 +195,102 @@ class CarritoHelper
 
     /**
      * Obtiene los productos del carrito con datos completos para la vista
+     * ✅ VERSIÓN ÚNICA Y CORREGIDA
      */
-    public static function getProductosCarrito($sucursal)
+    public static function getProductosCarrito($sucursal = null)
     {
-        $carrito = self::getCarrito();
-        $productosCarrito = collect();
+        $cart = self::getCarrito();
+        $productos = collect();
         $total = 0;
+        $cartCount = 0;
         
-        if (!empty($carrito)) {
-            foreach ($carrito as $id => $item) {
-                $producto = Producto::with(['categoria', 'color', 'ofertas'])->find($id);
-                
-                if ($producto) {
-                    $stock = $sucursal->productos()
-                        ->where('productos.id', $id)
-                        ->withPivot('existencias')
-                        ->first();
-                    
-                    $existencias = $stock ? (int)$stock->pivot->existencias : 0;
-                    
-                    $precio_original = (float)$producto->precio;
-                    $en_oferta = $producto->en_oferta;
-                    $precio_final = $producto->precio_final;
-                    $porcentaje_descuento = $producto->porcentaje_descuento;
-                    
-                    $precio_a_usar = $en_oferta ? $precio_final : $precio_original;
-                    $subtotal = $precio_a_usar * $item['cantidad'];
-                    
-                    $productosCarrito->push([
-                        'id' => $producto->id,
-                        'nombre' => $producto->nombre,
-                        'precio' => $precio_a_usar,
-                        'precio_original' => $precio_original,
-                        'en_oferta' => $en_oferta,
-                        'porcentaje_descuento' => $porcentaje_descuento,
-                        'codigo' => $producto->codigo,
-                        'litros' => $producto->litros,
-                        'existencias' => $existencias,
-                        'cantidad' => $item['cantidad'],
-                        'subtotal' => $subtotal
-                    ]);
-                    
-                    $total += $subtotal;
-                }
+        foreach ($cart as $id => $item) {
+            $cantidad = is_array($item) ? ($item['cantidad'] ?? 1) : $item;
+            
+            // Buscar producto con sus relaciones
+            $producto = Producto::with(['categoria', 'color'])->find($id);
+            
+            if (!$producto) {
+                // Si el producto no existe, lo eliminamos del carrito
+                self::eliminar($id);
+                continue;
             }
+            
+            // Verificar stock en sucursal
+            $existencias = 0;
+            if ($sucursal) {
+                $stock = $sucursal->productos()
+                    ->where('productos.id', $id)
+                    ->withPivot('existencias')
+                    ->first();
+                $existencias = $stock ? (int)$stock->pivot->existencias : 0;
+            }
+            
+            // Verificar si tiene oferta activa
+            $ofertaActiva = $producto->ofertas()
+                ->where('activa', true)
+                ->where('fecha_inicio', '<=', now())
+                ->where('fecha_fin', '>=', now())
+                ->first();
+            
+            $tieneOferta = !is_null($ofertaActiva);
+            $precioOriginal = (float)$producto->precio;
+            $precioFinal = $precioOriginal;
+            $descuentoTexto = null;
+            $ahorro = 0;
+            
+            if ($tieneOferta) {
+                $tipoOferta = $ofertaActiva->tipo;
+                $valorOferta = (float)$ofertaActiva->valor;
+                
+                if ($tipoOferta === 'porcentaje') {
+                    $precioFinal = $precioOriginal * (1 - $valorOferta / 100);
+                    $descuentoTexto = '-' . $valorOferta . '%';
+                } else { // fijo
+                    $precioFinal = $precioOriginal - $valorOferta;
+                    $descuentoTexto = '-$' . number_format($valorOferta, 0, '.', ',');
+                }
+                
+                $ahorro = $precioOriginal - $precioFinal;
+            }
+            
+            // Usar el precio del carrito si existe (por si ya tenía descuento)
+            $precioMostrar = $precioFinal;
+            if (is_array($item) && isset($item['precio'])) {
+                $precioMostrar = (float)$item['precio'];
+            }
+            
+            $subtotal = $precioMostrar * $cantidad;
+            
+            $productos->push([
+                'id' => $producto->id,
+                'nombre' => $producto->nombre,
+                'precio' => $precioMostrar,
+                'precio_original' => $precioOriginal,
+                'codigo' => $producto->codigo,
+                'litros' => $producto->litros,
+                'cantidad' => $cantidad,
+                'subtotal' => $subtotal,
+                'existencias' => $existencias,
+                // Campos de oferta
+                'tiene_oferta' => $tieneOferta,
+                'tipo_oferta' => $tieneOferta ? $ofertaActiva->tipo : null,
+                'valor_oferta' => $tieneOferta ? (float)$ofertaActiva->valor : null,
+                'descuento_texto' => $descuentoTexto,
+                'ahorro' => $ahorro,
+                'porcentaje_ahorro' => $tieneOferta && $ofertaActiva->tipo === 'porcentaje' ? 
+                    (float)$ofertaActiva->valor : 
+                    ($ahorro > 0 ? round(($ahorro / $precioOriginal) * 100) : 0)
+            ]);
+            
+            $total += $subtotal;
+            $cartCount += $cantidad;
         }
         
         return [
-            'productos' => $productosCarrito,
+            'productos' => $productos,
             'total' => $total,
-            'cartCount' => self::getCartCount()
+            'cartCount' => $cartCount
         ];
     }
 }

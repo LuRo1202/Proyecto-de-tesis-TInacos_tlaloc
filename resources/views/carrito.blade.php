@@ -21,6 +21,7 @@
     <link rel="icon" href="{{ asset('assets/img/logo.jpeg') }}">
     
     <style>
+        /* Estilos existentes */
         .quantity-input {
             -moz-appearance: textfield;
             appearance: textfield;
@@ -37,6 +38,102 @@
             background-color: #f5f5f5 !important;
             opacity: 0.7;
             cursor: not-allowed;
+        }
+        
+        /* ===== NUEVOS ESTILOS PARA OFERTAS ===== */
+        .offer-badge {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 3px 10px rgba(255, 71, 87, 0.3);
+            z-index: 10;
+            animation: pulse-offer 2s infinite;
+        }
+
+        @keyframes pulse-offer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .price-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .current-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #7fad39;
+        }
+
+        .original-price {
+            font-size: 0.9rem;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .savings-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Para móvil */
+        .offer-badge-small {
+            background: #ff4757;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+        }
+
+        .price-container-mobile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .current-price-mobile {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #7fad39;
+        }
+
+        .original-price-mobile {
+            font-size: 0.9rem;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .savings-tooltip {
+            background: #f0f9ff;
+            border-left: 3px solid #7fad39;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #2e7d32;
+        }
+
+        .savings-tooltip i {
+            color: #7fad39;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -281,13 +378,21 @@
                                         <tbody>
                                             @foreach($productosCarrito as $item)
                                             <tr>
+                                                {{-- COLUMNA PRODUCTO CON BADGE DE OFERTA --}}
                                                 <td class="ps-4 py-4">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="me-3">
+                                                    <div class="d-flex align-items-center position-relative">
+                                                        <div class="me-3 position-relative">
                                                             <img src="{{ CarritoHelper::obtenerImagenProducto($item['codigo']) }}" 
                                                                  alt="{{ $item['nombre'] }}" 
                                                                  class="rounded border" 
                                                                  style="width: 80px; height: 80px; object-fit: contain;">
+                                                            
+                                                            {{-- BADGE DE OFERTA --}}
+                                                            @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                                            <div class="offer-badge">
+                                                                <i class="fas fa-bolt"></i> {{ $item['descuento_texto'] ?? 'Oferta' }}
+                                                            </div>
+                                                            @endif
                                                         </div>
                                                         <div>
                                                             <h6 class="mb-1 fw-semibold">{{ $item['nombre'] }}</h6>
@@ -297,12 +402,36 @@
                                                             <p class="text-muted small mb-0">
                                                                 <i class="fas fa-tint me-1"></i>{{ $item['litros'] }} litros
                                                             </p>
+                                                            
+                                                            {{-- MOSTRAR AHORRO EN DESKTOP --}}
+                                                            @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'] && !empty($item['ahorro']) && $item['ahorro'] > 0)
+                                                            <div class="savings-tooltip d-none d-lg-block mt-2">
+                                                                <i class="fas fa-leaf"></i>
+                                                                <strong>Ahorras: {{ CarritoHelper::formatoPrecio($item['ahorro']) }}</strong>
+                                                            </div>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </td>
+                                                
+                                                {{-- COLUMNA PRECIO CON OFERTA --}}
                                                 <td class="text-center py-4">
+                                                    @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                                    <div class="price-container">
+                                                        <span class="current-price">{{ CarritoHelper::formatoPrecio($item['precio']) }}</span>
+                                                        <span class="original-price">{{ CarritoHelper::formatoPrecio($item['precio_original']) }}</span>
+                                                        @if(!empty($item['descuento_texto']))
+                                                        <span class="savings-badge">
+                                                            <i class="fas fa-tag me-1"></i>{{ $item['descuento_texto'] }}
+                                                        </span>
+                                                        @endif
+                                                    </div>
+                                                    @else
                                                     <div class="h5 mb-0 fw-bold text-primary">{{ CarritoHelper::formatoPrecio($item['precio']) }}</div>
+                                                    @endif
                                                 </td>
+                                                
+                                                {{-- COLUMNA CANTIDAD --}}
                                                 <td class="text-center py-4">
                                                     <div style="max-width: 120px; margin: 0 auto;">
                                                         <input type="number" 
@@ -318,9 +447,13 @@
                                                         </small>
                                                     </div>
                                                 </td>
+                                                
+                                                {{-- COLUMNA SUBTOTAL --}}
                                                 <td class="text-center py-4">
                                                     <div class="h5 mb-0 fw-bold text-success">{{ CarritoHelper::formatoPrecio($item['subtotal']) }}</div>
                                                 </td>
+                                                
+                                                {{-- COLUMNA ELIMINAR --}}
                                                 <td class="text-center py-4">
                                                     <a href="{{ route('carrito.eliminar', $item['id']) }}" 
                                                        class="btn btn-sm btn-outline-danger btn-remove"
@@ -335,24 +468,46 @@
                                     </table>
                                 </div>
                                 
-                                <!-- VERSIÓN MÓVIL -->
+                                <!-- VERSIÓN MÓVIL CON OFERTAS -->
                                 <div class="d-block d-lg-none">
                                     @foreach($productosCarrito as $item)
                                     <div class="border-bottom p-3">
                                         <div class="row g-3">
+                                            {{-- IMAGEN CON BADGE --}}
                                             <div class="col-4">
-                                                <img src="{{ CarritoHelper::obtenerImagenProducto($item['codigo']) }}" 
-                                                     alt="{{ $item['nombre'] }}" 
-                                                     class="img-fluid rounded border">
+                                                <div class="position-relative">
+                                                    <img src="{{ CarritoHelper::obtenerImagenProducto($item['codigo']) }}" 
+                                                         alt="{{ $item['nombre'] }}" 
+                                                         class="img-fluid rounded border">
+                                                    
+                                                    {{-- BADGE DE OFERTA MÓVIL --}}
+                                                    @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                                    <span class="offer-badge-small">
+                                                        {{ $item['descuento_texto'] ?? 'Oferta' }}
+                                                    </span>
+                                                    @endif
+                                                </div>
                                             </div>
+                                            
+                                            {{-- INFORMACIÓN DEL PRODUCTO --}}
                                             <div class="col-8">
                                                 <h6 class="fw-bold mb-1">{{ $item['nombre'] }}</h6>
                                                 <p class="text-muted small mb-2">
                                                     <i class="fas fa-barcode me-1"></i>{{ $item['codigo'] }}
                                                 </p>
                                                 
+                                                {{-- PRECIO Y ELIMINAR --}}
                                                 <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    {{-- PRECIO MÓVIL CON OFERTA --}}
+                                                    @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                                    <div class="price-container-mobile">
+                                                        <span class="current-price-mobile">{{ CarritoHelper::formatoPrecio($item['precio']) }}</span>
+                                                        <span class="original-price-mobile">{{ CarritoHelper::formatoPrecio($item['precio_original']) }}</span>
+                                                    </div>
+                                                    @else
                                                     <div class="h5 mb-0 fw-bold text-primary">{{ CarritoHelper::formatoPrecio($item['precio']) }}</div>
+                                                    @endif
+                                                    
                                                     <a href="{{ route('carrito.eliminar', $item['id']) }}" 
                                                        class="btn btn-sm btn-outline-danger btn-remove-mobile"
                                                        data-producto="{{ $item['nombre'] }}">
@@ -360,6 +515,15 @@
                                                     </a>
                                                 </div>
                                                 
+                                                {{-- MOSTRAR AHORRO EN MÓVIL --}}
+                                                @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'] && !empty($item['ahorro']) && $item['ahorro'] > 0)
+                                                <div class="savings-tooltip mb-2">
+                                                    <i class="fas fa-leaf"></i>
+                                                    <strong>Ahorras: {{ CarritoHelper::formatoPrecio($item['ahorro']) }}</strong>
+                                                </div>
+                                                @endif
+                                                
+                                                {{-- CANTIDAD Y SUBTOTAL --}}
                                                 <div class="d-flex align-items-center justify-content-between">
                                                     <div style="width: 140px;">
                                                         <input type="number" 
@@ -417,6 +581,11 @@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div class="text-truncate" style="max-width: 70%;">
                                         <small class="text-muted">{{ $item['nombre'] }}</small>
+                                        @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                        <small class="text-success ms-1">
+                                            <i class="fas fa-tag"></i>
+                                        </small>
+                                        @endif
                                     </div>
                                     <div>
                                         <small class="text-muted">{{ $item['cantidad'] }} × {{ CarritoHelper::formatoPrecio($item['precio']) }}</small>
@@ -424,6 +593,23 @@
                                 </div>
                                 @endforeach
                             </div>
+                            
+                            {{-- CALCULAR Y MOSTRAR AHORRO TOTAL --}}
+                            @php
+                                $ahorroTotal = 0;
+                                foreach($productosCarrito as $item) {
+                                    if(!empty($item['tiene_oferta']) && $item['tiene_oferta'] && !empty($item['ahorro'])) {
+                                        $ahorroTotal += $item['ahorro'] * $item['cantidad'];
+                                    }
+                                }
+                            @endphp
+                            
+                            @if($ahorroTotal > 0)
+                            <div class="d-flex justify-content-between align-items-center mb-2 text-success">
+                                <span><i class="fas fa-leaf me-1"></i>Total ahorrado</span>
+                                <span class="fw-bold">{{ CarritoHelper::formatoPrecio($ahorroTotal) }}</span>
+                            </div>
+                            @endif
                             
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -442,13 +628,10 @@
                             
                             <div class="d-grid gap-3">
                                 @auth('cliente')
-                                    <!-- DEBUG: Cliente logueado: {{ auth('cliente')->user()->email }} -->
                                     <a href="{{ route('cliente.checkout') }}" class="btn btn-primary btn-lg py-3 fw-bold">
                                         <i class="fas fa-credit-card me-2"></i>Continuar al Pago
                                     </a>
                                 @else
-                                    <!-- DEBUG: NO hay cliente logueado -->
-                                    {{-- Si no es cliente, va al login --}}
                                     <a href="{{ route('login') }}" class="btn btn-primary btn-lg py-3 fw-bold">
                                         <i class="fas fa-sign-in-alt me-2"></i>Inicia sesión para comprar
                                     </a>

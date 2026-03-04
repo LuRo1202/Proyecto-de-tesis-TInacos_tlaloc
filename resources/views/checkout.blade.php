@@ -28,6 +28,7 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     
     <style>
+        /* Estilos existentes */
         .cobertura-success {
             background: #d4edda;
             border: 1px solid #c3e6cb;
@@ -198,12 +199,106 @@
             color: #28a745;
             width: 20px;
         }
+        
+        /* ===== NUEVOS ESTILOS PARA OFERTAS EN CHECKOUT ===== */
+        .offer-badge-small {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-left: 5px;
+            animation: pulse-offer 2s infinite;
+        }
+        
+        @keyframes pulse-offer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .price-container-checkout {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+        
+        .current-price-checkout {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #7fad39;
+        }
+        
+        .original-price-checkout {
+            font-size: 0.8rem;
+            color: #999;
+            text-decoration: line-through;
+        }
+        
+        .savings-tag {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+        
+        .order-item {
+            position: relative;
+        }
+        
+        .order-item-img {
+            position: relative;
+        }
+        
+        .offer-badge-image {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(255, 71, 87, 0.3);
+            z-index: 5;
+        }
+        
+        .order-item-info h6 {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        /* Estilo para el resumen de ahorro */
+        .savings-summary {
+            background: #f0f9ff;
+            border-left: 3px solid #7fad39;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #2e7d32;
+        }
+        
+        .savings-summary i {
+            color: #7fad39;
+            margin-right: 5px;
+        }
     </style>
 </head>
 
 <body>
-    <!-- Header (TU DISEÑO ORIGINAL) -->
-<nav class="navbar navbar-expand-lg navbar-light main-navbar sticky-top">
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-light main-navbar sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tinacos Tlaloc" style="height: 50px;">
@@ -237,12 +332,10 @@
                 </ul>
                 
                 <div class="d-none d-lg-flex align-items-center">
-                    {{-- Verificar si hay alguien logueado (admin o cliente) --}}
                     @if(auth('web')->check() || auth('cliente')->check())
                         <div class="dropdown me-3">
                             <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user me-2"></i>
-                                {{-- Mostrar nombre según quien esté logueado --}}
                                 @auth('web')
                                     {{ auth('web')->user()->nombre }}
                                 @elseauth('cliente')
@@ -361,9 +454,7 @@
                             <i class="fas fa-truck me-2"></i>Información de Envío y Cobertura
                         </h4>
                         
-                     
-                        
-                        <!-- ✅ MENSAJES DE COBERTURA -->
+                        <!-- MENSAJES DE COBERTURA -->
                         <div id="cobertura-success" class="cobertura-success" style="display: none;">
                             <div class="d-flex align-items-center mb-3">
                                 <i class="fas fa-check-circle fs-1 me-3" style="color: #28a745;"></i>
@@ -389,7 +480,7 @@
                             </div>
                         </div>
                         
-                        <!-- ✅ Mostrar cobertura guardada en sesión -->
+                        <!-- Mostrar cobertura guardada en sesión -->
                         @if(session('cobertura_verificada') && session('cobertura_verificada.valido'))
                         <div class="cobertura-verificada-box" id="cobertura-session-box">
                             <h5>
@@ -525,7 +616,6 @@
                                             <option value="CDMX" {{ old('estado', session('cobertura_verificada.estado') ?? $cliente->estado) == 'CDMX' ? 'selected' : '' }}>Ciudad de México</option>
                                             <option value="San Luis Potosí" {{ old('estado', session('cobertura_verificada.estado') ?? $cliente->estado) == 'San Luis Potosí' ? 'selected' : '' }}>San Luis Potosí</option>
                                             <option value="Nuevo León" {{ old('estado', session('cobertura_verificada.estado') ?? $cliente->estado) == 'Nuevo León' ? 'selected' : '' }}>Nuevo León</option>
-                                        
                                         </select>
                                         @error('estado')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -615,7 +705,7 @@
                     </form>
                 </div>
                 
-                <!-- Resumen del pedido -->
+                <!-- Resumen del pedido con OFERTAS -->
                 <div class="col-lg-4">
                     <div class="order-summary-card">
                         <h4 class="order-title">
@@ -625,22 +715,83 @@
                         <div class="order-items">
                             @foreach($productosCarrito as $item)
                             <div class="order-item">
-                                <div class="order-item-img">
+                                <div class="order-item-img position-relative">
                                     <img src="{{ ProductoHelper::obtenerImagenProducto($item['codigo']) }}" 
                                          alt="{{ $item['nombre'] }}"
                                          loading="lazy">
+                                    
+                                    {{-- BADGE DE OFERTA EN LA IMAGEN --}}
+                                    @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                    <span class="offer-badge-image">
+                                        <i class="fas fa-bolt"></i> {{ $item['descuento_texto'] ?? 'Oferta' }}
+                                    </span>
+                                    @endif
                                 </div>
                                 <div class="order-item-info">
-                                    <h6>{{ $item['nombre'] }}</h6>
+                                    <h6>
+                                        {{ $item['nombre'] }}
+                                        @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'])
+                                        <span class="offer-badge-small">{{ $item['descuento_texto'] ?? 'Oferta' }}</span>
+                                        @endif
+                                    </h6>
                                     <small>Código: {{ $item['codigo'] }} | {{ $item['litros'] }}L</small>
+                                    
+                                    {{-- MOSTRAR PRECIO UNITARIO CON OFERTA --}}
+                                    @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'] && !empty($item['precio_original']) && $item['precio_original'] > $item['precio'])
+                                    <div class="mt-1">
+                                        <small class="text-muted text-decoration-line-through me-1">
+                                            {{ CarritoHelper::formatoPrecio($item['precio_original']) }}
+                                        </small>
+                                        <small class="text-success fw-bold">
+                                            {{ CarritoHelper::formatoPrecio($item['precio']) }} c/u
+                                        </small>
+                                    </div>
+                                    @else
+                                    <div class="mt-1">
+                                        <small class="text-muted">{{ CarritoHelper::formatoPrecio($item['precio']) }} c/u</small>
+                                    </div>
+                                    @endif
+                                    
                                     <p class="mb-0">Cantidad: {{ $item['cantidad'] }}</p>
                                 </div>
                                 <div class="order-item-price">
+                                    @if(!empty($item['tiene_oferta']) && $item['tiene_oferta'] && !empty($item['precio_original']) && $item['precio_original'] > $item['precio'])
+                                    <div class="price-container-checkout">
+                                        <span class="current-price-checkout">{{ CarritoHelper::formatoPrecio($item['subtotal']) }}</span>
+                                        <span class="original-price-checkout">
+                                            {{ CarritoHelper::formatoPrecio($item['precio_original'] * $item['cantidad']) }}
+                                        </span>
+                                        @if(!empty($item['ahorro']) && $item['ahorro'] > 0)
+                                        <span class="savings-tag">
+                                            <i class="fas fa-leaf"></i> Ahorras {{ CarritoHelper::formatoPrecio($item['ahorro'] * $item['cantidad']) }}
+                                        </span>
+                                        @endif
+                                    </div>
+                                    @else
                                     {{ CarritoHelper::formatoPrecio($item['subtotal']) }}
+                                    @endif
                                 </div>
                             </div>
                             @endforeach
                         </div>
+                        
+                        {{-- CALCULAR Y MOSTRA AHORRO TOTAL --}}
+                        @php
+                            $ahorroTotal = 0;
+                            foreach($productosCarrito as $item) {
+                                if(!empty($item['tiene_oferta']) && $item['tiene_oferta'] && !empty($item['ahorro'])) {
+                                    $ahorroTotal += $item['ahorro'] * $item['cantidad'];
+                                }
+                            }
+                        @endphp
+                        
+                        @if($ahorroTotal > 0)
+                        <div class="savings-summary">
+                            <i class="fas fa-leaf"></i>
+                            <strong>¡Felicidades! Ahorras {{ CarritoHelper::formatoPrecio($ahorroTotal) }}</strong>
+                            <small class="d-block text-muted">en esta compra</small>
+                        </div>
+                        @endif
                         
                         <div class="order-totals">
                             <div class="total-row">
@@ -764,7 +915,8 @@
     </script>
 
     <script src="{{ asset('assets/js/checkout_maps.js') }}"></script>
-        <!-- Mensaje de bienvenida con SweetAlert (se ejecutará al cargar la página) -->
+    
+    <!-- Mensaje de bienvenida con SweetAlert -->
     <script>
         $(document).ready(function() {
             Swal.fire({
