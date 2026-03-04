@@ -30,7 +30,13 @@ class Pedido extends Model
         'notas',
         'sucursal_id',
         'distancia_km',
-        'cobertura_verificada'
+        'cobertura_verificada',
+        // 🔥 NUEVOS CAMPOS DE MERCADO PAGO
+        'mp_preference_id',
+        'mp_payment_id',
+        'mp_status',
+        'mp_status_detail',
+        'mp_response'
     ];
 
     protected $casts = [
@@ -40,7 +46,9 @@ class Pedido extends Model
         'pago_confirmado' => 'boolean',
         'cobertura_verificada' => 'boolean',
         'total' => 'decimal:2',
-        'distancia_km' => 'decimal:2'
+        'distancia_km' => 'decimal:2',
+        // 🔥 NUEVO: mp_response como array
+        'mp_response' => 'array'
     ];
 
     // Relación con cliente
@@ -73,6 +81,37 @@ class Pedido extends Model
         return $this->belongsToMany(Usuario::class, 'pedido_responsables', 'pedido_id', 'usuario_id')
                     ->withPivot('fecha_asignacion')
                     ->withTimestamps();
+    }
+
+    // 🔥 NUEVOS MÉTODOS PARA MERCADO PAGO
+    public function pagoAprobado(): bool
+    {
+        return $this->mp_status === 'approved';
+    }
+
+    public function pagoPendiente(): bool
+    {
+        return in_array($this->mp_status, ['pending', 'in_process']);
+    }
+
+    public function pagoRechazado(): bool
+    {
+        return in_array($this->mp_status, ['rejected', 'cancelled']);
+    }
+
+    public function getMpStatusTextAttribute(): string
+    {
+        $statuses = [
+            'approved' => 'Aprobado',
+            'pending' => 'Pendiente',
+            'in_process' => 'En proceso',
+            'rejected' => 'Rechazado',
+            'cancelled' => 'Cancelado',
+            'refunded' => 'Reembolsado',
+            'charged_back' => 'Contracargo'
+        ];
+
+        return $statuses[$this->mp_status] ?? 'Desconocido';
     }
 
     // Verificar si tiene cliente registrado

@@ -156,7 +156,7 @@ Route::prefix('cliente')
     Route::post('/checkout/verificar-cobertura', [CheckoutController::class, 'verificarCobertura'])->name('checkout.verificar-cobertura');
     Route::post('/checkout/procesar', [CheckoutController::class, 'procesar'])->name('checkout.procesar');
     Route::post('/checkout/limpiar-cobertura', [CheckoutController::class, 'limpiarCobertura'])->name('checkout.limpiar-cobertura');
-    Route::get('/pago', [CheckoutController::class, 'pago'])->name('pago');
+    
 });
 
 // ===== RUTA DE GRACIAS POR PEDIDO =====
@@ -338,4 +338,14 @@ Route::prefix('vendedor')
     // CATÁLOGO
     Route::get('/catalogo', [App\Http\Controllers\Vendedor\CatalogoController::class, 'index'])->name('catalogo.index');
     Route::get('/producto/{id}/detalles', [App\Http\Controllers\Vendedor\ProductoController::class, 'detalles'])->name('producto.detalles');
+});
+
+
+// Pago
+Route::prefix('pago')->name('pago.')->group(function () {
+    Route::get('/', [App\Http\Controllers\PagoController::class, 'index'])->name('index');
+    Route::post('/webhook', [App\Http\Controllers\PagoController::class, 'webhook'])->name('webhook');
+    Route::get('/success', [App\Http\Controllers\PagoController::class, 'success'])->name('success');
+    Route::get('/failure', [App\Http\Controllers\PagoController::class, 'failure'])->name('failure');
+    Route::get('/pending', [App\Http\Controllers\PagoController::class, 'pending'])->name('pending');
 });

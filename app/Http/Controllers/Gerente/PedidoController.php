@@ -21,20 +21,17 @@ class PedidoController extends Controller
     protected $sucursalId;
     protected $sucursalNombre;
     
-    // CONSTANTES PARA CONTROL DE STOCK
     const ESTADOS_CON_STOCK = ['pendiente', 'confirmado', 'enviado', 'entregado'];
     const ESTADO_SIN_STOCK = 'cancelado';
 
     public function __construct()
     {
-        // Verificar que el usuario es gerente
         $user = auth()->user();
         
         if (!$user || $user->rol !== 'gerente') {
             abort(403, 'Acceso no autorizado - Se requieren permisos de gerente');
         }
         
-        // Obtener la sucursal del gerente desde usuario_sucursal
         $usuarioSucursal = DB::table('usuario_sucursal')
             ->where('usuario_id', $user->id)
             ->first();
@@ -44,21 +41,15 @@ class PedidoController extends Controller
         }
         
         $this->sucursalId = $usuarioSucursal->sucursal_id;
-        
-        // Obtener datos de la sucursal
         $this->sucursal = Sucursal::find($this->sucursalId);
         $this->sucursalNombre = $this->sucursal ? $this->sucursal->nombre : 'Sucursal no encontrada';
         
-        // Guardar en sesión para el sidebar
         session([
             'sucursal_nombre' => $this->sucursalNombre,
             'sucursal_id' => $this->sucursalId
         ]);
     }
 
-    /**
-     * ✅ MÉTODO 1: Verificar si el pedido ya tiene stock descontado
-     */
     private function tieneStockDescontado($pedido)
     {
         return PedidoHistorial::where('pedido_id', $pedido->id)
@@ -66,9 +57,6 @@ class PedidoController extends Controller
             ->exists();
     }
 
-    /**
-     * ✅ MÉTODO 2: Verificar si el pedido ya tiene stock regresado
-     */
     private function tieneStockRegresado($pedido)
     {
         return PedidoHistorial::where('pedido_id', $pedido->id)
@@ -76,9 +64,6 @@ class PedidoController extends Controller
             ->exists();
     }
 
-    /**
-     * ✅ MÉTODO 3: Validar stock suficiente antes de descontar
-     */
     private function validarStockSuficiente($pedido)
     {
         foreach ($pedido->items as $item) {
@@ -94,18 +79,13 @@ class PedidoController extends Controller
         return true;
     }
 
-    /**
-     * ✅ MÉTODO 4: Descontar stock del inventario (con verificación)
-     */
     private function descontarStockSeguro($pedido)
     {
-        // Si ya está descontado, no hacer nada
         if ($this->tieneStockDescontado($pedido)) {
             Log::info("Stock ya descontado para pedido {$pedido->id}");
             return false;
         }
         
-        // Validar stock suficiente
         $this->validarStockSuficiente($pedido);
         
         foreach ($pedido->items as $item) {
@@ -115,7 +95,6 @@ class PedidoController extends Controller
                 ->decrement('existencias', $item->cantidad);
         }
         
-        // Registrar en historial que se descontó stock
         PedidoHistorial::create([
             'pedido_id' => $pedido->id,
             'usuario_id' => auth()->id(),
@@ -128,12 +107,8 @@ class PedidoController extends Controller
         return true;
     }
 
-    /**
-     * ✅ MÉTODO 5: Regresar stock al inventario (con verificación)
-     */
     private function regresarStockSeguro($pedido)
     {
-        // Si ya está regresado, no hacer nada
         if ($this->tieneStockRegresado($pedido)) {
             Log::info("Stock ya regresado para pedido {$pedido->id}");
             return false;
@@ -146,7 +121,6 @@ class PedidoController extends Controller
                 ->increment('existencias', $item->cantidad);
         }
         
-        // Registrar en historial que se regresó stock
         PedidoHistorial::create([
             'pedido_id' => $pedido->id,
             'usuario_id' => auth()->id(),
@@ -159,14 +133,10 @@ class PedidoController extends Controller
         return true;
     }
 
-    /**
-     * ✅ MÉTODO 6: Sincronizar stock según cambio de estado
-     */
     private function sincronizarStockPorEstado($pedido, $nuevoEstado)
     {
         $estadoAnterior = $pedido->getOriginal('estado');
         
-        // Si el estado no cambió, no hacer nada
         if ($estadoAnterior == $nuevoEstado) {
             return;
         }
@@ -174,26 +144,17 @@ class PedidoController extends Controller
         $estadosConStock = self::ESTADOS_CON_STOCK;
         $estadoSinStock = self::ESTADO_SIN_STOCK;
         
-        // Caso 1: De estado con stock a cancelado (REGRESAR STOCK)
         if (in_array($estadoAnterior, $estadosConStock) && $nuevoEstado == $estadoSinStock) {
             $this->regresarStockSeguro($pedido);
         }
         
-        // Caso 2: De cancelado a estado con stock (DESCONTAR STOCK)
         if ($estadoAnterior == $estadoSinStock && in_array($nuevoEstado, $estadosConStock)) {
             $this->descontarStockSeguro($pedido);
         }
-        
-        // Caso 3: De un estado con stock a otro estado con stock (NO CAMBIA STOCK)
-        // Ejemplo: de pendiente a confirmado - no se modifica stock
     }
 
-    /**
-     * Lista todos los pedidos de la sucursal del gerente
-     */
     public function index(Request $request)
     {
-        // Contadores para el sidebar
         $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')
             ->where('sucursal_id', $this->sucursalId)
             ->count();
@@ -209,7 +170,6 @@ class PedidoController extends Controller
             'productos_bajos_count' => $productos_bajos_count
         ]);
 
-        // Obtener vendedores de la sucursal para mostrar en la vista
         $vendedores = Usuario::where('rol', 'vendedor')
             ->where('activo', true)
             ->whereHas('sucursales', function($q) {
@@ -218,13 +178,11 @@ class PedidoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        // Filtros
         $estado = $request->get('estado');
         $fecha_inicio = $request->get('fecha_inicio');
         $fecha_fin = $request->get('fecha_fin');
         $busqueda = $request->get('busqueda');
 
-        // Construir consulta - SOLO pedidos de la sucursal del gerente
         $query = Pedido::withCount('items')
             ->with('sucursal')
             ->where('sucursal_id', $this->sucursalId);
@@ -255,7 +213,6 @@ class PedidoController extends Controller
                 return $pedido;
             });
 
-        // Contar por estado para estadísticas
         $estados_count = Pedido::select('estado', DB::raw('count(*) as total'))
             ->where('sucursal_id', $this->sucursalId)
             ->groupBy('estado')
@@ -265,7 +222,6 @@ class PedidoController extends Controller
                 return $item;
             });
 
-        // Calcular total general
         $total_general = $pedidos->sum('total');
         $sucursal = $this->sucursal;
 
@@ -282,12 +238,8 @@ class PedidoController extends Controller
         ));
     }
 
-    /**
-     * Muestra el formulario para crear un nuevo pedido
-     */
     public function create(Request $request)
     {
-        // Actualizar contadores para el sidebar
         $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')
             ->where('sucursal_id', $this->sucursalId)
             ->count();
@@ -303,8 +255,10 @@ class PedidoController extends Controller
             'productos_bajos_count' => $productos_bajos_count
         ]);
 
-        // Obtener productos activos con sus existencias en la sucursal
+        // Excluir productos de ejemplo
         $productos = Producto::where('activo', true)
+            ->where('nombre', 'NOT LIKE', '%ejemplo%')
+            ->where('codigo', 'NOT LIKE', '%EJEMPLO%')
             ->orderBy('nombre')
             ->get()
             ->map(function($producto) {
@@ -317,7 +271,6 @@ class PedidoController extends Controller
                 return $producto;
             });
 
-        // ✅ OBTENER VENDEDORES DE LA SUCURSAL (NUEVO)
         $vendedores = Usuario::where('rol', 'vendedor')
             ->where('activo', true)
             ->whereHas('sucursales', function($q) {
@@ -326,7 +279,6 @@ class PedidoController extends Controller
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'usuario']);
 
-        // Datos del cliente desde sesión o request
         $cliente_datos = [
             'nombre' => $request->get('cliente', ''),
             'telefono' => $request->get('telefono', ''),
@@ -337,7 +289,6 @@ class PedidoController extends Controller
             'notas' => $request->get('notas', '')
         ];
 
-        // Variables para producto precargado
         $producto_id = $request->get('producto_id');
         $cantidad = $request->get('cantidad', 1);
         $producto_precargado = null;
@@ -366,7 +317,6 @@ class PedidoController extends Controller
                     }
                 }
                 
-                // Obtener existencias en la sucursal
                 $existencias = DB::table('producto_sucursal')
                     ->where('producto_id', $producto_id)
                     ->where('sucursal_id', $this->sucursalId)
@@ -379,23 +329,19 @@ class PedidoController extends Controller
         return view('gerente.pedidos.create', compact(
             'productos',
             'cliente_datos',
-            'vendedores', // ✅ NUEVO
+            'vendedores',
             'producto_precargado',
             'precio_con_oferta',
             'cantidad'
         ));
     }
 
-    /**
-     * Guarda un nuevo pedido en la base de datos
-     */
     public function store(Request $request)
     {
-        Log::info('=== INICIO CREACIÓN DE PEDIDO (GERENTE) ===');
-        
         $validated = $request->validate([
             'cliente_nombre' => 'required|string|max:100',
             'cliente_telefono' => 'required|string|max:20',
+            'cliente_email' => 'nullable|email|max:100',
             'cliente_direccion' => 'required|string|max:255',
             'cliente_ciudad' => 'required|string|max:100',
             'cliente_estado' => 'required|string|max:100',
@@ -405,10 +351,10 @@ class PedidoController extends Controller
             'productos.*' => 'required|integer|exists:productos,id',
             'cantidades' => 'required|array',
             'cantidades.*' => 'required|integer|min:1',
-            'distancia_km' => 'nullable|numeric'
+            'distancia_km' => 'nullable|numeric',
+            'vendedor_responsable' => 'nullable|exists:usuarios,id'
         ]);
 
-        // Verificar que la sucursal en sesión existe
         if (!$this->sucursalId) {
             return redirect()->back()
                 ->withInput()
@@ -424,16 +370,21 @@ class PedidoController extends Controller
         $error_existencias = false;
         $productosError = [];
 
-        // Procesar productos y verificar existencias
         foreach ($request->productos as $index => $producto_id) {
             if (!empty($producto_id) && isset($request->cantidades[$index])) {
                 $cantidad = (int)$request->cantidades[$index];
                 
                 if ($cantidad > 0) {
-                    $producto = Producto::find($producto_id);
+                    $producto = Producto::with(['ofertas' => function($query) {
+                            $query->where('activa', 1)
+                                ->where('fecha_inicio', '<=', now())
+                                ->where('fecha_fin', '>=', now());
+                        }])
+                        ->where('id', $producto_id)
+                        ->where('activo', true)
+                        ->first();
                     
                     if ($producto) {
-                        // Obtener existencias en la sucursal del gerente
                         $existencias = DB::table('producto_sucursal')
                             ->where('producto_id', $producto_id)
                             ->where('sucursal_id', $this->sucursalId)
@@ -444,14 +395,27 @@ class PedidoController extends Controller
                             $productosError[] = "{$producto->nombre} (Disponibles: {$existencias})";
                         }
                         
-                        $subtotal = $producto->precio * $cantidad;
+                        $precioUnitario = $producto->precio;
+                        
+                        if ($producto->ofertas->isNotEmpty()) {
+                            $oferta = $producto->ofertas->first();
+                            
+                            if ($oferta->tipo == 'porcentaje') {
+                                $precioUnitario = $producto->precio * (1 - $oferta->valor / 100);
+                            } else {
+                                $precioUnitario = $producto->precio - $oferta->valor;
+                            }
+                        }
+                        
+                        $subtotal = $precioUnitario * $cantidad;
                         $total += $subtotal;
                         
                         $productos_data[] = [
                             'producto_id' => $producto_id,
                             'producto_nombre' => $producto->nombre,
                             'cantidad' => $cantidad,
-                            'precio' => $producto->precio,
+                            'precio' => $precioUnitario,
+                            'precio_original' => $producto->precio,
                             'subtotal' => $subtotal
                         ];
                     }
@@ -459,7 +423,6 @@ class PedidoController extends Controller
             }
         }
 
-        // Si hay error de existencias
         if ($error_existencias) {
             $mensaje = 'No hay suficientes existencias para: ' . implode(', ', $productosError);
             return redirect()->back()
@@ -471,7 +434,6 @@ class PedidoController extends Controller
                 ]);
         }
 
-        // Validar que haya al menos un producto
         if (empty($productos_data)) {
             return redirect()->back()
                 ->withInput()
@@ -482,13 +444,11 @@ class PedidoController extends Controller
                 ]);
         }
 
-        // Generar folio único
         $folio = 'PED-' . date('Ymd') . '-' . rand(1000, 9999);
 
         try {
             DB::beginTransaction();
 
-            // Crear el pedido
             $pedido = Pedido::create([
                 'folio' => $folio,
                 'cliente_nombre' => $request->cliente_nombre,
@@ -508,9 +468,6 @@ class PedidoController extends Controller
                 'pago_confirmado' => false
             ]);
 
-            Log::info('Pedido creado con ID: ' . $pedido->id);
-
-            // Insertar items
             foreach ($productos_data as $producto) {
                 PedidoItem::create([
                     'pedido_id' => $pedido->id,
@@ -521,10 +478,16 @@ class PedidoController extends Controller
                 ]);
             }
 
-            // ✅ DESCONTAR STOCK SEGURO (con verificación)
             $this->descontarStockSeguro($pedido);
 
-            // Registrar en historial
+            if ($request->filled('vendedor_responsable')) {
+                DB::table('pedido_responsables')->insert([
+                    'pedido_id' => $pedido->id,
+                    'usuario_id' => $request->vendedor_responsable,
+                    'fecha_asignacion' => now()
+                ]);
+            }
+
             $usuario_id = auth()->id();
             PedidoHistorial::create([
                 'pedido_id' => $pedido->id,
@@ -536,7 +499,6 @@ class PedidoController extends Controller
 
             DB::commit();
 
-            // Limpiar cobertura de sesión
             session()->forget('cobertura_verificada');
 
             return redirect()->route('gerente.pedidos')
@@ -560,12 +522,8 @@ class PedidoController extends Controller
         }
     }
 
-    /**
-     * Muestra los detalles de un pedido específico
-     */
     public function show($id)
     {
-        // Obtener pedido - SOLO si pertenece a la sucursal del gerente
         $pedido = Pedido::with(['items', 'sucursal'])
             ->where('sucursal_id', $this->sucursalId)
             ->where('id', $id)
@@ -593,14 +551,12 @@ class PedidoController extends Controller
         
         $pedido->total_items = $items->sum('cantidad');
 
-        // Obtener responsable actual
         $responsable = DB::table('pedido_responsables')
             ->join('usuarios', 'pedido_responsables.usuario_id', '=', 'usuarios.id')
             ->where('pedido_responsables.pedido_id', $id)
             ->select('usuarios.id', 'usuarios.nombre', 'usuarios.usuario', 'usuarios.rol')
             ->first();
 
-        // Obtener vendedores de la sucursal
         $vendedores = Usuario::where('rol', 'vendedor')
             ->where('activo', true)
             ->whereHas('sucursales', function($q) {
@@ -609,7 +565,6 @@ class PedidoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        // Determinar si el gerente puede editar el pedido
         $puede_editar = false;
         if ($responsable) {
             if ($responsable->id == auth()->id()) {
@@ -619,7 +574,6 @@ class PedidoController extends Controller
             $puede_editar = true;
         }
 
-        // Obtener historial del pedido
         $historial = PedidoHistorial::with('usuario')
             ->where('pedido_id', $id)
             ->orderBy('fecha', 'desc')
@@ -640,12 +594,8 @@ class PedidoController extends Controller
         ));
     }
 
-    /**
-     * Muestra el formulario para editar un pedido
-     */
     public function edit($id)
     {
-        // Obtener pedido - SOLO si pertenece a la sucursal del gerente
         $pedido = Pedido::with('sucursal')
             ->where('sucursal_id', $this->sucursalId)
             ->where('id', $id)
@@ -662,7 +612,6 @@ class PedidoController extends Controller
 
         $pedido->fecha = Carbon::parse($pedido->fecha);
 
-        // Obtener vendedores de la sucursal
         $vendedores = Usuario::where('rol', 'vendedor')
             ->where('activo', true)
             ->whereHas('sucursales', function($q) {
@@ -671,7 +620,6 @@ class PedidoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        // Obtener el vendedor responsable actual
         $responsable_actual = DB::table('pedido_responsables')
             ->join('usuarios', 'pedido_responsables.usuario_id', '=', 'usuarios.id')
             ->where('pedido_responsables.pedido_id', $id)
@@ -680,7 +628,6 @@ class PedidoController extends Controller
         
         $vendedor_actual_id = $responsable_actual ? $responsable_actual->id : null;
 
-        // Obtener historial del pedido
         $historial = PedidoHistorial::with('usuario')
             ->where('pedido_id', $id)
             ->orderBy('fecha', 'desc')
@@ -694,22 +641,6 @@ class PedidoController extends Controller
         $usuario_id = auth()->id();
         $usuario_nombre = auth()->user()->nombre ?? 'Gerente';
 
-        // Actualizar contadores para el sidebar
-        $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')
-            ->where('sucursal_id', $this->sucursalId)
-            ->count();
-            
-        $productos_bajos_count = DB::table('producto_sucursal')
-            ->where('sucursal_id', $this->sucursalId)
-            ->where('existencias', '<=', 5)
-            ->distinct('producto_id')
-            ->count('producto_id');
-
-        session([
-            'pedidos_pendientes_count' => $pedidos_pendientes_count,
-            'productos_bajos_count' => $productos_bajos_count
-        ]);
-
         return view('gerente.pedidos.edit', compact(
             'pedido',
             'vendedores',
@@ -721,12 +652,8 @@ class PedidoController extends Controller
         ));
     }
 
-    /**
-     * ✅ MÉTODO MEJORADO: Actualiza un pedido existente (con stock seguro)
-     */
     public function update(Request $request, $id)
     {
-        // Obtener pedido - SOLO si pertenece a la sucursal del gerente
         $pedido = Pedido::with('items')
             ->where('sucursal_id', $this->sucursalId)
             ->where('id', $id)
@@ -753,7 +680,6 @@ class PedidoController extends Controller
 
         $usuario_id = auth()->id();
 
-        // Determinar fecha de confirmación
         $fecha_confirmacion = $pedido->fecha_confirmacion;
         if ($request->estado == 'confirmado' && !$pedido->fecha_confirmacion) {
             $fecha_confirmacion = now();
@@ -761,7 +687,6 @@ class PedidoController extends Controller
             $fecha_confirmacion = null;
         }
 
-        // Si el estado cambia a entregado, registrar fecha si no existe
         $fecha_entrega = $request->fecha_entrega;
         if ($request->estado == 'entregado' && !$fecha_entrega) {
             $fecha_entrega = now()->toDateString();
@@ -770,10 +695,8 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
 
-            // ✅ SINCRONIZAR STOCK SEGURO (evita duplicados)
             $this->sincronizarStockPorEstado($pedido, $request->estado);
 
-            // Actualizar pedido
             $pedido->update([
                 'estado' => $request->estado,
                 'pago_confirmado' => $request->has('pago_confirmado'),
@@ -784,7 +707,6 @@ class PedidoController extends Controller
                 'fecha_confirmacion' => $fecha_confirmacion
             ]);
 
-            // Registrar en historial
             $detalles = "Estado cambiado a: " . $request->estado . ". " . 
                        ($request->has('pago_confirmado') ? "Pago confirmado. " : "") . 
                        ($request->has('cobertura_verificada') ? "Cobertura verificada. " : "") .
@@ -798,15 +720,13 @@ class PedidoController extends Controller
                 'fecha' => now()
             ]);
 
-            // Procesar reasignación de vendedor
             if ($request->filled('vendedor_responsable')) {
                 $nuevo_vendedor_id = $request->vendedor_responsable;
                 
-                // Verificar que el vendedor pertenece a la sucursal o es el gerente
                 $vendedorValido = false;
                 
                 if ($nuevo_vendedor_id == $usuario_id) {
-                    $vendedorValido = true; // El gerente se asigna a sí mismo
+                    $vendedorValido = true;
                 } else {
                     $vendedorValido = Usuario::where('id', $nuevo_vendedor_id)
                         ->where('rol', 'vendedor')
@@ -818,24 +738,20 @@ class PedidoController extends Controller
                 }
 
                 if ($vendedorValido) {
-                    // Obtener responsable anterior
                     $responsable_anterior = DB::table('pedido_responsables')
                         ->where('pedido_id', $id)
                         ->first();
 
-                    // Eliminar asignaciones anteriores
                     DB::table('pedido_responsables')
                         ->where('pedido_id', $id)
                         ->delete();
 
-                    // Asignar nuevo responsable
                     DB::table('pedido_responsables')->insert([
                         'pedido_id' => $id,
                         'usuario_id' => $nuevo_vendedor_id,
                         'fecha_asignacion' => now()
                     ]);
 
-                    // Registrar en historial
                     $detalles_historial = "Reasignado por gerente";
                     
                     if ($responsable_anterior) {
@@ -866,22 +782,6 @@ class PedidoController extends Controller
 
             DB::commit();
 
-            // Actualizar contadores para el sidebar
-            $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')
-                ->where('sucursal_id', $this->sucursalId)
-                ->count();
-                
-            $productos_bajos_count = DB::table('producto_sucursal')
-                ->where('sucursal_id', $this->sucursalId)
-                ->where('existencias', '<=', 5)
-                ->distinct('producto_id')
-                ->count('producto_id');
-
-            session([
-                'pedidos_pendientes_count' => $pedidos_pendientes_count,
-                'productos_bajos_count' => $productos_bajos_count
-            ]);
-
             return redirect()->route('gerente.pedidos.editar', $id)
                 ->with('swal', [
                     'type' => 'success',
@@ -903,12 +803,8 @@ class PedidoController extends Controller
         }
     }
 
-    /**
-     * ✅ MÉTODO MEJORADO: Procesa acciones rápidas sobre el pedido (con stock seguro)
-     */
     public function procesarAccion($accion, $id)
     {
-        // Obtener pedido - SOLO si pertenece a la sucursal del gerente
         $pedido = Pedido::with('items')
             ->where('sucursal_id', $this->sucursalId)
             ->where('id', $id)
@@ -930,7 +826,6 @@ class PedidoController extends Controller
 
             switch ($accion) {
                 case 'cancelar':
-                    // ✅ REGRESAR STOCK SEGURO (solo si no está regresado)
                     if ($pedido->estado != 'cancelado') {
                         $this->regresarStockSeguro($pedido);
                     }
@@ -956,7 +851,6 @@ class PedidoController extends Controller
                     break;
                     
                 case 'confirmar':
-                    // ✅ SI VIENE DE CANCELADO, DESCONTAR STOCK SEGURO
                     if ($pedido->estado == 'cancelado') {
                         $this->descontarStockSeguro($pedido);
                     }
@@ -982,12 +876,10 @@ class PedidoController extends Controller
                     break;
                     
                 case 'tomar_control':
-                    // Eliminar asignaciones anteriores
                     DB::table('pedido_responsables')
                         ->where('pedido_id', $id)
                         ->delete();
 
-                    // Asignar gerente como responsable
                     DB::table('pedido_responsables')->insert([
                         'pedido_id' => $id,
                         'usuario_id' => $usuario_id,
@@ -1019,22 +911,6 @@ class PedidoController extends Controller
 
             DB::commit();
 
-            // Actualizar contadores
-            $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')
-                ->where('sucursal_id', $this->sucursalId)
-                ->count();
-                
-            $productos_bajos_count = DB::table('producto_sucursal')
-                ->where('sucursal_id', $this->sucursalId)
-                ->where('existencias', '<=', 5)
-                ->distinct('producto_id')
-                ->count('producto_id');
-
-            session([
-                'pedidos_pendientes_count' => $pedidos_pendientes_count,
-                'productos_bajos_count' => $productos_bajos_count
-            ]);
-
             return redirect()->route('gerente.pedidos.ver', $id)
                 ->with('swal', [
                     'type' => 'success',
@@ -1054,12 +930,8 @@ class PedidoController extends Controller
         }
     }
 
-    /**
-     * ✅ MÉTODO MEJORADO: Eliminar un pedido permanentemente (con stock seguro)
-     */
     public function destroy($id)
     {
-        // Obtener pedido - SOLO si pertenece a la sucursal del gerente
         $pedido = Pedido::with('items')
             ->where('sucursal_id', $this->sucursalId)
             ->where('id', $id)
@@ -1077,21 +949,13 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
             
-            // ✅ REGRESAR STOCK SEGURO (solo si no está regresado y no está cancelado)
             if ($pedido->estado != 'cancelado' && !$this->tieneStockRegresado($pedido)) {
                 $this->regresarStockSeguro($pedido);
             }
             
-            // Eliminar items relacionados
             PedidoItem::where('pedido_id', $id)->delete();
-            
-            // Eliminar historial
             PedidoHistorial::where('pedido_id', $id)->delete();
-            
-            // Eliminar responsables
             DB::table('pedido_responsables')->where('pedido_id', $id)->delete();
-            
-            // Eliminar pedido
             $pedido->delete();
             
             DB::commit();
@@ -1112,9 +976,6 @@ class PedidoController extends Controller
         }
     }
 
-    /**
-     * Asigna un responsable al pedido (API AJAX)
-     */
     public function asignarResponsable(Request $request)
     {
         $pedido_id = $request->get('pedido_id');
@@ -1125,7 +986,6 @@ class PedidoController extends Controller
         }
         
         try {
-            // Verificar que el pedido pertenece a la sucursal
             $pedido = Pedido::where('id', $pedido_id)
                 ->where('sucursal_id', $this->sucursalId)
                 ->first();
@@ -1161,9 +1021,6 @@ class PedidoController extends Controller
         }
     }
 
-    /**
-     * Remueve el responsable del pedido (API AJAX)
-     */
     public function removerResponsable(Request $request)
     {
         $pedido_id = $request->get('pedido_id');
@@ -1173,7 +1030,6 @@ class PedidoController extends Controller
         }
         
         try {
-            // Verificar que el pedido pertenece a la sucursal
             $pedido = Pedido::where('id', $pedido_id)
                 ->where('sucursal_id', $this->sucursalId)
                 ->first();
@@ -1232,6 +1088,7 @@ class PedidoController extends Controller
         
         return response()->json(['en_oferta' => false]);
     }
+    
     public function buscar(Request $request)
     {
         $busqueda = $request->get('busqueda');
@@ -1248,5 +1105,4 @@ class PedidoController extends Controller
         
         return response()->json($clientes);
     }
-
 }

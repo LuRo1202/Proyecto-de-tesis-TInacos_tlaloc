@@ -811,6 +811,9 @@
                         <div class="order-actions mt-4">
                             <button type="submit" form="form-checkout" class="btn btn-primary btn-lg w-100" id="btn-finalizar" {{ !session('cobertura_verificada') ? 'disabled' : '' }}>
                                 <i class="fas fa-credit-card me-2"></i>Continuar al Pago
+                                <small class="d-block mt-1 small" style="font-size: 0.7rem;">
+                                    <i class="fab fa-mercadopago"></i> Vía Mercado Pago
+                                </small>
                             </button>
                             <p class="text-center mt-3 small text-muted mb-0">
                                 <i class="fas fa-lock me-1"></i>

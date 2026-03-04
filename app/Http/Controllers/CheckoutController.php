@@ -39,13 +39,12 @@ class CheckoutController extends Controller
         }
 
         foreach ($cart as $id => $item) {
-            // Verificar si el item es array (nuevo formato) o simple (formato antiguo)
             if (is_array($item)) {
                 $cantidad = $item['cantidad'];
-                $precio = $item['precio']; // Precio ya con descuento
+                $precio = $item['precio'];
             } else {
                 $cantidad = $item;
-                $precio = null; // Se obtendrá del producto
+                $precio = null;
             }
             
             $producto = Producto::with(['categoria', 'color'])->find($id);
@@ -63,7 +62,6 @@ class CheckoutController extends Controller
                         "No hay suficiente stock de {$producto->nombre}. Disponible: {$existencias}");
                 }
                 
-
                 $ofertaActiva = $producto->ofertas()
                     ->where('activa', true)
                     ->where('fecha_inicio', '<=', now())
@@ -79,7 +77,6 @@ class CheckoutController extends Controller
                 if ($tieneOferta && $precioFinal < $precioOriginal) {
                     $ahorro = $precioOriginal - $precioFinal;
                     if ($ofertaActiva->tipo === 'porcentaje') {
-                        // 🔥 AQUÍ EL CAMBIO: round() elimina los decimales
                         $descuentoTexto = '-' . round($ofertaActiva->valor) . '%';
                     } else {
                         $descuentoTexto = '-$' . number_format($ofertaActiva->valor, 0);
@@ -143,7 +140,6 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Usar el método verificarCobertura del modelo
             $resultado = $sucursal->verificarCobertura(
                 $request->direccion,
                 $request->ciudad,
@@ -194,8 +190,7 @@ class CheckoutController extends Controller
     public function procesar(Request $request)
     {
         if (!auth('cliente')->check()) {
-            return redirect()->route('cliente.login')
-                ->with('error', 'Debes iniciar sesión para continuar con la compra');
+            return redirect()->route('cliente.login')->with('error', 'Debes iniciar sesión');
         }
         
         $cliente = auth('cliente')->user();
@@ -219,7 +214,6 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $cobertura = session('cobertura_verificada');
         $cart = session()->get('carrito', []);
 
         if (empty($cart)) {
@@ -230,138 +224,33 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $sucursal = SucursalHelper::getSucursalActual();
-        $total = 0;
+        // Guardar todo en sesión (NO crear pedido aún)
+        session()->put('checkout_data', [
+            'cliente_id' => $cliente->id,
+            'datos' => $validated,
+            'cobertura' => session('cobertura_verificada'),
+            'carrito' => $cart,
+            'total' => $this->calcularTotal($cart)
+        ]);
 
-        // PRIMERO: Verificar stock
-        foreach ($cart as $id => $item) {
-            $cantidad = is_array($item) ? $item['cantidad'] : $item;
-            $producto = Producto::find($id);
-            
-            if (!$producto) {
-                return redirect()->route('carrito')->with('swal', [
-                    'type' => 'error',
-                    'title' => 'Producto no encontrado',
-                    'message' => "El producto con ID {$id} no existe"
-                ]);
-            }
+        session()->forget('cobertura_verificada');
 
-            $stock = $sucursal->productos()
-                ->where('productos.id', $id)
-                ->withPivot('existencias')
-                ->first();
-            
-            if (!$stock || $stock->pivot->existencias < $cantidad) {
-                return redirect()->route('carrito')->with('swal', [
-                    'type' => 'error',
-                    'title' => 'Stock insuficiente',
-                    'message' => "Stock insuficiente para {$producto->nombre}"
-                ]);
-            }
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $folio = 'PED-' . date('ymd') . '-' . rand(1000, 9999);
-
-            $pedido = Pedido::create([
-                'cliente_id' => $cliente->id,
-                'folio' => $folio,
-                'cliente_nombre' => $validated['nombre'],
-                'cliente_telefono' => $validated['telefono'],
-                'cliente_direccion' => $validated['direccion'],
-                'cliente_ciudad' => $validated['ciudad'],
-                'cliente_estado' => $validated['estado'],
-                'codigo_postal' => $validated['codigo_postal'],
-                'total' => $total, // Se actualizará después
-                'metodo_pago' => 'en_linea',
-                'pago_confirmado' => false,
-                'estado' => 'pendiente',
-                'notas' => $validated['notas'] ?? null,
-                'sucursal_id' => $cobertura['sucursal_id'],
-                'distancia_km' => $cobertura['distancia'],
-                'cobertura_verificada' => true
-            ]);
-
-            // SEGUNDO: Crear items con el precio del carrito (ya con descuento)
-            foreach ($cart as $id => $item) {
-                // Verificar si el item es array (nuevo formato) o simple (formato antiguo)
-                if (is_array($item)) {
-                    $cantidad = $item['cantidad'];
-                    $precio = $item['precio']; // ← ESTE YA TIENE EL DESCUENTO APLICADO
-                    $producto = Producto::find($id);
-                } else {
-                    $cantidad = $item;
-                    $producto = Producto::find($id);
-                    $precio = $producto->precio; // Fallback para formato antiguo
-                }
-                
-                PedidoItem::create([
-                    'pedido_id' => $pedido->id,
-                    'producto_id' => $producto->id,
-                    'producto_nombre' => $producto->nombre,
-                    'cantidad' => $cantidad,
-                    'precio' => $precio // ← USAMOS EL PRECIO DEL CARRITO
-                ]);
-
-                $sucursal->productos()->updateExistingPivot($id, [
-                    'existencias' => DB::raw('existencias - ' . $cantidad)
-                ]);
-                
-                // Recalcular total
-                $total += $precio * $cantidad;
-            }
-
-            // Actualizar el total del pedido
-            $pedido->update(['total' => $total]);
-
-            session()->forget('carrito');
-            session()->put('pedido_pendiente', [
-                'pedido_id' => $pedido->id,
-                'folio' => $folio,
-                'total' => $total,
-                'sucursal' => [
-                    'id' => $cobertura['sucursal_id'],
-                    'nombre' => $cobertura['sucursal_nombre'],
-                    'direccion' => $cobertura['sucursal_direccion'],
-                    'distancia' => $cobertura['distancia']
-                ]
-            ]);
-
-            session()->forget('cobertura_verificada');
-            DB::commit();
-
-            return redirect()->route('cliente.pago')->with('swal', [
-                'type' => 'success',
-                'title' => '¡Pedido creado!',
-                'message' => "Tu pedido {$folio} ha sido registrado correctamente."
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error en checkout: ' . $e->getMessage());
-            
-            return redirect()->route('checkout')->with('swal', [
-                'type' => 'error',
-                'title' => 'Error al procesar',
-                'message' => 'Error: ' . $e->getMessage()
-            ]);
-        }
+        return redirect()->route('pago.index')->with('swal', [
+            'type' => 'success',
+            'title' => '¡Datos confirmados!',
+            'message' => 'Ahora procede al pago.'
+        ]);
     }
-    
-    public function pago()
-    {
-        if (!session()->has('pedido_pendiente')) {
-            return redirect()->route('tienda')->with('swal', [
-                'type' => 'error',
-                'title' => 'Sin pedido',
-                'message' => 'No hay un pedido pendiente para pagar'
-            ]);
-        }
 
-        $pedido = session('pedido_pendiente');
-        return view('cliente.pago', compact('pedido'));
+    private function calcularTotal($cart)
+    {
+        $total = 0;
+        foreach ($cart as $item) {
+            $precio = is_array($item) ? $item['precio'] : 0;
+            $cantidad = is_array($item) ? $item['cantidad'] : $item;
+            $total += $precio * $cantidad;
+        }
+        return $total;
     }
 
     public function limpiarCobertura(Request $request) 
@@ -385,31 +274,5 @@ class CheckoutController extends Controller
                 'message' => 'Error en el servidor'
             ], 500);
         }
-    }
-    
-    public function pedidoGracias(Request $request)
-    {
-        if (!session()->has('pedido_pendiente')) {
-            return redirect()->route('home')->with('swal', [
-                'type' => 'error',
-                'title' => 'Acceso denegado',
-                'message' => 'No puedes acceder directamente a esta página.'
-            ]);
-        }
-        
-        $pedido = session('pedido_pendiente');
-        $folio = $request->get('folio', $pedido['folio']);
-        
-        if ($folio !== $pedido['folio']) {
-            return redirect()->route('home')->with('swal', [
-                'type' => 'error',
-                'title' => 'Error de verificación',
-                'message' => 'Los datos del pedido no coinciden.'
-            ]);
-        }
-        
-        session()->forget('pedido_pendiente');
-        
-        return view('pedido-gracias', compact('folio'));
     }
 }

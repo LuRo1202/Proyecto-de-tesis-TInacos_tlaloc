@@ -1,6 +1,5 @@
 @php
     use App\Models\Sucursal;
-    // El gerente ya tiene su sucursal en sesión
     $sucursalActual = session('sucursal_nombre');
     $sucursalId = session('sucursal_id');
 @endphp
@@ -12,13 +11,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Nuevo Pedido - Sucursal {{ session('sucursal_nombre') }}</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places"></script>
     <link rel="icon" href="{{ asset('assets/img/logo.jpeg') }}">
     
@@ -54,7 +49,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Header Compacto */
         .header-bar {
             background: white;
             border-radius: 10px;
@@ -105,7 +99,6 @@
             flex-wrap: wrap;
         }
         
-        /* Botones Compactos */
         .btn-custom {
             padding: 6px 12px;
             border-radius: 6px;
@@ -152,7 +145,6 @@
             color: white;
         }
         
-        /* Selector de Vendedor */
         .vendedor-selector {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 8px;
@@ -185,7 +177,6 @@
             box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
         }
         
-        /* Verificar Cobertura Botón */
         .verificar-cobertura-btn {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
@@ -220,7 +211,6 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Cobertura Verificada Box */
         .cobertura-permanente {
             background: #d4edda;
             border: 1px solid #c3e6cb;
@@ -273,7 +263,6 @@
             width: 24px;
         }
         
-        /* Card Estilo */
         .card {
             border: none;
             border-radius: 8px;
@@ -312,7 +301,6 @@
             padding: 15px;
         }
         
-        /* Formulario Estilo */
         .form-label {
             font-weight: 500;
             color: var(--dark);
@@ -342,7 +330,6 @@
             outline: none;
         }
         
-        /* Badge Sucursal */
         .badge-sucursal {
             background: rgba(127, 173, 57, 0.1);
             color: var(--primary-dark);
@@ -354,7 +341,6 @@
             gap: 5px;
         }
         
-        /* Productos Estilos */
         .producto-item {
             border: 1px solid var(--light-gray);
             border-radius: 8px;
@@ -407,7 +393,6 @@
             color: var(--success);
         }
         
-        /* Badge de Oferta */
         .oferta-badge {
             background: linear-gradient(135deg, #dc3545, #c82333);
             color: white;
@@ -419,7 +404,6 @@
             margin-left: 5px;
         }
         
-        /* Resumen del Pedido */
         .resumen-pedido {
             background: linear-gradient(135deg, var(--light) 0%, #e9ecef 100%);
             border-radius: 8px;
@@ -435,7 +419,6 @@
             text-align: right;
         }
         
-        /* Input Group */
         .input-group-text {
             background-color: var(--light);
             border: 1px solid var(--light-gray);
@@ -443,7 +426,6 @@
             font-size: 0.85rem;
         }
 
-        /* Estilos para resultados de búsqueda de clientes */
         .list-group-item {
             cursor: pointer;
             transition: all 0.2s ease;
@@ -467,7 +449,6 @@
             padding: 5px;
         }
         
-        /* Responsive Design */
         @media (max-width: 1200px) {
             .main-content {
                 margin-left: 70px;
@@ -525,18 +506,6 @@
             }
         }
         
-        /* Animaciones */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
         .card, .producto-item {
             animation: fadeIn 0.3s ease-out;
         }
@@ -546,7 +515,6 @@
     @include('gerente.layouts.sidebar')
     
     <div class="main-content">
-        <!-- Header -->
         <div class="header-bar">
             <div>
                 <h1 class="header-title">
@@ -572,7 +540,6 @@
             <input type="hidden" name="sucursal_id" id="sucursal_id" value="{{ session('sucursal_id') }}">
             <input type="hidden" name="sucursal_nombre" id="sucursal_nombre" value="{{ session('sucursal_nombre') }}">
             
-            <!-- SELECTOR DE VENDEDOR (NUEVO) -->
             @if(isset($vendedores) && $vendedores->count() > 0)
             <div class="vendedor-selector">
                 <label for="vendedor_responsable">
@@ -598,7 +565,6 @@
             </div>
             @endif
 
-            <!-- BUSCADOR DE CLIENTES REGISTRADOS (NUEVO) -->
             <div class="card mb-3">
                 <div class="card-header">
                     <h5><i class="fas fa-search"></i> Buscar Cliente Registrado</h5>
@@ -613,9 +579,7 @@
                                     <i class="fas fa-search"></i> Buscar
                                 </button>
                             </div>
-                            <div id="resultados-busqueda" class="mt-2" style="display: none;">
-                                <!-- Resultados aparecerán aquí -->
-                            </div>
+                            <div id="resultados-busqueda" class="mt-2" style="display: none;"></div>
                         </div>
                         <div class="col-md-4">
                             <small class="text-muted d-block mt-2">
@@ -626,7 +590,6 @@
                 </div>
             </div>
             
-            <!-- Información del Cliente y Cobertura -->
             <div class="card">
                 <div class="card-header">
                     <h5><i class="fas fa-truck"></i> Información de Envío y Cobertura</h5>
@@ -635,7 +598,6 @@
                     </span>
                 </div>
                 <div class="card-body">
-                    <!-- Indicador de cobertura verificada -->
                     <div id="cobertura-verificada-box" class="cobertura-permanente" style="display: none;">
                         <h6><i class="fas fa-check-circle me-2"></i>Cobertura verificada</h6>
                         <div class="cobertura-detail-item">
@@ -689,6 +651,42 @@
                                        placeholder="55 1234 5678"
                                        value="{{ old('cliente_telefono', $cliente_datos['telefono'] ?? '') }}">
                                 @error('cliente_telefono')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cliente_email" class="form-label">
+                                    <i class="fas fa-envelope"></i>Correo electrónico
+                                </label>
+                                <input type="email" 
+                                       class="form-control @error('cliente_email') is-invalid @enderror" 
+                                       id="cliente_email" 
+                                       name="cliente_email" 
+                                       placeholder="ejemplo@correo.com"
+                                       value="{{ old('cliente_email') }}">
+                                @error('cliente_email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="codigo_postal" class="form-label">
+                                    <i class="fas fa-mail-bulk"></i>Código Postal *
+                                </label>
+                                <input type="text" 
+                                       class="form-control @error('codigo_postal') is-invalid @enderror" 
+                                       id="codigo_postal" 
+                                       name="codigo_postal" 
+                                       required 
+                                       placeholder="Ej: 55000"
+                                       maxlength="5"
+                                       value="{{ old('codigo_postal', $cliente_datos['codigo_postal'] ?? '') }}">
+                                @error('codigo_postal')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -749,24 +747,7 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="codigo_postal" class="form-label">
-                                    <i class="fas fa-mail-bulk"></i>Código Postal *
-                                </label>
-                                <input type="text" 
-                                       class="form-control @error('codigo_postal') is-invalid @enderror" 
-                                       id="codigo_postal" 
-                                       name="codigo_postal" 
-                                       required 
-                                       placeholder="Ej: 55000"
-                                       maxlength="5"
-                                       value="{{ old('codigo_postal', $cliente_datos['codigo_postal'] ?? '') }}">
-                                @error('codigo_postal')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
+                        <div class="col-md-4"></div>
                         
                         <div class="col-12">
                             <div class="form-group">
@@ -796,7 +777,6 @@
                 </div>
             </div>
 
-            <!-- Productos del Pedido (CON VERIFICACIÓN DE OFERTAS) -->
             <div class="card">
                 <div class="card-header">
                     <h5><i class="fas fa-boxes"></i> Productos del Pedido</h5>
@@ -805,11 +785,8 @@
                     </button>
                 </div>
                 <div class="card-body">
-                    <div id="productos-container">
-                        <!-- Los productos se agregarán dinámicamente aquí -->
-                    </div>
+                    <div id="productos-container"></div>
                     
-                    <!-- Resumen del Pedido -->
                     <div class="resumen-pedido">
                         <div class="row align-items-center">
                             <div class="col-md-6">
@@ -823,7 +800,6 @@
                 </div>
             </div>
 
-            <!-- Botones de Acción -->
             <div class="d-flex justify-content-between gap-2">
                 <a href="{{ route('gerente.pedidos') }}" class="btn-custom btn-secondary-custom">
                     <i class="fas fa-times"></i> Cancelar
@@ -839,13 +815,11 @@
         </form>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Variables globales
         let productoCount = 0;
         let coberturaVerificada = false;
         const productos = @json($productos);
@@ -853,7 +827,6 @@
         const sucursalId = '{{ session('sucursal_id') }}';
         const sucursalNombre = '{{ session('sucursal_nombre') }}';
 
-        // Variables para producto precargado (desde URL)
         @if(isset($producto_precargado) && $producto_precargado)
         const productoPrecargado = {
             id: {{ $producto_precargado->id }},
@@ -868,7 +841,6 @@
         const productoPrecargado = null;
         @endif
 
-        // Inicializar autocomplete de Google Maps
         function initAutocomplete() {
             const direccionInput = document.getElementById('cliente_direccion');
             if (direccionInput) {
@@ -907,7 +879,6 @@
             }
         }
 
-        // BUSCAR CLIENTE REGISTRADO (NUEVO)
         $('#btn-buscar-cliente').click(function() {
             const busqueda = $('#buscador-cliente').val().trim();
             
@@ -963,8 +934,7 @@
                         `).show();
                     }
                 },
-                error: function(xhr) {
-                    console.error('Error:', xhr);
+                error: function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
@@ -979,17 +949,10 @@
             });
         });
 
-        // Función para seleccionar cliente y llenar el formulario (NUEVO)
         window.seleccionarCliente = function(nombre, telefono, email, direccion, ciudad, estado, cp) {
             $('#cliente_nombre').val(nombre);
             $('#cliente_telefono').val(telefono);
-            
-            // Buscar campo de email si existe en tu formulario
-            const emailInput = $('input[name="cliente_email"]');
-            if (emailInput.length > 0) {
-                emailInput.val(email);
-            }
-            
+            $('#cliente_email').val(email);
             $('#cliente_direccion').val(direccion);
             $('#cliente_ciudad').val(ciudad);
             $('#cliente_estado').val(estado);
@@ -1009,7 +972,6 @@
             });
         };
 
-        // Enter en el campo de búsqueda (NUEVO)
         $('#buscador-cliente').keypress(function(e) {
             if (e.which == 13) {
                 e.preventDefault();
@@ -1017,7 +979,6 @@
             }
         });
 
-        // Verificar cobertura
         $('#verificar-cobertura').click(function() {
             const direccion = $('#cliente_direccion').val().trim();
             const ciudad = $('#cliente_ciudad').val().trim();
@@ -1047,22 +1008,17 @@
                     sucursal_id: sucursalId
                 },
                 success: function(response) {
-                    console.log('Respuesta:', response);
-                    
                     if (response.valido) {
                         coberturaVerificada = true;
                         $('#btn-crear-pedido').prop('disabled', false);
                         
-                        // Mostrar información de cobertura
                         $('#sucursal-nombre').text(response.sucursal_nombre);
                         $('#sucursal-direccion').text(response.sucursal_direccion);
                         $('#distancia').text(response.distancia);
                         $('#cobertura-verificada-box').show();
                         
-                        // Agregar campos ocultos
-                        $('#form-pedido').append(`
-                            <input type="hidden" name="distancia_km" value="${response.distancia}">
-                        `);
+                        $('input[name="distancia_km"]').remove();
+                        $('#form-pedido').append(`<input type="hidden" name="distancia_km" value="${response.distancia}">`);
                         
                         Swal.fire({
                             icon: 'success',
@@ -1083,18 +1039,11 @@
                         });
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('Error:', xhr.responseJSON);
-                    
-                    let errorMessage = 'No se pudo verificar la cobertura';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    }
-                    
+                error: function() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: errorMessage,
+                        text: 'No se pudo verificar la cobertura',
                         confirmButtonColor: '#7fad39'
                     });
                 },
@@ -1104,17 +1053,13 @@
             });
         });
 
-        // Cambiar dirección
         $('#cambiar-direccion').click(function() {
             coberturaVerificada = false;
             $('#btn-crear-pedido').prop('disabled', true);
             $('#cobertura-verificada-box').hide();
-            
-            // Eliminar campos ocultos
             $('input[name="distancia_km"]').remove();
         });
 
-        // Funciones de productos (CON VERIFICACIÓN DE OFERTAS)
         function agregarProducto() {
             const container = document.getElementById('productos-container');
             const index = productoCount++;
@@ -1205,13 +1150,10 @@
                 const productoId = option.value;
                 const precioOriginal = parseFloat(option.dataset.precio);
                 const existencias = parseInt(option.dataset.existencias);
-                const nombre = option.dataset.nombre;
                 
-                // Mostrar precio original mientras se verifica
                 precioInput.value = precioOriginal.toFixed(2);
                 existenciasInfo.innerHTML = '<span class="text-info">Verificando oferta...</span>';
                 
-                // VERIFICAR SI TIENE OFERTA VÍA AJAX
                 $.ajax({
                     url: '{{ route("gerente.productos.verificar-oferta") }}',
                     method: 'POST',
@@ -1221,10 +1163,7 @@
                     },
                     success: function(response) {
                         if (response.en_oferta) {
-                            // USAR PRECIO CON OFERTA
                             precioInput.value = response.precio_final.toFixed(2);
-                            
-                            // MOSTRAR BADGE DE OFERTA
                             existenciasInfo.innerHTML = `
                                 <span class="badge bg-danger" style="font-size: 0.75rem;">
                                     <i class="fas fa-tag"></i> -${Math.round(response.porcentaje)}% OFERTA
@@ -1234,30 +1173,23 @@
                                 </span>
                             `;
                         } else {
-                            // SIN OFERTA, mostrar precio normal
                             precioInput.value = precioOriginal.toFixed(2);
-                            
                             if (existencias <= 5) {
                                 existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
                             } else {
                                 existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
                             }
                         }
-                        
-                        // Validar cantidad después de actualizar
                         validarCantidad(index);
                         calcularSubtotal(index);
                     },
                     error: function() {
-                        // Si hay error, usar precio original
                         precioInput.value = precioOriginal.toFixed(2);
-                        
                         if (existencias <= 5) {
                             existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
                         } else {
                             existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
                         }
-                        
                         calcularSubtotal(index);
                     }
                 });
@@ -1277,25 +1209,13 @@
             if (option.value) {
                 const existencias = parseInt(option.dataset.existencias);
                 const cantidad = parseInt(cantidadInput.value) || 0;
-                const nombre = option.dataset.nombre;
                 
                 if (cantidad < 1) {
                     cantidadInput.value = 1;
                 } else if (cantidad > existencias && existencias > 0) {
                     cantidadInput.value = existencias;
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Existencia insuficiente',
-                        text: `Solo hay ${existencias} unidades disponibles de ${nombre}`,
-                        confirmButtonColor: '#7fad39',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
                 }
             }
-            
             calcularSubtotal(index);
         }
 
@@ -1303,19 +1223,16 @@
             const precio = parseFloat(document.getElementById(`precio-${index}`).value) || 0;
             const cantidad = parseInt(document.getElementById(`cantidad-${index}`).value) || 0;
             const subtotal = precio * cantidad;
-            
             document.getElementById(`subtotal-${index}`).value = subtotal.toFixed(2);
             calcularTotal();
         }
 
         function calcularTotal() {
             let total = 0;
-            
             for (let i = 0; i < productoCount; i++) {
                 const subtotal = parseFloat(document.getElementById(`subtotal-${i}`)?.value) || 0;
                 total += subtotal;
             }
-            
             document.getElementById('total-pedido').textContent = '$' + total.toFixed(2);
         }
 
@@ -1350,7 +1267,6 @@
             });
         }
 
-        // Validación del formulario antes de enviar
         $('#form-pedido').on('submit', function(e) {
             if (!coberturaVerificada) {
                 e.preventDefault();
@@ -1363,7 +1279,6 @@
                 return false;
             }
             
-            // Verificar que haya al menos un producto
             const productosSeleccionados = $('.select-producto').filter(function() {
                 return $(this).val() !== '';
             }).length;
@@ -1379,7 +1294,6 @@
                 return false;
             }
             
-            // Verificar que se haya seleccionado un vendedor (si hay vendedores disponibles)
             const vendedorSelect = $('#vendedor_responsable');
             if (vendedorSelect.length > 0 && vendedorSelect.val() === '') {
                 e.preventDefault();
@@ -1395,99 +1309,14 @@
             return true;
         });
 
-        // Auto-seleccionar producto desde URL (para precarga)
         $(document).ready(function() {
             if (typeof google !== 'undefined') {
                 initAutocomplete();
             }
             
-            // Agregar primer producto automáticamente
-            agregarProducto();
+            // 🚨 IMPORTANTE: NO agregar productos automáticamente
+            // El usuario debe hacer clic en "Agregar Producto"
             
-            // Verificar si viene un producto desde detalles
-            const urlParams = new URLSearchParams(window.location.search);
-            const productoId = urlParams.get('producto_id');
-            const cantidad = urlParams.get('cantidad');
-            
-            if (productoId && productoPrecargado) {
-                setTimeout(() => {
-                    const primerSelect = document.querySelector('.select-producto');
-                    if (primerSelect) {
-                        for (let i = 0; i < primerSelect.options.length; i++) {
-                            if (primerSelect.options[i].value == productoId) {
-                                primerSelect.selectedIndex = i;
-                                
-                                // Si el producto tiene oferta, actualizar el precio
-                                if (productoPrecargado.en_oferta) {
-                                    const precioInput = document.getElementById('precio-0');
-                                    if (precioInput) {
-                                        precioInput.value = productoPrecargado.precio_final.toFixed(2);
-                                    }
-                                    
-                                    // Mostrar badge de oferta
-                                    const existenciasInfo = document.getElementById('existencias-info-0');
-                                    if (existenciasInfo) {
-                                        existenciasInfo.innerHTML = `
-                                            <span class="badge bg-danger" style="font-size: 0.75rem;">
-                                                <i class="fas fa-tag"></i> -${productoPrecargado.descuento}% OFERTA
-                                            </span>
-                                            <span class="ms-2">${productoPrecargado.existencias} disponibles</span>
-                                        `;
-                                    }
-                                }
-                                
-                                const event = new Event('change', { bubbles: true });
-                                primerSelect.dispatchEvent(event);
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (cantidad) {
-                        setTimeout(() => {
-                            const primerCantidad = document.getElementById('cantidad-0');
-                            if (primerCantidad) {
-                                primerCantidad.value = cantidad;
-                                const event = new Event('change', { bubbles: true });
-                                primerCantidad.dispatchEvent(event);
-                            }
-                        }, 100);
-                    }
-                    
-                    // Mostrar alerta personalizada
-                    if (productoPrecargado.en_oferta) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Producto con OFERTA precargado!',
-                            html: `
-                                <p><strong>${productoPrecargado.nombre}</strong></p>
-                                <p>Cantidad: ${cantidad || 1}</p>
-                                <p>
-                                    Precio normal: <span style="text-decoration: line-through; color: #999;">
-                                        $${productoPrecargado.precio.toFixed(2)}
-                                    </span><br>
-                                    <span style="color: #dc3545; font-weight: bold;">
-                                        Precio oferta: $${productoPrecargado.precio_final.toFixed(2)}
-                                    </span>
-                                    <span class="badge bg-danger ms-2">-${Math.round(productoPrecargado.descuento)}%</span>
-                                </p>
-                            `,
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Producto precargado',
-                            text: 'El producto seleccionado ha sido cargado automáticamente',
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
-                    }
-                }, 500);
-            }
-            
-            // Si hay errores de validación del servidor, mostrar alerta
             @if($errors->any())
                 Swal.fire({
                     icon: 'error',
@@ -1497,7 +1326,6 @@
                 });
             @endif
             
-            // Si hay mensaje flash
             @if(session('swal'))
                 Swal.fire({
                     icon: '{{ session('swal')['type'] }}',
