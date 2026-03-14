@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Producto;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
+use App\Models\PagoPendiente; // 👈 NUEVO
 use App\Helpers\SucursalHelper;
 use App\Helpers\CarritoHelper;
 use Illuminate\Support\Facades\DB;
@@ -187,6 +188,18 @@ class CheckoutController extends Controller
         }
     }
 
+    private function calcularTotal($cart)
+    {
+        $total = 0;
+        foreach ($cart as $item) {
+            $precio = is_array($item) ? $item['precio'] : 0;
+            $cantidad = is_array($item) ? $item['cantidad'] : $item;
+            $total += $precio * $cantidad;
+        }
+        return $total;
+    }
+
+    // 👇 SOLO ESTE MÉTODO CAMBIA (procesar)
     public function procesar(Request $request)
     {
         if (!auth('cliente')->check()) {
@@ -224,33 +237,29 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // Guardar todo en sesión (NO crear pedido aún)
-        session()->put('checkout_data', [
+        // 🔥 GUARDAR EN BASE DE DATOS EN VEZ DE SESIÓN
+        $folio = 'PED-' . date('ymd') . '-' . rand(1000, 9999);
+        
+        $pagoPendiente = PagoPendiente::create([
+            'folio' => $folio,
             'cliente_id' => $cliente->id,
-            'datos' => $validated,
-            'cobertura' => session('cobertura_verificada'),
-            'carrito' => $cart,
-            'total' => $this->calcularTotal($cart)
+            'checkout_data' => [
+                'cliente_id' => $cliente->id,
+                'datos' => $validated,
+                'cobertura' => session('cobertura_verificada'),
+                'carrito' => $cart,
+                'total' => $this->calcularTotal($cart)
+            ],
+            'status' => 'pendiente'
         ]);
 
         session()->forget('cobertura_verificada');
 
-        return redirect()->route('pago.index')->with('swal', [
+        return redirect()->route('pago.index', ['folio' => $folio])->with('swal', [
             'type' => 'success',
             'title' => '¡Datos confirmados!',
             'message' => 'Ahora procede al pago.'
         ]);
-    }
-
-    private function calcularTotal($cart)
-    {
-        $total = 0;
-        foreach ($cart as $item) {
-            $precio = is_array($item) ? $item['precio'] : 0;
-            $cantidad = is_array($item) ? $item['cantidad'] : $item;
-            $total += $precio * $cantidad;
-        }
-        return $total;
     }
 
     public function limpiarCobertura(Request $request) 

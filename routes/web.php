@@ -341,11 +341,13 @@ Route::prefix('vendedor')
 });
 
 
-// Pago
+//< Pago
 Route::prefix('pago')->name('pago.')->group(function () {
     Route::get('/', [App\Http\Controllers\PagoController::class, 'index'])->name('index');
     Route::post('/webhook', [App\Http\Controllers\PagoController::class, 'webhook'])->name('webhook');
     Route::get('/success', [App\Http\Controllers\PagoController::class, 'success'])->name('success');
     Route::get('/failure', [App\Http\Controllers\PagoController::class, 'failure'])->name('failure');
     Route::get('/pending', [App\Http\Controllers\PagoController::class, 'pending'])->name('pending');
+    Route::post('/api/process-payment', [App\Http\Controllers\PagoController::class, 'processPayment'])->name('api.process-payment');
 });
+

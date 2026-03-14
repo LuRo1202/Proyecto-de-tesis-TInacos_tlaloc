@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
 use App\Models\Producto;
+use App\Models\PagoPendiente; // 👈 NUEVO
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Client\Payment\PaymentClient;
@@ -26,18 +27,31 @@ class PagoController extends Controller
         MercadoPagoConfig::setAccessToken($this->accessToken);
     }
 
-    public function index()
+    // 👇 ESTE MÉTODO CAMBIA COMPLETO
+    public function index(Request $request)
     {
-        if (!session()->has('checkout_data')) {
+        $folio = $request->get('folio');
+        
+        if (!$folio) {
             return redirect()->route('tienda')->with('error', 'No hay datos de checkout');
         }
-
-        $checkoutData = session('checkout_data');
+        
+        $pagoPendiente = PagoPendiente::where('folio', $folio)
+                            ->where('status', 'pendiente')
+                            ->first();
+        
+        if (!$pagoPendiente) {
+            return redirect()->route('tienda')->with('error', 'Datos de checkout no encontrados');
+        }
+        
+        $checkoutData = $pagoPendiente->checkout_data;
         
         try {
-            $folio = 'PED-' . date('ymd') . '-' . rand(1000, 9999);
-            
             $preferenceData = $this->crearPreferencia($checkoutData, $folio);
+            
+            // Guardar preference_id
+            $pagoPendiente->mp_preference_id = $preferenceData['id'];
+            $pagoPendiente->save();
             
             $pedidoArray = [
                 'folio' => $folio,
@@ -51,8 +65,7 @@ class PagoController extends Controller
             return view('cliente.pago', [
                 'pedido' => $pedidoArray,
                 'preferenceId' => $preferenceData['id'],
-                'publicKey' => $this->publicKey,
-                'sucursal' => $checkoutData['cobertura'] ?? null
+                'publicKey' => $this->publicKey
             ]);
 
         } catch (MPApiException $e) {
@@ -137,24 +150,37 @@ class PagoController extends Controller
         return response()->json(['message' => 'OK']);
     }
 
+    // 👇 ESTE MÉTODO CAMBIA COMPLETO
     private function procesarPago($paymentId)
     {
         try {
             $client = new PaymentClient();
-            $payment = $client->get($paymentId);
+            $payment = $client->get((int)$paymentId);
 
             if ($payment->status === 'approved') {
                 
-                $checkoutData = session('checkout_data');
+                $folio = $payment->external_reference;
                 
-                if (!$checkoutData) {
-                    Log::error('No hay datos de checkout');
+                $pagoPendiente = PagoPendiente::where('folio', $folio)
+                                    ->where('status', 'pendiente')
+                                    ->first();
+                
+                if (!$pagoPendiente) {
+                    Log::error('No hay pago pendiente para folio: ' . $folio);
                     return;
                 }
                 
+                $checkoutData = $pagoPendiente->checkout_data;
+                
                 DB::beginTransaction();
                 
-                $folio = $payment->external_reference;
+                // Verificar si ya existe el pedido
+                $existe = Pedido::where('folio', $folio)->first();
+                if ($existe) {
+                    Log::info('Pedido ya existe: ' . $folio);
+                    DB::rollBack();
+                    return;
+                }
                 
                 $pedido = Pedido::create([
                     'cliente_id' => $checkoutData['cliente_id'],
@@ -194,6 +220,10 @@ class PagoController extends Controller
                 }
 
                 DB::commit();
+                
+                // Marcar como procesado
+                $pagoPendiente->status = 'procesado';
+                $pagoPendiente->save();
                 
                 session()->forget('checkout_data');
                 session()->forget('carrito');
@@ -236,5 +266,20 @@ class PagoController extends Controller
         return view('pago.pending', [
             'message' => 'Tu pago está siendo procesado. Te notificaremos cuando se confirme.'
         ]);
+    }
+
+    public function processPayment(Request $request)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'payment_id' => 'PAY-' . rand(1000, 9999)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

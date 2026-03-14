@@ -68,7 +68,7 @@
     </style>
 </head>
 <body>
-    <!-- HEADER (Igual al checkout) -->
+    <!-- HEADER -->
     <nav class="navbar navbar-expand-lg navbar-light main-navbar sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
@@ -88,7 +88,7 @@
                     <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Inicio</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('tienda') }}">Tienda</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a></li>
-                    <li class="nav-item"><a class="av-link" href="{{ route('contacto') }}">Contacto</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('contacto') }}">Contacto</a></li>
                 </ul>
                 <div class="d-none d-lg-flex align-items-center">
                     @if(auth('web')->check() || auth('cliente')->check())
@@ -119,7 +119,7 @@
         </div>
     </nav>
 
-    <!-- HERO SECTION (Igual al checkout) -->
+    <!-- HERO SECTION -->
     <section class="checkout-hero-section">
         <div class="container">
             <div class="row align-items-center">
@@ -178,7 +178,7 @@
                             @endif
                         </div>
 
-                        <!-- Contenedor de Mercado Pago (WALLET BRICK) -->
+                        <!-- 🔥 CONTENEDOR DE CARD PAYMENT BRICK (NO PIDE LOGIN) -->
                         <div id="wallet_container"></div>
                         
                         @else
@@ -211,7 +211,7 @@
         </div>
     </section>
 
-    <!-- FOOTER (Igual al checkout) -->
+    <!-- FOOTER -->
     <footer class="main-footer">
         <div class="container">
             <div class="row g-4">
@@ -273,14 +273,47 @@
                 locale: 'es-MX'
             });
             
-            mp.bricks().create("wallet", "wallet_container", {
+            // 🔥 CARD PAYMENT BRICK - NO PIDE LOGIN
+            mp.bricks().create("cardPayment", "wallet_container", {
                 initialization: {
-                    preferenceId: "{{ $preferenceId }}",
-                    redirectMode: "modal"
+                    amount: Number({{ $pedido['total'] }}).toFixed(2),
+                    preferenceId: "{{ $preferenceId }}"
+                },
+                callbacks: {
+                    onReady: () => {
+                        console.log('Formulario de tarjeta listo');
+                    },
+                    onSubmit: (formData) => {
+                        return new Promise((resolve, reject) => {
+                            fetch('/pago/api/process-payment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify(formData)
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if(data.success) {
+                                    window.location.href = '{{ route("pago.success") }}?payment_id=' + data.payment_id;
+                                    resolve();
+                                } else {
+                                    alert('Error al procesar el pago');
+                                    reject();
+                                }
+                            })
+                            .catch(error => {
+                                console.error(error);
+                                reject();
+                            });
+                        });
+                    },
+                    onError: (error) => {
+                        console.error('Error:', error);
+                        $('#wallet_container').html('<div class="alert alert-danger">Error al cargar el formulario de pago</div>');
+                    }
                 }
-            }).catch((error) => {
-                console.error('Error:', error);
-                $('#wallet_container').html('<div class="alert alert-danger">Error al cargar el pago</div>');
             });
         });
     </script>
