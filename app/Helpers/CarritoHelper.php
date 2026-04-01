@@ -7,19 +7,60 @@ use App\Models\Producto;
 use App\Helpers\SucursalHelper;
 use App\Helpers\ProductoHelper;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;  // 👈 AGREGAR ESTO
 
 class CarritoHelper
 {
     /**
-     * Obtiene el carrito de la sesión
+     * 🔑 NUEVO: Obtener el carrito desde la fuente correcta (BD o Sesión)
      */
     public static function getCarrito()
     {
+        // ✅ ¿Hay cliente autenticado?
+        if (Auth::guard('cliente')->check()) {
+            $cliente = Auth::guard('cliente')->user();
+            
+            // Si tiene carrito en BD, devolverlo
+            if ($cliente->carrito) {
+                return $cliente->carrito;
+            }
+            
+            // Si no tiene carrito en BD pero tiene en sesión, migrarlo
+            $carritoSesion = Session::get('carrito', []);
+            if (!empty($carritoSesion)) {
+                $cliente->carrito = $carritoSesion;
+                $cliente->save();
+                Session::forget('carrito');
+                return $carritoSesion;
+            }
+            
+            return [];
+        }
+        
+        // ❌ Usuario invitado: usar sesión (código original)
         return Session::get('carrito', []);
     }
 
     /**
+     * 💾 NUEVO: Guardar el carrito en la fuente correcta
+     */
+    protected static function guardarCarrito($carrito)
+    {
+        // ✅ Usuario autenticado → guardar en BD
+        if (Auth::guard('cliente')->check()) {
+            $cliente = Auth::guard('cliente')->user();
+            $cliente->carrito = $carrito;
+            $cliente->save();
+        } 
+        // ❌ Usuario invitado → guardar en sesión (código original)
+        else {
+            Session::put('carrito', $carrito);
+        }
+    }
+
+    /**
      * Formatea un precio a moneda mexicana
+     * ✅ ESTE MÉTODO NO CAMBIA
      */
     public static function formatoPrecio($precio)
     {
@@ -28,6 +69,7 @@ class CarritoHelper
 
     /**
      * Obtiene la imagen de un producto
+     * ✅ ESTE MÉTODO NO CAMBIA
      */
     public static function obtenerImagenProducto($codigo)
     {
@@ -36,10 +78,11 @@ class CarritoHelper
 
     /**
      * Agrega un producto al carrito con validación de stock
+     * 🔧 SOLO CAMBIA: Session::put() → self::guardarCarrito()
      */
     public static function agregar($productoId, $cantidad = 1)
     {
-        $carrito = self::getCarrito();
+        $carrito = self::getCarrito();  // 👈 YA USA EL NUEVO getCarrito()
         $sucursal = SucursalHelper::getSucursalActual();
         
         // Verificar que el producto existe
@@ -116,7 +159,8 @@ class CarritoHelper
             ];
         }
 
-        Session::put('carrito', $carrito);
+        // 🔧 CAMBIO IMPORTANTE: Usar guardarCarrito() en lugar de Session::put()
+        self::guardarCarrito($carrito);
         
         return [
             'success' => true,
@@ -128,6 +172,7 @@ class CarritoHelper
 
     /**
      * Calcula el total del carrito
+     * ✅ ESTE MÉTODO NO CAMBIA
      */
     public static function calcularTotal($carrito = null)
     {
@@ -145,6 +190,7 @@ class CarritoHelper
 
     /**
      * Obtiene el total formateado
+     * ✅ ESTE MÉTODO NO CAMBIA
      */
     public static function totalFormateado()
     {
@@ -153,14 +199,16 @@ class CarritoHelper
 
     /**
      * Vacía el carrito
+     * 🔧 MODIFICADO: Ahora usa guardarCarrito() con array vacío
      */
     public static function vaciar()
     {
-        Session::forget('carrito');
+        self::guardarCarrito([]);  // 👈 Guardar carrito vacío
     }
 
     /**
      * Elimina un producto del carrito
+     * 🔧 MODIFICADO: Ahora usa guardarCarrito()
      */
     public static function eliminar($productoId)
     {
@@ -168,7 +216,7 @@ class CarritoHelper
         
         if (isset($carrito[$productoId])) {
             unset($carrito[$productoId]);
-            Session::put('carrito', $carrito);
+            self::guardarCarrito($carrito);  // 👈 Cambio: usar guardarCarrito()
         }
         
         return $carrito;
@@ -176,6 +224,7 @@ class CarritoHelper
 
     /**
      * Obtiene el contador de items del carrito
+     * ✅ ESTE MÉTODO NO CAMBIA (usa getCarrito() que ya es nuevo)
      */
     public static function getCartCount()
     {
@@ -195,11 +244,11 @@ class CarritoHelper
 
     /**
      * Obtiene los productos del carrito con datos completos para la vista
-     * ✅ VERSIÓN ÚNICA Y CORREGIDA
+     * ✅ ESTE MÉTODO NO CAMBIA (usa getCarrito() que ya es nuevo)
      */
     public static function getProductosCarrito($sucursal = null)
     {
-        $cart = self::getCarrito();
+        $cart = self::getCarrito();  // 👈 YA USA EL NUEVO getCarrito()
         $productos = collect();
         $total = 0;
         $cartCount = 0;

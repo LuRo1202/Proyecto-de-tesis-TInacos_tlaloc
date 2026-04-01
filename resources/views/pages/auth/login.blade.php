@@ -414,11 +414,11 @@
             </div>
             
             <div class="login-body">
-                <livewire:auth.login />
+                <livewire:auth.login :redirect_to="request()->get('redirect_to')" />
                 
                 <div class="register-link">
                     ¿Aún no estás registrado?  
-                    <a href="{{ route('cliente.registro') }}">Regístrate aquí</a>
+                    <a href="{{ route('cliente.registro', ['redirect_to' => request()->get('redirect_to')]) }}">Regístrate aquí</a>
                 </div>
 
                 <div class="reset-link">

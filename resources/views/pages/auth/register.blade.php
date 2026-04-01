@@ -483,8 +483,9 @@
                 @endif
                 
                 <form method="POST" action="{{ route('cliente.register.store') }}" id="formRegistro">
-                    @csrf
                     
+                    @csrf
+                    <input type="hidden" name="redirect_to" value="{{ request()->get('redirect_to') }}">
                     <!-- Nombre -->
                     <div class="mb-3">
                         <label class="form-label">Nombre completo *</label>
@@ -638,7 +639,7 @@
                         <i class="fas fa-user-plus me-2"></i>Crear cuenta
                     </button>
                     
-                    <a href="{{ route('login') }}" class="login-link">
+                    <a href="{{ route('login', ['redirect_to' => request()->get('redirect_to')]) }}" class="login-link">
                         <i class="fas fa-arrow-left me-1"></i>¿Ya tienes cuenta? Inicia sesión
                     </a>
                     

@@ -51,7 +51,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Header Compacto */
         .header-bar {
             background: white;
             border-radius: 8px;
@@ -102,7 +101,6 @@
             flex-wrap: wrap;
         }
         
-        /* Botones Compactos */
         .btn-custom {
             padding: 6px 12px;
             border-radius: 6px;
@@ -154,7 +152,6 @@
             color: white;
         }
         
-        /* Encabezado del Card */
         .card {
             border: none;
             border-radius: 8px;
@@ -189,7 +186,6 @@
             color: var(--primary);
         }
         
-        /* Formulario */
         .form-label {
             font-weight: 500;
             color: var(--dark);
@@ -210,7 +206,6 @@
             box-shadow: 0 0 0 3px rgba(127, 173, 57, 0.1);
         }
         
-        /* Preview de imagen */
         .preview-imagen {
             width: 100%;
             height: 200px;
@@ -247,7 +242,6 @@
             color: var(--light-gray);
         }
         
-        /* Checkboxes */
         .form-check {
             margin-bottom: 5px;
         }
@@ -268,7 +262,6 @@
             font-weight: 500;
         }
         
-        /* Input group */
         .input-group-text {
             background: var(--light);
             border: 1px solid var(--light-gray);
@@ -276,13 +269,11 @@
             font-weight: 500;
         }
         
-        /* Info text */
         .form-text {
             font-size: 0.8rem;
             color: var(--gray);
         }
         
-        /* Acciones del formulario */
         .form-actions {
             background: var(--light);
             border-radius: 8px;
@@ -296,7 +287,6 @@
             gap: 10px;
         }
         
-        /* Badges */
         .badge {
             padding: 4px 8px;
             border-radius: 12px;
@@ -307,7 +297,6 @@
             gap: 3px;
         }
         
-        /* Info box */
         .info-box {
             background: var(--light);
             border-radius: 8px;
@@ -316,13 +305,11 @@
             border-left: 4px solid var(--primary);
         }
         
-        /* Required field indicator */
         .required::after {
             content: " *";
             color: var(--danger);
         }
         
-        /* Selector de sucursal */
         .sucursal-selector {
             background: var(--light);
             border-radius: 8px;
@@ -331,137 +318,50 @@
             border: 1px solid var(--light-gray);
         }
         
-        /* Responsive Design */
         @media (max-width: 1200px) {
-            .main-content {
-                margin-left: 70px;
-                padding: 12px;
-            }
+            .main-content { margin-left: 70px; padding: 12px; }
         }
         
         @media (max-width: 992px) {
-            .header-bar {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-            
-            .header-actions {
-                justify-content: center;
-            }
-            
-            .form-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .form-actions > div {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .btn-custom {
-                width: 100%;
-                justify-content: center;
-            }
+            .header-bar { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-actions { justify-content: center; }
+            .form-actions { flex-direction: column; align-items: stretch; }
+            .form-actions > div { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+            .btn-custom { width: 100%; justify-content: center; }
         }
         
         @media (max-width: 768px) {
-            .main-content {
-                margin-left: 60px;
-                padding: 10px;
-            }
-            
-            .header-title {
-                font-size: 1.1rem;
-            }
-            
-            .card-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 8px;
-            }
-            
-            .preview-imagen {
-                height: 180px;
-            }
+            .main-content { margin-left: 60px; padding: 10px; }
+            .header-title { font-size: 1.1rem; }
+            .card-header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .preview-imagen { height: 180px; }
         }
         
         @media (max-width: 576px) {
-            .main-content {
-                margin-left: 0;
-                padding: 8px;
-            }
-            
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-custom {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .form-actions > div .btn-custom {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .preview-imagen {
-                height: 160px;
-            }
+            .main-content { margin-left: 0; padding: 8px; }
+            .header-actions { flex-direction: column; width: 100%; }
+            .btn-custom { width: 100%; justify-content: center; }
+            .preview-imagen { height: 160px; }
         }
         
-        /* Animaciones Suaves */
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        .card {
-            animation: fadeIn 0.3s ease-out;
-        }
+        .card { animation: fadeIn 0.3s ease-out; }
         
-        /* Scrollbar Personalizado */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--light-gray); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
         
-        ::-webkit-scrollbar-track {
-            background: var(--light-gray);
-            border-radius: 3px;
-        }
+        .form-control:hover, .form-select:hover { border-color: var(--primary-light); }
+        ::placeholder { color: #adb5bd !important; opacity: 1; }
+        .form-switch .form-check-input { height: 1.25em; width: 2.5em; }
         
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 3px;
-        }
-        
-        /* Hover effects para formularios */
-        .form-control:hover, .form-select:hover {
-            border-color: var(--primary-light);
-        }
-        
-        /* Placeholder styling */
-        ::placeholder {
-            color: #adb5bd !important;
-            opacity: 1;
-        }
-        
-        /* Estilo para switches */
-        .form-switch .form-check-input {
-            height: 1.25em;
-            width: 2.5em;
+        .guia-colores {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid var(--info);
         }
     </style>
 </head>
@@ -489,6 +389,128 @@
                 </a>
             </div>
         </div>
+
+        <!-- ========== GUÍA DE VARIANTES DE COLOR (OCULTA POR DEFECTO) ========== -->
+        <div class="card mb-4 border border-info guia-colores">
+            <div class="card-header bg-info bg-opacity-10 border-bottom border-info">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-palette text-info me-2"></i>
+                    <span class="text-info">🎨 Guía: ¿Cómo crear productos con variantes de color?</span>
+                </h5>
+                <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#guiaVariantes">
+                    <i class="fas fa-chevron-down"></i> Mostrar guía
+                </button>
+            </div>
+            
+            <div class="collapse" id="guiaVariantes">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="alert alert-success py-2 mb-3">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>¡Importante!</strong> Los productos con el <strong>MISMO código base</strong> se agrupan automáticamente en una sola tarjeta.
+                            </div>
+                            
+                            <div class="bg-light p-3 rounded mb-3">
+                                <p class="mb-2"><strong>📦 Ejemplo correcto (se agrupan):</strong></p>
+                                <ul class="mb-3">
+                                    <li><code class="bg-white px-2 py-1 rounded border">TIN-1100</code> → Producto base (color estándar)</li>
+                                    <li><code class="bg-white px-2 py-1 rounded border">TIN-1100-N</code> → Variante color Negro</li>
+                                    <li><code class="bg-white px-2 py-1 rounded border">TIN-1100-B</code> → Variante color Blanco</li>
+                                    <li><code class="bg-white px-2 py-1 rounded border">TIN-1100-AZ</code> → Variante color Azul Rey</li>
+                                </ul>
+                                <div class="alert alert-info py-2 mb-0">
+                                    <i class="fas fa-arrow-right me-2"></i>
+                                    <strong>Resultado:</strong> Todos se muestran en UNA sola tarjeta con selector de colores.
+                                </div>
+                            </div>
+                            
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-2"><strong>🎨 Sufijos de color disponibles:</strong></p>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <span class="badge bg-dark">-N = Negro</span>
+                                    <span class="badge bg-light text-dark border">-B = Blanco</span>
+                                    <span class="badge bg-primary">-AZ = Azul Rey</span>
+                                    <span class="badge bg-danger">-R = Rojo</span>
+                                    <span class="badge bg-warning text-dark">-M = Morado</span>
+                                    <span class="badge" style="background: #FF69B4; color: white;">-RM = Rosa Mexicano</span>
+                                </div>
+                                <div class="alert alert-warning py-2 mb-0 small">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Consejo:</strong> Para crear una variante, COPIA el código base y agrégale el sufijo de color.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-5">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-steps me-2 text-primary"></i>
+                                Pasos para crear un producto con variantes:
+                            </h6>
+                            
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item bg-transparent px-0">
+                                    <div class="d-flex">
+                                        <span class="badge bg-primary rounded-circle me-3 mt-1" style="width: 24px; height: 24px; line-height: 20px;">1</span>
+                                        <div>
+                                            <strong>Crea el producto base</strong>
+                                            <div class="small text-muted">Ej: código <code>TIN-1100</code>, sin color</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="list-group-item bg-transparent px-0">
+                                    <div class="d-flex">
+                                        <span class="badge bg-primary rounded-circle me-3 mt-1" style="width: 24px; height: 24px; line-height: 20px;">2</span>
+                                        <div>
+                                            <strong>Guarda el producto base</strong>
+                                            <div class="small text-muted">Ya tienes el producto principal</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="list-group-item bg-transparent px-0">
+                                    <div class="d-flex">
+                                        <span class="badge bg-primary rounded-circle me-3 mt-1" style="width: 24px; height: 24px; line-height: 20px;">3</span>
+                                        <div>
+                                            <strong>Crea la variante de color</strong>
+                                            <div class="small text-muted">Usa el MISMO código base + sufijo</div>
+                                            <code class="d-block mt-1 bg-light p-1 rounded">TIN-1100-N</code>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="list-group-item bg-transparent px-0">
+                                    <div class="d-flex">
+                                        <span class="badge bg-primary rounded-circle me-3 mt-1" style="width: 24px; height: 24px; line-height: 20px;">4</span>
+                                        <div>
+                                            <strong>Repite para cada color</strong>
+                                            <div class="small text-muted">Crea una variante por cada color disponible</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                    
+                        </div>
+                    </div>
+                    <div class="alert alert-warning py-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>⚠️ Importante:</strong> No olvides que el código base debe ser IDÉNTICO en todas las variantes. Solo cambia después del sufijo de color.
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="text-center">
+                        <p class="small text-muted mb-0">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            <strong>Tip:</strong> Cada variante puede tener su propio precio. Si una variante tiene precio diferente, se mostrará ese precio al seleccionarla.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ========== FIN GUÍA ========== -->
 
         <!-- Selector de Sucursal -->
         <div class="sucursal-selector">
@@ -537,8 +559,11 @@
                                     <label class="form-label required">Código del Producto</label>
                                     <input type="text" name="codigo" class="form-control @error('codigo') is-invalid @enderror" required 
                                            maxlength="50" id="codigo" value="{{ old('codigo') }}"
-                                           placeholder="Ej: TANQ-1000, ACC-TAPA">
-                                    <div class="form-text">Código único para identificar el producto</div>
+                                           placeholder="Ej: TIN-1100, TIN-1100-N">
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle text-info"></i> 
+                                        <strong>Para variantes:</strong> usa el mismo código base + sufijo (ej: TIN-1100-N)
+                                    </div>
                                     @error('codigo')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -548,7 +573,7 @@
                                     <label class="form-label required">Nombre del Producto</label>
                                     <input type="text" name="nombre" class="form-control @error('nombre') is-invalid @enderror" required 
                                            id="nombre" value="{{ old('nombre') }}"
-                                           placeholder="Ej: Tanque Rotoplas 1000L">
+                                           placeholder="Ej: Tinaco 1100 litros">
                                     <div class="form-text">Nombre descriptivo del producto</div>
                                     @error('nombre')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -561,7 +586,7 @@
                                     <label class="form-label">Capacidad (litros)</label>
                                     <input type="number" name="litros" class="form-control @error('litros') is-invalid @enderror" 
                                            id="litros" min="0" step="1" value="{{ old('litros', 0) }}"
-                                           placeholder="Ej: 1000">
+                                           placeholder="Ej: 1100">
                                     <div class="form-text">Capacidad en litros (opcional)</div>
                                     @error('litros')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -708,7 +733,6 @@
             const file = e.target.files[0];
             
             if (file) {
-                // Validar tamaño (2MB máximo)
                 if (file.size > 2 * 1024 * 1024) {
                     Swal.fire({
                         title: 'Archivo muy grande',
@@ -721,7 +745,6 @@
                     return;
                 }
                 
-                // Validar extensión (solo JPG)
                 const extension = file.name.split('.').pop().toLowerCase();
                 if (!['jpg', 'jpeg'].includes(extension)) {
                     Swal.fire({
@@ -735,20 +758,14 @@
                     return;
                 }
                 
-                // Mostrar preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.innerHTML = `
                         <img src="${e.target.result}" alt="Previsualización" class="img-fluid">
-                        <div class="preview-imagen-texto" style="display: none;">
-                            <i class="fas fa-image fa-2x"></i>
-                            <p class="mb-1 mt-2">Sin imagen</p>
-                            <small>Selecciona una imagen JPG</small>
-                        </div>`;
+                        <div class="preview-imagen-texto" style="display: none;"></div>`;
                 }
                 reader.readAsDataURL(file);
             } else {
-                // Restaurar vista sin imagen
                 preview.innerHTML = `
                     <div class="preview-imagen-texto">
                         <i class="fas fa-image fa-2x"></i>
@@ -764,15 +781,12 @@
             const codigoInput = document.getElementById('codigo');
             const ejemploImagen = document.getElementById('ejemploImagen');
             
-            // Si el código está vacío, sugerir uno
             if (codigoInput.value === '' && nombre !== '') {
-                // Convertir a mayúsculas, eliminar espacios y caracteres especiales
                 let codigoSugerido = nombre.toUpperCase()
-                    .replace(/[^A-Z0-9\s]/g, '')  // Eliminar caracteres especiales
-                    .replace(/\s+/g, '-')         // Reemplazar espacios con guiones
-                    .substring(0, 20);            // Limitar longitud
+                    .replace(/[^A-Z0-9\s]/g, '')
+                    .replace(/\s+/g, '-')
+                    .substring(0, 20);
                 
-                // Si el código sugerido es válido, mostrarlo
                 if (codigoSugerido.length >= 3) {
                     codigoInput.value = codigoSugerido;
                     if (ejemploImagen) {
@@ -795,7 +809,6 @@
         document.getElementById('sucursal-selector').addEventListener('change', function() {
             document.getElementById('sucursal_id').value = this.value;
             
-            // Mostrar mensaje informativo
             const sucursalNombre = this.options[this.selectedIndex].text;
             Swal.fire({
                 title: 'Sucursal cambiada',
@@ -817,7 +830,6 @@
             
             let errores = [];
             
-            // Validar campos requeridos
             if (codigo.trim() === '') {
                 errores.push('El código del producto es obligatorio');
             }
@@ -830,13 +842,11 @@
                 errores.push('El precio debe ser mayor a $0.00');
             }
             
-            // Validar formato del código (solo letras, números y guiones)
             const codigoRegex = /^[A-Za-z0-9-]+$/;
             if (codigo.trim() !== '' && !codigoRegex.test(codigo)) {
                 errores.push('El código solo puede contener letras, números y guiones');
             }
             
-            // Si hay errores, mostrar alerta y prevenir envío
             if (errores.length > 0) {
                 e.preventDefault();
                 
@@ -874,7 +884,6 @@
         });
         @endif
         
-        {{-- ✅ CORREGIDO: Mensajes específicos para productos --}}
         @if(session('swal_producto'))
         document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({
@@ -887,7 +896,6 @@
         });
         @endif
 
-        {{-- Mantener swal genérico por compatibilidad --}}
         @if(session('swal'))
         document.addEventListener('DOMContentLoaded', function() {
             Swal.fire({

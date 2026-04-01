@@ -23,7 +23,8 @@ $(document).ready(function() {
     });
     
     // ===== VALIDACIÓN DEL FORMULARIO AL ENVIAR =====
-    $('form').on('submit', function(e) {
+    // CAMBIO IMPORTANTE: Ahora solo afecta al formulario de proyecto
+    $('#contactform form, .project-form-card form, form[action*="proyecto.enviar"]').on('submit', function(e) {
         let isValid = true;
         const $form = $(this);
         
@@ -299,12 +300,7 @@ $(document).ready(function() {
         });
     });
     
-    // ===== FORM AUTO-FOCUS =====
-    if ($('#nombre').length) {
-        setTimeout(() => {
-            $('#nombre').focus();
-        }, 500);
-    }
+
     
     // ===== MOSTRAR ERRORES DESDE LA URL =====
     const urlParams = new URLSearchParams(window.location.search);

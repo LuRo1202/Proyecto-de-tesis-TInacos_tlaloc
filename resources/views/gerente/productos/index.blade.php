@@ -1022,18 +1022,7 @@
             }, 1000);
             @endif
             
-            setTimeout(() => {
-                Swal.fire({
-                    title: 'Productos de Sucursal',
-                    html: `Viendo inventario de: <strong>{{ session('sucursal_nombre') }}</strong>`,
-                    icon: 'info',
-                    timer: 3000,
-                    timerProgressBar: true,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false
-                });
-            }, 800);
+            // ✅ ALERTA DE SUCURSAL ELIMINADA - Ya no aparece al cargar la página
         });
         
         document.querySelectorAll('.stat-card').forEach(card => {

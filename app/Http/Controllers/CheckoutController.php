@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Producto;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
-use App\Models\PagoPendiente; // 👈 NUEVO
+use App\Models\PagoPendiente;
 use App\Helpers\SucursalHelper;
-use App\Helpers\CarritoHelper;
+use App\Helpers\CarritoHelper;  // 👈 YA ESTÁ IMPORTADO
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -29,82 +29,21 @@ class CheckoutController extends Controller
             return redirect()->route('tienda')->with('error', 'No se pudo determinar la sucursal.');
         }
 
-        $cart = session()->get('carrito', []);
-        
-        $productosCarrito = collect();
-        $total = 0;
-        $cartCount = 0;
+        // 🔧 CAMBIO: Usar CarritoHelper en lugar de session() directamente
+        $datosCarrito = CarritoHelper::getProductosCarrito($sucursal);
+        $productosCarrito = $datosCarrito['productos'];
+        $total = $datosCarrito['total'];
+        $cartCount = $datosCarrito['cartCount'];
 
-        if (empty($cart)) {
+        if ($productosCarrito->isEmpty()) {
             return redirect()->route('carrito')->with('error', 'Tu carrito está vacío');
         }
 
-        foreach ($cart as $id => $item) {
-            if (is_array($item)) {
-                $cantidad = $item['cantidad'];
-                $precio = $item['precio'];
-            } else {
-                $cantidad = $item;
-                $precio = null;
-            }
-            
-            $producto = Producto::with(['categoria', 'color'])->find($id);
-            
-            if ($producto) {
-                $stock = $sucursal->productos()
-                    ->where('productos.id', $id)
-                    ->withPivot('existencias')
-                    ->first();
-                
-                $existencias = $stock ? $stock->pivot->existencias : 0;
-                
-                if ($existencias < $cantidad) {
-                    return redirect()->route('carrito')->with('error', 
-                        "No hay suficiente stock de {$producto->nombre}. Disponible: {$existencias}");
-                }
-                
-                $ofertaActiva = $producto->ofertas()
-                    ->where('activa', true)
-                    ->where('fecha_inicio', '<=', now())
-                    ->where('fecha_fin', '>=', now())
-                    ->first();
-
-                $tieneOferta = !is_null($ofertaActiva);
-                $precioOriginal = (float)$producto->precio;
-                $precioFinal = $precio ?? $precioOriginal;
-                $ahorro = 0;
-                $descuentoTexto = null;
-
-                if ($tieneOferta && $precioFinal < $precioOriginal) {
-                    $ahorro = $precioOriginal - $precioFinal;
-                    if ($ofertaActiva->tipo === 'porcentaje') {
-                        $descuentoTexto = '-' . round($ofertaActiva->valor) . '%';
-                    } else {
-                        $descuentoTexto = '-$' . number_format($ofertaActiva->valor, 0);
-                    }
-                }
-                
-                $subtotal = $precioFinal * $cantidad;
-                
-                $productosCarrito->push([
-                    'id' => $producto->id,
-                    'nombre' => $producto->nombre,
-                    'precio' => $precioFinal,
-                    'precio_original' => $precioOriginal,
-                    'tiene_oferta' => $tieneOferta,
-                    'descuento_texto' => $descuentoTexto,
-                    'ahorro' => $ahorro,
-                    'codigo' => $producto->codigo,
-                    'litros' => $producto->litros,
-                    'cantidad' => $cantidad,
-                    'subtotal' => $subtotal,
-                    'existencias' => $existencias
-                ]);
-                
-                $total += $subtotal;
-                $cartCount += $cantidad;
-            } else {
-                session()->forget("cart.{$id}");
+        // 🔧 NUEVO: Verificar stock de cada producto (ya lo hace getProductosCarrito, pero validamos)
+        foreach ($productosCarrito as $item) {
+            if ($item['existencias'] < $item['cantidad']) {
+                return redirect()->route('carrito')->with('error', 
+                    "No hay suficiente stock de {$item['nombre']}. Disponible: {$item['existencias']}");
             }
         }
 
@@ -124,6 +63,7 @@ class CheckoutController extends Controller
 
     public function verificarCobertura(Request $request)
     {
+        // ✅ ESTE MÉTODO NO CAMBIA, no usa carrito directamente
         $request->validate([
             'direccion' => 'required|string|max:255',
             'ciudad' => 'required|string|max:100',
@@ -188,18 +128,18 @@ class CheckoutController extends Controller
         }
     }
 
+    /**
+     * 🔧 MODIFICADO: Ahora usa CarritoHelper en lugar de session()
+     */
     private function calcularTotal($cart)
     {
-        $total = 0;
-        foreach ($cart as $item) {
-            $precio = is_array($item) ? $item['precio'] : 0;
-            $cantidad = is_array($item) ? $item['cantidad'] : $item;
-            $total += $precio * $cantidad;
-        }
-        return $total;
+        // Este método ya no se usa directamente, pero lo dejamos por si acaso
+        return CarritoHelper::calcularTotal($cart);
     }
 
-    // 👇 SOLO ESTE MÉTODO CAMBIA (procesar)
+    /**
+     * 🔧 PROCESAR - Cambio importante: obtener carrito del helper
+     */
     public function procesar(Request $request)
     {
         if (!auth('cliente')->check()) {
@@ -227,9 +167,11 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $cart = session()->get('carrito', []);
+        // 🔧 CAMBIO IMPORTANTE: Obtener carrito del HELPER, no de session()
+        $carrito = CarritoHelper::getCarrito();
+        $total = CarritoHelper::calcularTotal($carrito);
 
-        if (empty($cart)) {
+        if (empty($carrito)) {
             return redirect()->route('carrito')->with('swal', [
                 'type' => 'error',
                 'title' => 'Carrito vacío',
@@ -237,7 +179,7 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // 🔥 GUARDAR EN BASE DE DATOS EN VEZ DE SESIÓN
+        // Crear registro de pago pendiente
         $folio = 'PED-' . date('ymd') . '-' . rand(1000, 9999);
         
         $pagoPendiente = PagoPendiente::create([
@@ -247,8 +189,8 @@ class CheckoutController extends Controller
                 'cliente_id' => $cliente->id,
                 'datos' => $validated,
                 'cobertura' => session('cobertura_verificada'),
-                'carrito' => $cart,
-                'total' => $this->calcularTotal($cart)
+                'carrito' => $carrito,
+                'total' => $total
             ],
             'status' => 'pendiente'
         ]);
@@ -264,6 +206,7 @@ class CheckoutController extends Controller
 
     public function limpiarCobertura(Request $request) 
     {
+        // ✅ ESTE MÉTODO NO CAMBIA
         try {
             if ($request->ajax()) {
                 session()->forget('cobertura_verificada');

@@ -117,11 +117,6 @@
             color: white;
         }
         
-        .btn-warning-custom {
-            background: linear-gradient(135deg, var(--warning), #e0a800);
-            color: #000;
-        }
-        
         .btn-secondary-custom {
             background: white;
             color: var(--gray);
@@ -223,8 +218,6 @@
             padding-right: 2rem;
             cursor: pointer;
             appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
         }
         
         .alert-stock {
@@ -237,11 +230,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-        
-        .alert-stock i {
-            color: var(--warning);
-            font-size: 1.2rem;
         }
         
         .card {
@@ -312,18 +300,6 @@
             border: 1px solid rgba(255, 193, 7, 0.2);
         }
         
-        .badge-sucursal {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            background: #e3f2fd;
-            color: #1976d2;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            white-space: nowrap;
-        }
-        
         .producto-img {
             width: 60px;
             height: 60px;
@@ -358,18 +334,12 @@
             color: #555;
             border-bottom: 2px solid #eee;
             padding: 10px 12px;
-            white-space: nowrap;
         }
         
         .table td {
             vertical-align: middle;
             padding: 10px 12px;
             border-bottom: 1px solid #eee;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(127, 173, 57, 0.05);
-            cursor: pointer;
         }
         
         .action-buttons {
@@ -416,17 +386,6 @@
             opacity: 0.3;
         }
         
-        .empty-state h5 {
-            font-weight: 600;
-            margin-bottom: 5px;
-            font-size: 1rem;
-        }
-        
-        .empty-state p {
-            font-size: 0.85rem;
-            margin: 0 auto 12px;
-        }
-        
         .pagination-custom .page-link {
             border: none;
             color: var(--gray);
@@ -439,11 +398,6 @@
         .pagination-custom .page-item.active .page-link {
             background: var(--primary);
             color: white;
-        }
-        
-        .pagination-custom .page-link:hover {
-            background: var(--light-gray);
-            color: var(--dark);
         }
         
         .sucursal-actual {
@@ -460,159 +414,52 @@
         }
         
         @media (max-width: 1200px) {
-            .main-content {
-                margin-left: 70px;
-                padding: 15px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                gap: 10px;
-            }
+            .main-content { margin-left: 70px; padding: 15px; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
         }
         
         @media (max-width: 992px) {
-            .header-bar {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-            
-            .header-actions {
-                justify-content: center;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            
-            .stat-value {
-                font-size: 1.3rem;
-            }
-            
-            .card-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 8px;
-            }
-            
-            .producto-img {
-                width: 50px;
-                height: 50px;
-            }
+            .header-bar { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-actions { justify-content: center; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .stat-value { font-size: 1.3rem; }
         }
         
         @media (max-width: 768px) {
-            .main-content {
-                margin-left: 60px;
-                padding: 12px;
-            }
-            
-            .header-title {
-                font-size: 1.1rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .table th,
-            .table td {
-                padding: 8px 10px;
-                font-size: 0.8rem;
-            }
-            
-            .producto-img {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .btn-action {
-                width: 28px;
-                height: 28px;
-            }
+            .main-content { margin-left: 60px; padding: 12px; }
+            .header-title { font-size: 1.1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .table th, .table td { padding: 8px 10px; font-size: 0.8rem; }
+            .producto-img { width: 40px; height: 40px; }
+            .btn-action { width: 28px; height: 28px; }
         }
         
         @media (max-width: 576px) {
-            .main-content {
-                margin-left: 0;
-                padding: 10px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-custom {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .action-buttons {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .producto-img {
-                width: 35px;
-                height: 35px;
-            }
+            .main-content { margin-left: 0; padding: 10px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .header-actions { flex-direction: column; width: 100%; }
+            .btn-custom { width: 100%; justify-content: center; }
+            .producto-img { width: 35px; height: 35px; }
         }
         
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        .stat-card,
-        .filter-card,
-        .card {
-            animation: fadeIn 0.3s ease-out;
-        }
+        .stat-card, .filter-card, .card { animation: fadeIn 0.3s ease-out; }
         
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--light-gray);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 3px;
-        }
-        
-        input[type="text"]:focus,
-        select:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 2px rgba(127, 173, 57, 0.1) !important;
-        }
-        
-        .table tbody tr {
-            transition: background-color 0.2s ease;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--light-gray); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
         
         .table tbody tr:hover {
             background-color: rgba(127, 173, 57, 0.08);
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- Incluimos el sidebar -->
     @include('admin.layouts.sidebar')
     
     <div class="main-content">
@@ -621,10 +468,8 @@
                 <h1 class="header-title mb-0">
                     <i class="fas fa-box me-2"></i>Gestión de Productos
                 </h1>
-                @php
-                    $sucursal_nombre = \App\Models\Sucursal::find($sucursal_id)->nombre ?? 'Todas';
-                @endphp
                 @if($sucursal_id)
+                @php $sucursal_nombre = \App\Models\Sucursal::find($sucursal_id)->nombre ?? 'Todas'; @endphp
                 <span class="sucursal-actual">
                     <i class="fas fa-store"></i> {{ $sucursal_nombre }}
                 </span>
@@ -632,12 +477,12 @@
             </div>
             
             <div class="header-actions">
-                <a href="{{ route('admin.productos.nuevo', ['sucursal_id' => $sucursal_id]) }}" class="btn-custom btn-success-custom">
+                <a href="{{ route('admin.productos.nuevo') }}" class="btn-custom btn-success-custom">
                     <i class="fas fa-plus"></i> Nuevo Producto
                 </a>
                 @if(request()->has('sucursal_id') || request()->has('categoria') || request()->has('busqueda') || request()->has('stock_bajo'))
                 <a href="{{ route('admin.productos') }}" class="btn-custom btn-secondary-custom">
-                    <i class="fas fa-times"></i> Limpiar
+                    <i class="fas fa-times"></i> Limpiar Filtros
                 </a>
                 @endif
             </div>
@@ -647,37 +492,33 @@
             <div class="stat-card stat-total">
                 <div class="stat-value">{{ $total_productos }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-box"></i>
-                    Total Productos
+                    <i class="fas fa-box"></i> Total Productos
                 </div>
             </div>
             
             <div class="stat-card stat-bajos">
                 <div class="stat-value">{{ $productos_bajos }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Stock Bajo
+                    <i class="fas fa-exclamation-triangle"></i> Stock Bajo
                 </div>
             </div>
             
             <div class="stat-card stat-valor">
                 <div class="stat-value">${{ number_format($valor_inventario, 0) }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Valor Inventario
+                    <i class="fas fa-money-bill-wave"></i> Valor Inventario
                 </div>
             </div>
             
             <div class="stat-card stat-sin-stock">
                 <div class="stat-value">{{ $sin_stock }}</div>
                 <div class="stat-label">
-                    <i class="fas fa-times-circle"></i>
-                    Sin Stock
+                    <i class="fas fa-times-circle"></i> Sin Stock
                 </div>
             </div>
         </div>
 
-        @if($productos_bajos > 0)
+        @if($productos_bajos > 0 && !request()->has('stock_bajo'))
         <div class="alert-stock">
             <i class="fas fa-exclamation-triangle"></i>
             <div class="flex-grow-1">
@@ -698,13 +539,13 @@
                 <i class="fas fa-filter"></i> Filtros de Búsqueda
             </h3>
             
-            <form method="GET" action="{{ route('admin.productos') }}" class="row g-2">
+            <form method="GET" action="{{ route('admin.productos') }}" class="row g-2" id="filtrosForm">
                 <div class="col-md-3 col-sm-6">
                     <label class="form-label small fw-semibold">Sucursal</label>
-                    <select name="sucursal_id" class="form-control-sm" id="selectSucursal">
-                        <option value="">Todas las sucursales</option>
+                    <select name="sucursal_id" class="form-control-sm">
+                        <option value="">Todas las sucursales (Stock Total)</option>
                         @foreach($sucursales as $sucursal)
-                        <option value="{{ $sucursal->id }}" {{ request('sucursal_id', $sucursal_id) == $sucursal->id ? 'selected' : '' }}>
+                        <option value="{{ $sucursal->id }}" {{ request('sucursal_id') == $sucursal->id ? 'selected' : '' }}>
                             {{ $sucursal->nombre }}
                         </option>
                         @endforeach
@@ -734,7 +575,7 @@
                     <label class="form-label small fw-semibold">Stock</label>
                     <div class="form-check mt-2">
                         <input class="form-check-input" type="checkbox" name="stock_bajo" id="stockBajo" 
-                               {{ request('stock_bajo') ? 'checked' : '' }}>
+                               value="1" {{ request('stock_bajo') ? 'checked' : '' }}>
                         <label class="form-check-label small" for="stockBajo">
                             Solo stock bajo
                         </label>
@@ -744,12 +585,15 @@
                 <div class="col-12 mt-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <button type="submit" class="btn-custom btn-primary-custom">
-                            <i class="fas fa-filter"></i> Aplicar Filtros
+                            <i class="fas fa-search"></i> Aplicar Filtros
                         </button>
                         
                         <div class="text-muted small">
                             <i class="fas fa-info-circle"></i>
                             Mostrando <strong>{{ $total_productos }}</strong> productos
+                            @if(!request('sucursal_id') && !request('categoria') && !request('busqueda') && !request('stock_bajo'))
+                            <span class="text-success">(Stock TOTAL de todas las sucursales)</span>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -762,13 +606,6 @@
                     <i class="fas fa-list-ol"></i> Lista de Productos
                     <span class="badge bg-primary">{{ $total_productos }}</span>
                 </h5>
-                
-                @if($total_productos > 0)
-                <div class="text-muted small">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Valor total: <strong>${{ number_format($valor_inventario, 2) }}</strong>
-                </div>
-                @endif
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -789,8 +626,10 @@
                             @forelse($productos_paginados as $producto)
                             @php
                                 $stock_class = 'badge-stock-alto';
-                                if ($producto->existencias <= 5) {
-                                    $stock_class = $producto->existencias == 0 ? 'badge-stock-bajo' : 'badge-stock-medio';
+                                if ($producto->existencias <= 5 && $producto->existencias > 0) {
+                                    $stock_class = 'badge-stock-medio';
+                                } elseif ($producto->existencias == 0) {
+                                    $stock_class = 'badge-stock-bajo';
                                 }
                             @endphp
                             <tr onclick="window.location.href='{{ route('admin.productos.editar', array_merge(request()->all(), ['id' => $producto->id])) }}';">
@@ -811,13 +650,9 @@
                                 </td>
                                 <td>
                                     <div class="fw-semibold">{{ $producto->nombre }}</div>
-                                    <small class="text-muted">
-                                        {{ $producto->litros }} litros
-                                    </small>
+                                    <small class="text-muted">{{ $producto->litros }} litros</small>
                                 </td>
-                                <td>
-                                    {{ $producto->categoria->nombre ?? 'Sin categoría' }}
-                                </td>
+                                <td>{{ $producto->categoria->nombre ?? 'Sin categoría' }}</td>
                                 <td class="fw-bold" style="color: var(--primary);">
                                     ${{ number_format($producto->precio, 2) }}
                                 </td>
@@ -849,8 +684,7 @@
                                 <td>
                                     <div class="action-buttons" onclick="event.stopPropagation();">
                                         <a href="{{ route('admin.productos.editar', array_merge(request()->all(), ['id' => $producto->id])) }}" 
-                                           class="btn-action btn-edit" 
-                                           title="Editar producto">
+                                           class="btn-action btn-edit" title="Editar producto">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <button type="button" 
@@ -870,7 +704,7 @@
                                     <p>{{ request()->has('sucursal_id') || request()->has('categoria') || request()->has('busqueda') || request()->has('stock_bajo') ? 
                                         'No hay productos que coincidan con los filtros aplicados.' : 
                                         'Aún no hay productos registrados en el sistema.' }}</p>
-                                    <a href="{{ route('admin.productos.nuevo', ['sucursal_id' => $sucursal_id]) }}" class="btn-custom btn-primary-custom mt-2">
+                                    <a href="{{ route('admin.productos.nuevo') }}" class="btn-custom btn-primary-custom mt-2">
                                         <i class="fas fa-plus"></i> Agregar Producto
                                     </a>
                                 </td>
@@ -926,7 +760,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- SweetAlert2 JS -->
@@ -969,12 +803,7 @@
                             'Accept': 'application/json'
                         }
                     })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Error en la respuesta del servidor');
-                        }
-                        return response.json();
-                    })
+                    .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             Swal.fire({
@@ -1013,61 +842,44 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const hasFilters = urlParams.has('sucursal_id') || urlParams.has('categoria') || urlParams.has('busqueda') || urlParams.has('stock_bajo');
-            
-            if (hasFilters) {
-                setTimeout(() => {
-                    Swal.fire({
-                        title: 'Filtros Aplicados',
-                        text: 'Mostrando resultados filtrados',
-                        icon: 'info',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true
-                    });
-                }, 500);
-            }
-            
-            @if($total_productos === 0 && (request()->has('sucursal_id') || request()->has('categoria') || request()->has('busqueda') || request()->has('stock_bajo')))
-            setTimeout(() => {
-                Swal.fire({
-                    title: 'Sin Resultados',
-                    html: 'No se encontraron productos con los filtros aplicados.',
-                    icon: 'warning',
-                    confirmButtonColor: '#ffc107',
-                    confirmButtonText: 'Limpiar Filtros'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '{{ route("admin.productos") }}';
-                    }
-                });
-            }, 1000);
+            // Solo mostrar alerta de éxito si existe
+            @if(session('swal_producto'))
+            Swal.fire({
+                title: '{{ session('swal_producto.title') }}',
+                text: '{{ session('swal_producto.message') }}',
+                icon: '{{ session('swal_producto.type') }}',
+                confirmButtonColor: '#7fad39',
+                confirmButtonText: 'Aceptar'
+            });
             @endif
             
-            // Script para mantener el scroll después de recargar
-            if (sessionStorage.getItem('scrollPosition')) {
-                window.scrollTo(0, sessionStorage.getItem('scrollPosition'));
-                sessionStorage.removeItem('scrollPosition');
-            }
-            
-            document.querySelectorAll('.pagination a').forEach(link => {
-                link.addEventListener('click', function() {
-                    sessionStorage.setItem('scrollPosition', window.scrollY);
+            // No mostrar alerta de "Filtros Aplicados" automáticamente
+            // Solo si el usuario hizo clic en el botón de aplicar filtros
+            const form = document.getElementById('filtrosForm');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    // Solo si hay filtros aplicados, mostrar alerta
+                    const tieneFiltros = document.querySelector('select[name="sucursal_id"]').value !== '' ||
+                                         document.querySelector('select[name="categoria"]').value !== '' ||
+                                         document.querySelector('input[name="busqueda"]').value !== '' ||
+                                         document.querySelector('input[name="stock_bajo"]').checked;
+                    
+                    if (tieneFiltros) {
+                        setTimeout(() => {
+                            Swal.fire({
+                                title: 'Filtros Aplicados',
+                                text: 'Mostrando resultados filtrados',
+                                icon: 'info',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                        }, 100);
+                    }
                 });
-            });
-        });
-        
-        document.querySelectorAll('.stat-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-3px)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
+            }
         });
         
         document.querySelectorAll('.table tbody tr').forEach(row => {
@@ -1081,30 +893,6 @@
             });
         });
         
-        document.querySelectorAll('select').forEach(select => {
-            select.addEventListener('focus', function() {
-                this.style.borderColor = 'var(--primary)';
-                this.style.boxShadow = '0 0 0 2px rgba(127, 173, 57, 0.1)';
-            });
-            
-            select.addEventListener('blur', function() {
-                this.style.borderColor = 'var(--light-gray)';
-                this.style.boxShadow = 'none';
-            });
-        });
-        
-        document.querySelectorAll('input[type="text"]').forEach(input => {
-            input.addEventListener('focus', function() {
-                this.style.borderColor = 'var(--primary)';
-                this.style.boxShadow = '0 0 0 2px rgba(127, 173, 57, 0.1)';
-            });
-            
-            input.addEventListener('blur', function() {
-                this.style.borderColor = 'var(--light-gray)';
-                this.style.boxShadow = 'none';
-            });
-        });
-
         // Logout con SweetAlert
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
@@ -1146,18 +934,5 @@
             });
         }
     </script>
-    @if(session('swal_producto'))
-    <script>
-        Swal.fire({
-            title: '{{ session('swal_producto.title') }}',
-            text: '{{ session('swal_producto.message') }}',
-            icon: '{{ session('swal_producto.type') }}',
-            confirmButtonColor: '#7fad39',
-            confirmButtonText: 'Aceptar',
-            allowOutsideClick: false,
-            allowEscapeKey: false
-        });
-    </script>
-    @endif
 </body>
 </html>

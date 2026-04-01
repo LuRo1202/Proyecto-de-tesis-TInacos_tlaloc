@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\File;
 class ProductoController extends Controller
 {
     /**
-     * Lista todos los productos con filtros
+     * Lista todos los productos con filtros (por defecto muestra stock total de todas las sucursales)
      */
     public function index(Request $request)
     {
@@ -29,17 +29,11 @@ class ProductoController extends Controller
         $por_pagina = 20;
         $offset = ($pagina - 1) * $por_pagina;
 
-        // Si no se seleccionó sucursal, usar la actual o por defecto
-        if (!$sucursal_id) {
-            $sucursal_actual = SucursalHelper::getSucursalActual();
-            $sucursal_id = $sucursal_actual ? $sucursal_actual->id : 1;
-        }
-
-        // Obtener contadores para badges del sidebar (para la sucursal seleccionada o actual)
+        // Contadores para el sidebar (sin filtrar por sucursal para los badges)
         $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')->count();
         
+        // Calcular productos con stock bajo (TOTAL de todas las sucursales para el badge)
         $productos_bajos_count = DB::table('producto_sucursal')
-            ->where('sucursal_id', $sucursal_id)
             ->where('existencias', '<=', 5)
             ->distinct('producto_id')
             ->count('producto_id');
@@ -50,10 +44,12 @@ class ProductoController extends Controller
             'productos_bajos_count' => $productos_bajos_count
         ]);
 
-        // Construir consulta base trayendo productos con sus existencias de la sucursal seleccionada
+        // Construir consulta base
         $query = Producto::with('categoria')
             ->with(['sucursales' => function($q) use ($sucursal_id) {
-                $q->where('sucursal_id', $sucursal_id);
+                if ($sucursal_id) {
+                    $q->where('sucursal_id', $sucursal_id);
+                }
             }]);
 
         // Aplicar filtros
@@ -71,9 +67,17 @@ class ProductoController extends Controller
         // Obtener todos los productos
         $productos = $query->orderBy('codigo')->get();
 
-        // Mapear para agregar la propiedad existencias desde la relación
-        $productos = $productos->map(function($producto) {
-            $producto->existencias = $producto->sucursales->first()->pivot->existencias ?? 0;
+        // Calcular existencias (TOTALES o por sucursal según filtro)
+        $productos = $productos->map(function($producto) use ($sucursal_id) {
+            if ($sucursal_id) {
+                // Si hay sucursal seleccionada, mostrar stock de esa sucursal
+                $producto->existencias = $producto->sucursales->first()->pivot->existencias ?? 0;
+            } else {
+                // Si NO hay sucursal seleccionada, sumar stock de TODAS las sucursales
+                $producto->existencias = $producto->sucursales->sum(function($sucursal) {
+                    return $sucursal->pivot->existencias ?? 0;
+                });
+            }
             return $producto;
         });
 
@@ -89,24 +93,26 @@ class ProductoController extends Controller
         $total_paginas = ceil($total_productos / $por_pagina);
         $productos_paginados = $productos->slice($offset, $por_pagina)->values();
 
+        // Calcular valor total del inventario (con stock TOTAL)
+        $valor_inventario = $productos->sum(function($producto) {
+            return $producto->precio * $producto->existencias;
+        });
+
+        // Calcular productos sin stock
+        $sin_stock = $productos->filter(function($producto) {
+            return $producto->existencias == 0;
+        })->count();
+
+        // Productos con stock bajo (para el filtro)
+        $productos_bajos = $productos->filter(function($producto) {
+            return $producto->existencias <= 5 && $producto->existencias > 0;
+        })->count();
+
         // Obtener todas las categorías para el filtro
         $categorias = Categoria::orderBy('nombre')->get();
 
         // Obtener todas las sucursales activas para el filtro
         $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
-
-        // Estadísticas adicionales (para la sucursal seleccionada)
-        $productos_bajos = $productos->filter(function($producto) {
-            return $producto->existencias <= 5;
-        })->count();
-
-        $valor_inventario = $productos->sum(function($producto) {
-            return $producto->precio * $producto->existencias;
-        });
-
-        $sin_stock = $productos->filter(function($producto) {
-            return $producto->existencias == 0;
-        })->count();
 
         return view('admin.productos.index', compact(
             'productos_paginados',
@@ -138,7 +144,6 @@ class ProductoController extends Controller
         // Obtener contadores para badges del sidebar
         $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')->count();
         $productos_bajos_count = DB::table('producto_sucursal')
-            ->where('sucursal_id', $sucursal_id)
             ->where('existencias', '<=', 5)
             ->distinct('producto_id')
             ->count('producto_id');
@@ -152,10 +157,8 @@ class ProductoController extends Controller
         $categorias = Categoria::orderBy('nombre')->get();
         $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
         
-        // CREAR VARIABLE PARA LA VISTA CON EL NOMBRE CORRECTO
         $sucursal_seleccionada = $sucursal_id;
         
-        // Obtener productos con sus existencias en la sucursal seleccionada
         $productos = Producto::where('activo', true)
             ->orderBy('nombre')
             ->get()
@@ -197,7 +200,6 @@ class ProductoController extends Controller
             'imagen' => 'nullable|file|mimes:jpg,jpeg|max:2048'
         ]);
 
-        // Determinar valores booleanos
         $activo = $request->has('activo');
         $destacado = $request->has('destacado');
         $litros = $validated['litros'] ?? 0;
@@ -206,7 +208,6 @@ class ProductoController extends Controller
         try {
             DB::beginTransaction();
 
-            // Crear producto
             $producto = Producto::create([
                 'codigo' => $validated['codigo'],
                 'nombre' => $validated['nombre'],
@@ -217,7 +218,6 @@ class ProductoController extends Controller
                 'destacado' => $destacado
             ]);
 
-            // Insertar en producto_sucursal para la sucursal seleccionada
             DB::table('producto_sucursal')->insert([
                 'producto_id' => $producto->id,
                 'sucursal_id' => $validated['sucursal_id'],
@@ -229,25 +229,20 @@ class ProductoController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Procesar imagen si se subió
             if ($request->hasFile('imagen')) {
                 $imagen = $request->file('imagen');
-                
-                // Crear directorio si no existe
                 $path = public_path('assets/img/productos');
                 if (!File::exists($path)) {
                     File::makeDirectory($path, 0755, true);
                 }
-
-                // Guardar imagen
                 $nombre_archivo = $producto->codigo . '.jpg';
                 $imagen->move($path, $nombre_archivo);
             }
 
             DB::commit();
 
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
-            return redirect()->route('admin.productos', ['sucursal_id' => $validated['sucursal_id']])
+            // Redirigir a la lista de productos sin aplicar filtros automáticos
+            return redirect()->route('admin.productos')
                 ->with('swal_producto', [
                     'type' => 'success',
                     'title' => '¡Producto creado!',
@@ -258,7 +253,6 @@ class ProductoController extends Controller
             DB::rollBack();
             Log::error('Error al crear producto: ' . $e->getMessage());
             
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
             return redirect()->back()
                 ->withInput()
                 ->with('swal_producto', [
@@ -274,7 +268,6 @@ class ProductoController extends Controller
      */
     public function edit(Request $request, $id)
     {
-        // Obtener la sucursal seleccionada
         $sucursal_id = $request->get('sucursal_id');
         
         if (!$sucursal_id) {
@@ -282,15 +275,12 @@ class ProductoController extends Controller
             $sucursal_id = $sucursal_actual ? $sucursal_actual->id : 1;
         }
         
-        // Obtener contadores para badges del sidebar
         $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')->count();
         $productos_bajos_count = DB::table('producto_sucursal')
-            ->where('sucursal_id', $sucursal_id)
             ->where('existencias', '<=', 5)
             ->distinct('producto_id')
             ->count('producto_id');
 
-        // Guardar en sesión para el sidebar
         session([
             'pedidos_pendientes_count' => $pedidos_pendientes_count,
             'productos_bajos_count' => $productos_bajos_count
@@ -298,7 +288,6 @@ class ProductoController extends Controller
 
         $producto = Producto::with('categoria')->findOrFail($id);
         
-        // Obtener existencias de producto_sucursal para la sucursal seleccionada
         $existencias = DB::table('producto_sucursal')
             ->where('producto_id', $id)
             ->where('sucursal_id', $sucursal_id)
@@ -307,7 +296,6 @@ class ProductoController extends Controller
         $categorias = Categoria::orderBy('nombre')->get();
         $sucursales = Sucursal::where('activa', true)->orderBy('nombre')->get();
         
-        // Obtener parámetros de filtro para mantener en la redirección
         $queryParams = $request->only(['sucursal_id', 'categoria', 'busqueda', 'stock_bajo', 'pagina']);
         
         return view('admin.productos.edit', compact(
@@ -321,13 +309,12 @@ class ProductoController extends Controller
     }
 
     /**
-     * Actualiza un producto existente y redirige a la misma página con los filtros
+     * Actualiza un producto existente
      */
     public function update(Request $request, $id)
     {
         $producto = Producto::findOrFail($id);
         
-        // Guardar los parámetros de filtro actuales para redirigir a la misma página
         $queryParams = [];
         if ($request->has('sucursal_id') && !empty($request->sucursal_id)) {
             $queryParams['sucursal_id'] = $request->sucursal_id;
@@ -345,7 +332,6 @@ class ProductoController extends Controller
             $queryParams['pagina'] = $request->pagina;
         }
         
-        // Validar datos
         $validated = $request->validate([
             'codigo' => 'required|string|max:50|unique:productos,codigo,' . $id,
             'nombre' => 'required|string|max:200',
@@ -360,7 +346,6 @@ class ProductoController extends Controller
             'eliminar_imagen' => 'sometimes|in:0,1'
         ]);
 
-        // Determinar valores booleanos
         $activo = $request->has('activo');
         $destacado = $request->has('destacado');
         $litros = $validated['litros'] ?? 0;
@@ -369,10 +354,8 @@ class ProductoController extends Controller
         try {
             DB::beginTransaction();
 
-            // Guardar código anterior para manejo de imágenes
             $codigo_anterior = $producto->codigo;
 
-            // Actualizar producto
             $producto->update([
                 'codigo' => $validated['codigo'],
                 'nombre' => $validated['nombre'],
@@ -383,14 +366,12 @@ class ProductoController extends Controller
                 'destacado' => $destacado
             ]);
 
-            // Verificar si existe el registro en producto_sucursal
             $existe_registro = DB::table('producto_sucursal')
                 ->where('producto_id', $id)
                 ->where('sucursal_id', $validated['sucursal_id'])
                 ->exists();
 
             if ($existe_registro) {
-                // Actualizar existencias
                 DB::table('producto_sucursal')
                     ->where('producto_id', $id)
                     ->where('sucursal_id', $validated['sucursal_id'])
@@ -399,7 +380,6 @@ class ProductoController extends Controller
                         'updated_at' => now()
                     ]);
             } else {
-                // Insertar nuevo registro
                 DB::table('producto_sucursal')->insert([
                     'producto_id' => $id,
                     'sucursal_id' => $validated['sucursal_id'],
@@ -412,7 +392,6 @@ class ProductoController extends Controller
                 ]);
             }
 
-            // Manejar eliminación de imagen si se solicitó
             if ($request->input('eliminar_imagen') == 1) {
                 $ruta_imagen = public_path('assets/img/productos/' . $codigo_anterior . '.jpg');
                 if (File::exists($ruta_imagen)) {
@@ -420,17 +399,13 @@ class ProductoController extends Controller
                 }
             }
 
-            // Procesar nueva imagen si se subió
             if ($request->hasFile('imagen')) {
                 $imagen = $request->file('imagen');
-
-                // Crear directorio si no existe
                 $path = public_path('assets/img/productos');
                 if (!File::exists($path)) {
                     File::makeDirectory($path, 0755, true);
                 }
 
-                // Eliminar imagen anterior si existe (con código anterior o nuevo)
                 $ruta_imagen_anterior = public_path('assets/img/productos/' . $codigo_anterior . '.jpg');
                 if (File::exists($ruta_imagen_anterior)) {
                     File::delete($ruta_imagen_anterior);
@@ -441,11 +416,9 @@ class ProductoController extends Controller
                     File::delete($ruta_imagen_nueva);
                 }
 
-                // Guardar nueva imagen
                 $nombre_archivo = $producto->codigo . '.jpg';
                 $imagen->move($path, $nombre_archivo);
             } elseif ($codigo_anterior != $producto->codigo) {
-                // Si cambió el código pero no se subió nueva imagen, renombrar la imagen existente
                 $ruta_imagen_anterior = public_path('assets/img/productos/' . $codigo_anterior . '.jpg');
                 $ruta_imagen_nueva = public_path('assets/img/productos/' . $producto->codigo . '.jpg');
                 
@@ -456,8 +429,8 @@ class ProductoController extends Controller
 
             DB::commit();
 
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
-            return redirect()->route('admin.productos', $queryParams)
+            // Redirigir a la lista de productos sin aplicar filtros automáticos
+            return redirect()->route('admin.productos')
                 ->with('swal_producto', [
                     'type' => 'success',
                     'title' => '¡Producto actualizado!',
@@ -468,7 +441,6 @@ class ProductoController extends Controller
             DB::rollBack();
             Log::error('Error al actualizar producto: ' . $e->getMessage());
             
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_producto'
             return redirect()->back()
                 ->withInput()
                 ->with('swal_producto', [
@@ -490,16 +462,13 @@ class ProductoController extends Controller
             
             DB::beginTransaction();
 
-            // Eliminar de producto_sucursal
             DB::table('producto_sucursal')->where('producto_id', $id)->delete();
 
-            // Eliminar imagen si existe
             $ruta_imagen = public_path('assets/img/productos/' . $producto->codigo . '.jpg');
             if (File::exists($ruta_imagen)) {
                 File::delete($ruta_imagen);
             }
 
-            // Eliminar producto
             $producto->delete();
 
             DB::commit();

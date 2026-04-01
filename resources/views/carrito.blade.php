@@ -632,7 +632,7 @@
                                         <i class="fas fa-credit-card me-2"></i>Continuar al Pago
                                     </a>
                                 @else
-                                    <a href="{{ route('login') }}" class="btn btn-primary btn-lg py-3 fw-bold">
+                                    <a href="{{ route('login', ['redirect_to' => 'carrito']) }}" class="btn btn-primary btn-lg py-3 fw-bold">
                                         <i class="fas fa-sign-in-alt me-2"></i>Inicia sesión para comprar
                                     </a>
                                 @endauth

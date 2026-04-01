@@ -263,60 +263,95 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    @if(isset($pedido) && $pedido)
-    <script>
-        $(document).ready(function() {
-            const mp = new MercadoPago('{{ $publicKey }}', {
-                locale: 'es-MX'
-            });
-            
-            // 🔥 CARD PAYMENT BRICK - NO PIDE LOGIN
-            mp.bricks().create("cardPayment", "wallet_container", {
-                initialization: {
-                    amount: Number({{ $pedido['total'] }}).toFixed(2),
-                    preferenceId: "{{ $preferenceId }}"
-                },
-                callbacks: {
-                    onReady: () => {
-                        console.log('Formulario de tarjeta listo');
-                    },
-                    onSubmit: (formData) => {
-                        return new Promise((resolve, reject) => {
-                            fetch('/pago/api/process-payment', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify(formData)
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if(data.success) {
-                                    window.location.href = '{{ route("pago.success") }}?payment_id=' + data.payment_id;
-                                    resolve();
-                                } else {
-                                    alert('Error al procesar el pago');
-                                    reject();
-                                }
-                            })
-                            .catch(error => {
-                                console.error(error);
-                                reject();
-                            });
-                        });
-                    },
-                    onError: (error) => {
-                        console.error('Error:', error);
-                        $('#wallet_container').html('<div class="alert alert-danger">Error al cargar el formulario de pago</div>');
-                    }
-                }
-            });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@if(isset($pedido) && $pedido)
+<script>
+    $(document).ready(function() {
+        const mp = new MercadoPago('{{ $publicKey }}', {
+            locale: 'es-MX'
         });
-    </script>
-    @endif
+        
+        // Obtener el folio del pedido
+        const folio = '{{ $pedido["folio"] }}';
+        console.log('📋 Folio del pedido:', folio);
+        
+        // 🔥 CARD PAYMENT BRICK - NO PIDE LOGIN
+        mp.bricks().create("cardPayment", "wallet_container", {
+            initialization: {
+                amount: Number({{ $pedido['total'] }}),
+                preferenceId: "{{ $preferenceId }}"
+            },
+            callbacks: {
+                onReady: () => {
+                    console.log('✅ Formulario de tarjeta listo');
+                },
+                onSubmit: (formData) => {
+                    console.log('📤 Enviando datos de pago...', formData);
+                    
+                    // Agregar el folio a los datos del formulario
+                    const datosCompletos = {
+                        ...formData,
+                        folio: folio  // 👈 ESTO ES CRÍTICO
+                    };
+                    
+                    return new Promise((resolve, reject) => {
+                        // 👇 SOLO CAMBIA ESTA LÍNEA - USA LA RUTA DE TU web.php
+                        fetch('/pago/api/process-payment', {  // ← CAMBIA /pago/process POR /pago/api/process-payment
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(datosCompletos)
+                        })
+                        .then(response => {
+                            console.log('📥 Respuesta recibida:', response);
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('📊 Datos de respuesta:', data);
+                            
+                            if(data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Pago exitoso!',
+                                    text: 'Tu pedido ha sido confirmado',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '{{ route("pago.success") }}?payment_id=' + data.payment_id + '&external_reference=' + folio;
+                                });
+                                resolve();
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message || 'Error al procesar el pago'
+                                });
+                                reject();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('❌ Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error de conexión',
+                                text: 'No se pudo conectar con el servidor'
+                            });
+                            reject();
+                        });
+                    });
+                },
+                onError: (error) => {
+                    console.error('❌ Error en brick:', error);
+                    $('#wallet_container').html('<div class="alert alert-danger">Error al cargar el formulario de pago. Recarga la página.</div>');
+                }
+            }
+        });
+    });
+</script>
+@endif
 </body>
 </html>

@@ -9,11 +9,13 @@ class PagoPendiente extends Model
 {
     protected $table = 'pagos_pendientes';
     
+// app/Models/PagoPendiente.php
     protected $fillable = [
         'folio',
         'cliente_id',
         'checkout_data',
         'mp_preference_id',
+        'mp_payment_id',  // 👈 AGREGAR ESTO
         'status'
     ];
     

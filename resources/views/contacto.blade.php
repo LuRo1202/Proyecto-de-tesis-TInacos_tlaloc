@@ -27,24 +27,26 @@
     <nav class="navbar navbar-expand-lg navbar-light main-navbar sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
-                <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tinacos Tlaloc" style="height: 50px;">
+                <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tinacos Tlaloc" class="img-fluid" style="max-height: 45px;">
             </a>
             
+            <!-- Botón carrito móvil -->
             <div class="d-lg-none d-flex align-items-center ms-auto me-3">
                 <a href="{{ route('carrito') }}" class="btn btn-primary position-relative btn-sm">
                     <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-badge">{{ $cartCount }}</span> 
+                    <span class="cart-badge">{{ $cartCount ?? 0 }}</span> 
                 </a>
             </div>
-
+            
+            <!-- Botón hamburguesa -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav mx-auto">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Inicio</a>
+                        <a class="nav-link " href="{{ route('home') }}">Inicio</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('tienda') }}">Tienda</a>
@@ -98,6 +100,8 @@
                         <span class="cart-badge">{{ $cartCount ?? 0 }}</span>
                     </a>
                 </div>
+                
+                <!-- Botones móvil -->
                 <div class="d-lg-none mt-3">
                     @if(auth('web')->check() || auth('cliente')->check())
                         <div class="d-grid gap-2">
@@ -122,13 +126,10 @@
                         </a>
                     @endif
                 </div>
-
-
-
-
             </div>
         </div>
     </nav>
+
 
     <!-- ===== HERO SECTION ===== -->
     <section class="hero-section">

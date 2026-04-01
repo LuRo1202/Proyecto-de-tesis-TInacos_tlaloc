@@ -6,7 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Notifications\ResetPasswordNotification; // 👈 IMPORTAR LA NOTIFICACIÓN UNIFICADA
+use App\Notifications\ResetPasswordNotification;
 
 class Cliente extends Authenticatable
 {
@@ -14,6 +14,7 @@ class Cliente extends Authenticatable
 
     protected $table = 'clientes';
     
+    // 👇 SOLO AGREGAR 'carrito' aquí (no borrar nada)
     protected $fillable = [
         'nombre',
         'email',
@@ -23,7 +24,8 @@ class Cliente extends Authenticatable
         'ciudad',
         'estado',
         'codigo_postal',
-        'activo'
+        'activo',
+        'carrito'  // ← SOLO AGREGAR ESTA LÍNEA
     ];
 
     protected $hidden = [
@@ -31,27 +33,24 @@ class Cliente extends Authenticatable
         'remember_token',
     ];
 
+    // 👇 SOLO AGREGAR 'carrito' => 'array' aquí
     protected $casts = [
         'email_verified_at' => 'datetime',
         'activo' => 'boolean',
+        'carrito' => 'array',  // ← SOLO AGREGAR ESTA LÍNEA
     ];
 
-    // Relación: Cliente tiene muchos pedidos
+    // El resto del código SIGUE IGUAL, no toques nada más
     public function pedidos(): HasMany
     {
         return $this->hasMany(Pedido::class, 'cliente_id');
     }
 
-    /**
-     * Enviar notificación de restablecimiento de contraseña
-     */
     public function sendPasswordResetNotification($token)
     {
-        // 👈 CAMBIADO: Ahora usa la notificación unificada con tipo 'cliente'
         $this->notify(new ResetPasswordNotification($token, 'cliente'));
     }
 
-    // Obtener pedidos recientes
     public function pedidosRecientes($limite = 5)
     {
         return $this->pedidos()
@@ -60,7 +59,6 @@ class Cliente extends Authenticatable
                     ->get();
     }
 
-    // Calcular total gastado
     public function getTotalGastadoAttribute()
     {
         return $this->pedidos()
@@ -68,13 +66,11 @@ class Cliente extends Authenticatable
                     ->sum('total');
     }
 
-    // Scope para clientes activos
     public function scopeActivos($query)
     {
         return $query->where('activo', true);
     }
 
-    // Scope para búsqueda
     public function scopeBuscar($query, $termino)
     {
         if ($termino) {

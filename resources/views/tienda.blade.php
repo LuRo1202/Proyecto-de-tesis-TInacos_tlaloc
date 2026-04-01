@@ -46,16 +46,20 @@
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Inicio</a>
+                        <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" 
+                        href="{{ route('home') }}">Inicio</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('tienda') }}">Tienda</a>
+                        <a class="nav-link {{ (request()->routeIs('tienda') && request()->get('categoria') != 2) ? 'active' : (request()->routeIs('tienda') && !request()->has('categoria') ? 'active' : '') }}" 
+                        href="{{ route('tienda') }}">Tienda</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a>
+                        <a class="nav-link {{ request()->routeIs('tienda') && request()->get('categoria') == 2 ? 'active' : '' }}" 
+                        href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('contacto') }}">Contacto</a>
+                        <a class="nav-link {{ request()->routeIs('contacto') ? 'active' : '' }}" 
+                        href="{{ route('contacto') }}">Contacto</a>
                     </li>
                 </ul>
                 

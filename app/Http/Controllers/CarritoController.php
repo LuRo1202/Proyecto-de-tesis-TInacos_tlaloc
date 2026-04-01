@@ -33,19 +33,18 @@ class CarritoController extends Controller
             'cantidad' => 'nullable|integer|min:1'
         ]);
         
-        // USAR EL HELPER PARA AGREGAR
+        // USAR EL HELPER PARA AGREGAR (✅ YA ESTÁ BIEN, usa CarritoHelper::agregar)
         $resultado = CarritoHelper::agregar(
             $request->producto_id, 
             $request->cantidad ?? 1
         );
         
-        // 🔴 SI EL HELPER DICE QUE NO FUE EXITOSO (STOCK INSUFICIENTE)
         if (!$resultado['success']) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => $resultado['message']
-                ], 400); // CÓDIGO 400 = BAD REQUEST
+                ], 400);
             }
             
             return redirect()->back()->with('swal', [
@@ -55,7 +54,6 @@ class CarritoController extends Controller
             ]);
         }
         
-        // ✅ SI FUE EXITOSO
         $cartCount = CarritoHelper::getCartCount();
         
         if ($request->ajax()) {
@@ -80,6 +78,7 @@ class CarritoController extends Controller
             'cantidad.*' => 'integer|min:0'
         ]);
         
+        // 🔧 CAMBIO: Usar CarritoHelper::getCarrito() en lugar de session()
         $carrito = CarritoHelper::getCarrito();
         $nuevoCarrito = [];
         
@@ -90,8 +89,13 @@ class CarritoController extends Controller
             }
         }
         
-        session()->put('carrito', $nuevoCarrito);
-        session()->save();
+        // 🔧 CAMBIO: Usar CarritoHelper::guardarCarrito() (pero es privado, usamos agregar/eliminar)
+        // Mejor: vaciar y volver a agregar, o crear un método actualizarCarrito()
+        // Por ahora, usamos la lógica directa del helper:
+        CarritoHelper::vaciar(); // Vaciamos primero
+        foreach ($nuevoCarrito as $id => $item) {
+            CarritoHelper::agregar($id, $item['cantidad']);
+        }
         
         return redirect()->route('carrito')->with('swal', [
             'type' => 'success',
@@ -102,14 +106,12 @@ class CarritoController extends Controller
 
     public function eliminar($id)
     {
+        // 🔧 CAMBIO: Usar CarritoHelper::getCarrito() y CarritoHelper::eliminar()
         $carrito = CarritoHelper::getCarrito();
         $nombreProducto = isset($carrito[$id]) ? $carrito[$id]['nombre'] : 'Producto';
         
-        if (isset($carrito[$id])) {
-            unset($carrito[$id]);
-            session()->put('carrito', $carrito);
-            session()->save();
-        }
+        // Usar el helper para eliminar (✅ YA USA EL HELPER INTERNAMENTE)
+        CarritoHelper::eliminar($id);
         
         return redirect()->route('carrito')->with('swal', [
             'type' => 'success',
@@ -120,8 +122,8 @@ class CarritoController extends Controller
 
     public function vaciar()
     {
-        session()->forget('carrito');
-        session()->save();
+        // 🔧 CAMBIO: Usar CarritoHelper::vaciar() en lugar de session()
+        CarritoHelper::vaciar();
         
         return redirect()->route('carrito')->with('swal', [
             'type' => 'success',
