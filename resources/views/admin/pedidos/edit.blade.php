@@ -1,5 +1,43 @@
 @php
     use Carbon\Carbon;
+    
+    // Estados siguientes permitidos
+    $estadoActual = $pedido->estado;
+    $estadosTexto = [
+        'pendiente' => 'Pendiente',
+        'confirmado' => 'Confirmado',
+        'enviado' => 'Enviado',
+        'entregado' => 'Entregado',
+        'cancelado' => 'Cancelado'
+    ];
+    
+    // Transiciones permitidas
+    $transicionesEstado = [
+        'pendiente' => ['confirmado', 'cancelado'],
+        'confirmado' => ['enviado', 'cancelado'],
+        'enviado' => ['entregado', 'cancelado'],
+        'entregado' => [],
+        'cancelado' => []
+    ];
+    
+    $estadosSiguientes = $transicionesEstado[$estadoActual] ?? [];
+    
+    // Mensaje de ayuda
+    $mensajeAyuda = '';
+    if ($estadoActual == 'pendiente') {
+        $mensajeAyuda = 'Solo puedes avanzar a <strong>Confirmado</strong> o <strong>Cancelado</strong>';
+    } elseif ($estadoActual == 'confirmado') {
+        $mensajeAyuda = 'Solo puedes avanzar a <strong>Enviado</strong> o <strong>Cancelado</strong>';
+    } elseif ($estadoActual == 'enviado') {
+        $mensajeAyuda = 'Solo puedes avanzar a <strong>Entregado</strong> o <strong>Cancelado</strong>';
+    } elseif ($estadoActual == 'entregado') {
+        $mensajeAyuda = '⚠️ Este pedido ya fue entregado. No se puede modificar el estado.';
+    } elseif ($estadoActual == 'cancelado') {
+        $mensajeAyuda = '⚠️ Este pedido está cancelado. No se puede modificar el estado.';
+    }
+    
+    // Si el pedido está entregado o cancelado, deshabilitar campos de estado
+    $pedidoFinalizado = in_array($estadoActual, ['entregado', 'cancelado']);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -51,7 +89,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Header Compacto */
         .header-bar {
             background: white;
             border-radius: 10px;
@@ -83,7 +120,6 @@
             flex-wrap: wrap;
         }
         
-        /* Botones Compactos */
         .btn-custom {
             padding: 6px 12px;
             border-radius: 6px;
@@ -130,17 +166,6 @@
             color: white;
         }
         
-        .btn-warning-custom {
-            background: linear-gradient(135deg, var(--warning), #e0a800);
-            color: #000;
-        }
-        
-        .btn-danger-custom {
-            background: linear-gradient(135deg, var(--danger), #c82333);
-            color: white;
-        }
-        
-        /* Resumen del Pedido */
         .resumen-pedido {
             background: white;
             border-radius: 8px;
@@ -175,7 +200,6 @@
             font-size: 1rem;
         }
         
-        /* Card Styles */
         .card {
             border: none;
             border-radius: 8px;
@@ -200,7 +224,6 @@
             gap: 8px;
         }
         
-        /* Badge Estados */
         .badge-estado {
             padding: 4px 8px;
             border-radius: 12px;
@@ -213,33 +236,12 @@
             justify-content: center;
         }
         
-        .badge-pendiente { 
-            background: #fff3cd; 
-            color: #856404; 
-            border: 1px solid #ffeaa7;
-        }
-        .badge-confirmado { 
-            background: #d1ecf1; 
-            color: #0c5460; 
-            border: 1px solid #bee5eb;
-        }
-        .badge-enviado { 
-            background: #cce5ff; 
-            color: #004085; 
-            border: 1px solid #b8daff;
-        }
-        .badge-entregado { 
-            background: #d4edda; 
-            color: #155724; 
-            border: 1px solid #c3e6cb;
-        }
-        .badge-cancelado { 
-            background: #f8d7da; 
-            color: #721c24; 
-            border: 1px solid #f5c6cb;
-        }
+        .badge-pendiente { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .badge-confirmado { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .badge-enviado { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+        .badge-entregado { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .badge-cancelado { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         
-        /* Form Controls */
         .form-label {
             font-weight: 500;
             color: #555;
@@ -262,7 +264,6 @@
             outline: none;
         }
         
-        /* Selects mejorados */
         select.form-control-sm {
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
@@ -271,11 +272,8 @@
             padding-right: 2rem;
             cursor: pointer;
             appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
         }
         
-        /* Botones de Estado */
         .btn-estado-group {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -297,9 +295,15 @@
             gap: 3px;
         }
         
-        .btn-estado:hover {
+        .btn-estado:hover:not(:disabled) {
             transform: translateY(-1px);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-estado:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .btn-estado.active {
@@ -307,43 +311,19 @@
             box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
         }
         
-        .btn-estado i {
-            font-size: 0.9rem;
-        }
+        .btn-estado i { font-size: 0.9rem; }
         
-        .btn-pendiente { 
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); 
-            color: #856404; 
-        }
-        .btn-confirmado { 
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); 
-            color: #0c5460; 
-        }
-        .btn-enviado { 
-            background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%); 
-            color: #004085; 
-        }
-        .btn-entregado { 
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); 
-            color: #155724; 
-        }
-        .btn-cancelado { 
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); 
-            color: #721c24; 
-        }
+        .btn-pendiente { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); color: #856404; }
+        .btn-confirmado { background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); color: #0c5460; }
+        .btn-enviado { background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%); color: #004085; }
+        .btn-entregado { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724; }
+        .btn-cancelado { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24; }
         
-        /* Checkboxes */
         .form-check-input:checked {
             background-color: var(--primary);
             border-color: var(--primary);
         }
         
-        .form-check-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(127, 173, 57, 0.1);
-        }
-        
-        /* Información Cliente */
         .info-cliente {
             background: white;
             border-radius: 6px;
@@ -369,7 +349,6 @@
             font-size: 0.85rem;
         }
         
-        /* Acciones Rápidas */
         .acciones-rapidas {
             display: grid;
             gap: 8px;
@@ -387,6 +366,8 @@
             text-decoration: none;
             border: none;
             cursor: pointer;
+            width: 100%;
+            justify-content: center;
         }
         
         .btn-accion:hover {
@@ -394,7 +375,6 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
         }
         
-        /* Responsable Selector */
         .responsable-selector {
             margin-top: 10px;
             padding: 15px;
@@ -438,7 +418,6 @@
             color: white;
         }
         
-        /* Responsable Info */
         .responsable-info {
             background: rgba(155, 89, 182, 0.1);
             border: 1px solid rgba(155, 89, 182, 0.2);
@@ -463,12 +442,6 @@
             font-size: 0.9rem;
         }
         
-        .responsable-rol {
-            font-size: 0.75rem;
-            color: #666;
-        }
-        
-        /* Badge Sucursal */
         .badge-sucursal {
             background: rgba(127, 173, 57, 0.1);
             color: var(--primary-dark);
@@ -479,138 +452,33 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            margin-top: 8px;
         }
         
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .main-content {
-                margin-left: 70px;
-                padding: 15px;
-            }
+        .alert-info-custom {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
         }
         
-        @media (max-width: 992px) {
-            .header-bar {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-            
-            .header-actions {
-                justify-content: center;
-            }
-            
-            .info-resumen {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .btn-estado-group {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
+        @media (max-width: 1200px) { .main-content { margin-left: 70px; padding: 15px; } }
+        @media (max-width: 992px) { .header-bar { flex-direction: column; align-items: stretch; text-align: center; } .header-actions { justify-content: center; } }
+        @media (max-width: 768px) { .main-content { margin-left: 60px; padding: 12px; } .btn-estado-group { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 576px) { .main-content { margin-left: 0; padding: 10px; } .btn-estado-group { grid-template-columns: 1fr; } }
         
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 60px;
-                padding: 12px;
-            }
-            
-            .header-title {
-                font-size: 1.1rem;
-            }
-            
-            .info-resumen {
-                grid-template-columns: 1fr;
-            }
-            
-            .btn-estado-group {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .btn-estado {
-                font-size: 0.75rem;
-                padding: 6px;
-            }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .card, .resumen-pedido { animation: fadeIn 0.3s ease-out; }
         
-        @media (max-width: 576px) {
-            .main-content {
-                margin-left: 0;
-                padding: 10px;
-            }
-            
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-custom {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .btn-estado-group {
-                grid-template-columns: 1fr;
-            }
-            
-            .btn-accion {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-        
-        /* Animaciones */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .card, .resumen-pedido {
-            animation: fadeIn 0.3s ease-out;
-        }
-        
-        /* Scrollbar Personalizado */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--light-gray);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 3px;
-        }
-        
-        /* Mejora para inputs de fecha */
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            opacity: 0.6;
-            filter: invert(0.5);
-        }
-        
-        input[type="date"]::-webkit-calendar-picker-indicator:hover {
-            opacity: 1;
-        }
-        
-        /* Placeholder más claro */
-        ::placeholder {
-            color: #adb5bd !important;
-            opacity: 0.7;
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--light-gray); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
     </style>
 </head>
 <body>
-    <!-- Incluimos el sidebar -->
     @include('admin.layouts.sidebar')
     
     <div class="main-content">
@@ -621,7 +489,7 @@
                     <i class="fas fa-edit me-2"></i>Editar Pedido
                 </h1>
                 @if($pedido->sucursal)
-                <div class="badge-sucursal mt-2">
+                <div class="badge-sucursal">
                     <i class="fas fa-store"></i> {{ $pedido->sucursal->nombre }}
                 </div>
                 @endif
@@ -637,6 +505,13 @@
             </div>
         </div>
 
+        <!-- Mensaje de ayuda sobre estados permitidos -->
+        @if($mensajeAyuda)
+        <div class="alert-info-custom">
+            <i class="fas fa-info-circle me-2"></i> {!! $mensajeAyuda !!}
+        </div>
+        @endif
+
         <!-- Resumen del Pedido -->
         <div class="resumen-pedido">
             <div class="info-resumen">
@@ -644,23 +519,19 @@
                     <div class="info-label">Pedido</div>
                     <div class="info-value">{{ $pedido->folio }}</div>
                 </div>
-                
                 <div class="info-item">
                     <div class="info-label">Cliente</div>
                     <div class="info-value">{{ $pedido->cliente_nombre }}</div>
                 </div>
-                
                 <div class="info-item">
                     <div class="info-label">Total</div>
                     <div class="info-value text-primary">${{ number_format($pedido->total, 2) }}</div>
                 </div>
-                
                 <div class="info-item">
                     <div class="info-label">Estado Actual</div>
                     <div>
                         <span class="badge-estado badge-{{ $pedido->estado }}">
-                            <i class="fas fa-circle fa-xs"></i>
-                            {{ ucfirst($pedido->estado) }}
+                            <i class="fas fa-circle fa-xs"></i> {{ ucfirst($pedido->estado) }}
                         </span>
                     </div>
                 </div>
@@ -683,43 +554,52 @@
                             <div class="mb-4">
                                 <label class="form-label fw-bold mb-2">Estado del Pedido</label>
                                 <div class="btn-estado-group">
-                                    <button type="button" class="btn-estado btn-pendiente {{ $pedido->estado == 'pendiente' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('pendiente')">
-                                        <i class="fas fa-clock"></i>
-                                        <span>Pendiente</span>
-                                    </button>
+                                    @php
+                                        $botones = [
+                                            'pendiente' => ['icono' => 'fa-clock', 'texto' => 'Pendiente', 'clase' => 'btn-pendiente'],
+                                            'confirmado' => ['icono' => 'fa-check-circle', 'texto' => 'Confirmado', 'clase' => 'btn-confirmado'],
+                                            'enviado' => ['icono' => 'fa-truck', 'texto' => 'Enviado', 'clase' => 'btn-enviado'],
+                                            'entregado' => ['icono' => 'fa-box-open', 'texto' => 'Entregado', 'clase' => 'btn-entregado'],
+                                            'cancelado' => ['icono' => 'fa-times', 'texto' => 'Cancelado', 'clase' => 'btn-cancelado']
+                                        ];
+                                    @endphp
                                     
-                                    <button type="button" class="btn-estado btn-confirmado {{ $pedido->estado == 'confirmado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('confirmado')">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>Confirmado</span>
-                                    </button>
-                                    
-                                    <button type="button" class="btn-estado btn-enviado {{ $pedido->estado == 'enviado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('enviado')">
-                                        <i class="fas fa-truck"></i>
-                                        <span>Enviado</span>
-                                    </button>
-                                    
-                                    <button type="button" class="btn-estado btn-entregado {{ $pedido->estado == 'entregado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('entregado')">
-                                        <i class="fas fa-box-open"></i>
-                                        <span>Entregado</span>
-                                    </button>
-                                    
-                                    <button type="button" class="btn-estado btn-cancelado {{ $pedido->estado == 'cancelado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('cancelado')">
-                                        <i class="fas fa-times"></i>
-                                        <span>Cancelado</span>
-                                    </button>
+                                    @foreach($botones as $estado => $info)
+                                        @php
+                                            $puedeSeleccionar = ($estado == $estadoActual) || in_array($estado, $estadosSiguientes);
+                                            $esActivo = ($estadoActual == $estado);
+                                        @endphp
+                                        
+                                        <button type="button" 
+                                                class="btn-estado {{ $info['clase'] }} {{ $esActivo ? 'active' : '' }}"
+                                                onclick="seleccionarEstado('{{ $estado }}', this)"
+                                                {{ !$puedeSeleccionar ? 'disabled' : '' }}>
+                                            <i class="fas {{ $info['icono'] }}"></i>
+                                            <span>{{ $info['texto'] }}</span>
+                                            @if(!$puedeSeleccionar && $estado != $estadoActual)
+                                                <small class="d-block" style="font-size: 0.6rem;">❌ No permitido</small>
+                                            @endif
+                                        </button>
+                                    @endforeach
                                 </div>
                                 <input type="hidden" name="estado" id="inputEstado" value="{{ $pedido->estado }}">
+                                
+                                @if($pedidoFinalizado)
+                                <div class="alert alert-secondary mt-2 small">
+                                    <i class="fas fa-lock me-1"></i> 
+                                    @if($estadoActual == 'entregado')
+                                        El pedido ya fue entregado. No se puede modificar el estado.
+                                    @else
+                                        El pedido está cancelado. No se puede modificar el estado.
+                                    @endif
+                                </div>
+                                @endif
                             </div>
                             
                             <div class="row g-2">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Sucursal</label>
-                                    <select name="sucursal_id" class="form-control-sm" id="selectSucursal" onchange="cambiarSucursal()">
+                                    <select name="sucursal_id" class="form-control-sm" id="selectSucursal" onchange="cambiarSucursal()" {{ $pedidoFinalizado ? 'disabled' : '' }}>
                                         <option value="">Seleccionar sucursal...</option>
                                         @foreach($sucursales as $sucursal)
                                         <option value="{{ $sucursal->id }}" {{ $pedido->sucursal_id == $sucursal->id ? 'selected' : '' }}>
@@ -732,7 +612,8 @@
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Fecha de Entrega</label>
                                     <input type="date" name="fecha_entrega" class="form-control-sm" 
-                                           value="{{ $pedido->fecha_entrega ? Carbon::parse($pedido->fecha_entrega)->format('Y-m-d') : '' }}">
+                                           value="{{ $pedido->fecha_entrega ? Carbon::parse($pedido->fecha_entrega)->format('Y-m-d') : '' }}"
+                                           {{ $pedidoFinalizado ? 'disabled' : '' }}>
                                 </div>
                             </div>
                             
@@ -740,15 +621,17 @@
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Distancia (km)</label>
                                     <input type="number" name="distancia_km" class="form-control-sm" step="0.01" min="0"
-                                           value="{{ $pedido->distancia_km }}">
+                                           value="{{ $pedido->distancia_km }}"
+                                           {{ $pedidoFinalizado ? 'disabled' : '' }}>
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Checkboxes</label>
+                                    <label class="form-label">Opciones</label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="pago_confirmado" id="pagoConfirmado"
-                                                {{ $pedido->pago_confirmado ? 'checked' : '' }}>
+                                                {{ $pedido->pago_confirmado ? 'checked' : '' }}
+                                                {{ $pedidoFinalizado ? 'disabled' : '' }}>
                                             <label class="form-check-label small" for="pagoConfirmado">
                                                 Pago Confirmado
                                             </label>
@@ -756,7 +639,8 @@
                                         
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="cobertura_verificada" id="coberturaVerificada"
-                                                {{ $pedido->cobertura_verificada ? 'checked' : '' }}>
+                                                {{ $pedido->cobertura_verificada ? 'checked' : '' }}
+                                                {{ $pedidoFinalizado ? 'disabled' : '' }}>
                                             <label class="form-check-label small" for="coberturaVerificada">
                                                 Cobertura Verificada
                                             </label>
@@ -765,7 +649,8 @@
                                 </div>
                             </div>
                             
-                            <!-- Asignación de Responsable -->
+                            <!-- Asignación de Responsable (solo si no está finalizado) -->
+                            @if(!$pedidoFinalizado)
                             <div class="mb-4">
                                 <label class="form-label fw-bold mb-2">Asignar Responsable</label>
                                 
@@ -831,11 +716,13 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                             
                             <div class="mb-4">
                                 <label class="form-label">Notas Internas</label>
                                 <textarea name="notas" class="form-control-sm" rows="4" 
-                                          placeholder="Notas adicionales sobre el pedido...">{{ $pedido->notas }}</textarea>
+                                          placeholder="Notas adicionales sobre el pedido..."
+                                          {{ $pedidoFinalizado ? 'disabled' : '' }}>{{ $pedido->notas }}</textarea>
                                 <div class="form-text small">Estas notas son solo para uso interno.</div>
                             </div>
                             
@@ -843,9 +730,15 @@
                                 <a href="{{ route('admin.pedidos.ver', $pedido->id) }}" class="btn-custom btn-secondary-custom">
                                     <i class="fas fa-times"></i> Cancelar
                                 </a>
+                                @if(!$pedidoFinalizado)
                                 <button type="submit" class="btn-custom btn-success-custom">
                                     <i class="fas fa-save"></i> Guardar Cambios
                                 </button>
+                                @else
+                                <div class="alert alert-secondary mb-0 py-2 px-3 small">
+                                    <i class="fas fa-lock me-1"></i> Este pedido no puede ser editado
+                                </div>
+                                @endif
                             </div>
                         </form>
                     </div>
@@ -869,10 +762,8 @@
                             <div class="cliente-item">
                                 <div class="cliente-label">Teléfono</div>
                                 <div class="cliente-value">
-                                    <a href="tel:{{ $pedido->cliente_telefono }}" 
-                                       class="text-decoration-none text-primary">
-                                        <i class="fas fa-phone fa-sm me-1"></i>
-                                        {{ $pedido->cliente_telefono }}
+                                    <a href="tel:{{ $pedido->cliente_telefono }}" class="text-decoration-none text-primary">
+                                        <i class="fas fa-phone fa-sm me-1"></i> {{ $pedido->cliente_telefono }}
                                     </a>
                                 </div>
                             </div>
@@ -884,9 +775,7 @@
                             
                             <div class="cliente-item">
                                 <div class="cliente-label">Ciudad/Estado</div>
-                                <div class="cliente-value">
-                                    {{ $pedido->cliente_ciudad }}, {{ $pedido->cliente_estado }}
-                                </div>
+                                <div class="cliente-value">{{ $pedido->cliente_ciudad }}, {{ $pedido->cliente_estado }}</div>
                             </div>
                             
                             <div class="cliente-item">
@@ -922,35 +811,33 @@
                     <div class="card-body">
                         <div class="acciones-rapidas">
                             @php
-                                $whatsapp_msg = "Hola " . $pedido->cliente_nombre . ", te contacto por tu pedido " . $pedido->folio . " en Tanques Tláloc. ¿Podrías confirmar si recibiste nuestros mensajes anteriores?";
+                                $whatsapp_msg = "Hola " . $pedido->cliente_nombre . ", te contacto por tu pedido " . $pedido->folio . " en Tanques Tláloc.";
                                 $whatsapp_url = "https://wa.me/" . preg_replace('/[^0-9]/', '', $pedido->cliente_telefono) . "?text=" . urlencode($whatsapp_msg);
                             @endphp
                             
                             <a href="{{ $whatsapp_url }}"
                                class="btn-accion" 
                                style="background: linear-gradient(135deg, #25D366, #128C7E); color: white;"
-                               target="_blank"
-                               onclick="trackWhatsAppClick()">
-                                <i class="fab fa-whatsapp"></i>
-                                <span>Contactar por WhatsApp</span>
+                               target="_blank">
+                                <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
                             </a>
                             
-                            @if(!$pedido->pago_confirmado && $pedido->estado != 'cancelado')
+                            @if(!$pedido->pago_confirmado && !$pedidoFinalizado)
                             <a href="{{ route('admin.pedidos.procesar', ['accion' => 'confirmar_pago', 'id' => $pedido->id]) }}"
                                class="btn-accion" 
                                style="background: linear-gradient(135deg, var(--warning), #e0a800); color: #000;">
-                                <i class="fas fa-money-check"></i>
-                                <span>Confirmar Pago</span>
+                                <i class="fas fa-money-check"></i> Confirmar Pago
                             </a>
                             @endif
                             
+                            @if(!$pedidoFinalizado)
                             <button type="button" 
                                     class="btn-accion" 
                                     style="background: linear-gradient(135deg, var(--danger), #c82333); color: white;"
                                     onclick="confirmarEliminacion({{ $pedido->id }}, '{{ $pedido->folio }}')">
-                                <i class="fas fa-trash"></i>
-                                <span>Eliminar Pedido</span>
+                                <i class="fas fa-trash"></i> Eliminar Pedido
                             </button>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -958,66 +845,62 @@
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    {{-- Mensajes específicos para pedidos --}}
+
     @if(session('swal_pedido'))
     <script>
         Swal.fire({
             icon: '{{ session('swal_pedido')['type'] }}',
             title: '{{ session('swal_pedido')['title'] }}',
             text: '{{ session('swal_pedido')['message'] }}',
-            confirmButtonColor: '#7fad39',
-            confirmButtonText: 'Aceptar'
-        });
-    </script>
-    @endif
-
-    {{-- Mantener swal genérico por compatibilidad --}}
-    @if(session('swal'))
-    <script>
-        Swal.fire({
-            icon: '{{ session('swal')['type'] }}',
-            title: '{{ session('swal')['title'] }}',
-            text: '{{ session('swal')['message'] }}',
-            confirmButtonColor: '#7fad39',
-            confirmButtonText: 'Aceptar'
+            confirmButtonColor: '#7fad39'
         });
     </script>
     @endif
 
     <script>
-        // Variables globales
         let responsableSeleccionado = '{{ $responsable_actual ? $responsable_actual->id : '' }}';
         let responsableSeleccionadoNombre = '{{ $responsable_actual ? $responsable_actual->nombre : '' }}';
         
-        // Seleccionar estado
-        function seleccionarEstado(estado) {
+        const estadosSiguientes = @json($estadosSiguientes);
+        const estadoActual = '{{ $estadoActual }}';
+        
+        function seleccionarEstado(estado, elemento) {
+            // Validar si el estado está permitido
+            if (estado !== estadoActual && !estadosSiguientes.includes(estado)) {
+                const estadosTexto = {
+                    'pendiente': 'Pendiente', 'confirmado': 'Confirmado',
+                    'enviado': 'Enviado', 'entregado': 'Entregado', 'cancelado': 'Cancelado'
+                };
+                Swal.fire({
+                    title: 'Cambio no permitido',
+                    html: `No puedes cambiar el estado de <strong>${estadosTexto[estadoActual]}</strong> a <strong>${estadosTexto[estado]}</strong>.<br><br><small>Solo puedes avanzar en el flujo del pedido.</small>`,
+                    icon: 'warning',
+                    confirmButtonColor: '#7fad39'
+                });
+                return;
+            }
+            
             document.getElementById('inputEstado').value = estado;
             
             document.querySelectorAll('.btn-estado').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            event.currentTarget.classList.add('active');
+            elemento.classList.add('active');
             
             Swal.fire({
-                title: 'Estado Cambiado',
-                text: 'El estado se ha cambiado a: ' + estado.charAt(0).toUpperCase() + estado.slice(1),
+                title: 'Estado seleccionado',
+                text: 'Estado cambiado a: ' + estado.charAt(0).toUpperCase() + estado.slice(1),
                 icon: 'info',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 1500,
-                timerProgressBar: true
+                timer: 1500
             });
         }
         
-        // Seleccionar usuario como responsable
         function seleccionarUsuario(element) {
             const userId = element.getAttribute('data-user-id');
             const userName = element.getAttribute('data-user-name');
@@ -1035,28 +918,25 @@
             
             Swal.fire({
                 title: 'Responsable Seleccionado',
-                html: `<strong>${userName}</strong> (${userRol})<br>será asignado como responsable del pedido.`,
+                html: `<strong>${userName}</strong> (${userRol}) será asignado como responsable.`,
                 icon: 'success',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
+                timer: 2000
             });
         }
         
-        // Eliminar responsable actual
         function eliminarResponsable() {
             Swal.fire({
                 title: '¿Remover Responsable?',
-                html: `¿Deseas remover a <strong>${responsableSeleccionadoNombre}</strong> como responsable del pedido?`,
+                html: `¿Deseas remover a <strong>${responsableSeleccionadoNombre}</strong> como responsable?`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Sí, remover',
-                cancelButtonText: 'Cancelar',
-                reverseButtons: true
+                cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.querySelectorAll('.usuario-option').forEach(option => {
@@ -1073,7 +953,7 @@
                     }
                     
                     Swal.fire({
-                        title: '¡Responsable Removido!',
+                        title: 'Responsable Removido',
                         text: 'El responsable ha sido removido del pedido.',
                         icon: 'success',
                         toast: true,
@@ -1085,7 +965,6 @@
             });
         }
         
-        // Cambiar sucursal
         function cambiarSucursal() {
             const sucursalId = document.getElementById('selectSucursal').value;
             const selector = document.getElementById('selectorResponsable');
@@ -1097,52 +976,40 @@
                 selector.style.display = 'none';
                 sinSucursal.style.display = 'block';
                 document.getElementById('inputResponsable').value = '';
-                responsableSeleccionado = '';
-                responsableSeleccionadoNombre = '';
             }
         }
         
-        // Confirmar eliminación
         function confirmarEliminacion(id, folio) {
             Swal.fire({
                 title: '¿Eliminar Pedido?',
-                html: `¿Estás seguro de eliminar el pedido <strong>#${folio}</strong>?<br><br>
-                       <small class="text-danger">Esta acción no se puede deshacer.</small>`,
+                html: `¿Estás seguro de eliminar el pedido <strong>#${folio}</strong>?<br><br><small class="text-danger">Esta acción no se puede deshacer y regresará el stock.</small>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar',
-                reverseButtons: true,
-                allowOutsideClick: false
+                cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
                         title: 'Eliminando...',
                         text: 'Por favor, espera un momento.',
-                        icon: 'info',
-                        showConfirmButton: false,
-                        allowOutsideClick: false
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            window.location.href = '{{ url("admin/pedidos") }}/' + id + '/eliminar';
+                        }
                     });
-                    
-                    window.location.href = '{{ url("admin/pedidos") }}/' + id + '/eliminar';
                 }
             });
         }
         
-        // Track WhatsApp click
-        function trackWhatsAppClick() {
-            console.log('WhatsApp clicked for order: {{ $pedido->folio }}');
-        }
-        
-        // Form submission
-        document.getElementById('formEditarPedido').addEventListener('submit', function(e) {
+        document.getElementById('formEditarPedido')?.addEventListener('submit', function(e) {
             e.preventDefault();
             
             const sucursalSeleccionada = document.getElementById('selectSucursal').value;
-            const tieneResponsable = '{{ $responsable_actual ? 'true' : 'false' }}';
             const nuevoResponsable = document.getElementById('inputResponsable').value;
+            const tieneResponsable = '{{ $responsable_actual ? 'true' : 'false' }}';
             
             if (sucursalSeleccionada && !nuevoResponsable && tieneResponsable === 'false') {
                 Swal.fire({
@@ -1153,36 +1020,34 @@
                     confirmButtonColor: '#7fad39',
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Sí, continuar',
-                    cancelButtonText: 'Asignar responsable',
-                    reverseButtons: true
+                    cancelButtonText: 'Asignar responsable'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        submitForm();
+                        Swal.fire({
+                            title: 'Guardando...',
+                            text: 'Por favor espera',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                                e.target.submit();
+                            }
+                        });
                     }
                 });
                 return;
             }
             
-            submitForm();
-            
-            function submitForm() {
-                Swal.fire({
-                    title: 'Guardando Cambios...',
-                    text: 'Por favor, espera un momento.',
-                    icon: 'info',
-                    showConfirmButton: false,
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                        setTimeout(() => {
-                            e.target.submit();
-                        }, 500);
-                    }
-                });
-            }
+            Swal.fire({
+                title: 'Guardando...',
+                text: 'Por favor espera',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                    e.target.submit();
+                }
+            });
         });
         
-        // Seleccionar responsable actual
         @if($responsable_actual)
         document.addEventListener('DOMContentLoaded', function() {
             const responsableOption = document.getElementById('option-{{ $responsable_actual->id }}');
@@ -1193,31 +1058,6 @@
             }
         });
         @endif
-        
-        // Mejoras visuales
-        document.querySelectorAll('select').forEach(select => {
-            select.addEventListener('focus', function() {
-                this.style.borderColor = 'var(--primary)';
-                this.style.boxShadow = '0 0 0 2px rgba(127, 173, 57, 0.1)';
-            });
-            
-            select.addEventListener('blur', function() {
-                this.style.borderColor = 'var(--light-gray)';
-                this.style.boxShadow = 'none';
-            });
-        });
-        
-        document.querySelectorAll('input[type="date"], input[type="number"], textarea').forEach(input => {
-            input.addEventListener('focus', function() {
-                this.style.borderColor = 'var(--primary)';
-                this.style.boxShadow = '0 0 0 2px rgba(127, 173, 57, 0.1)';
-            });
-            
-            input.addEventListener('blur', function() {
-                this.style.borderColor = 'var(--light-gray)';
-                this.style.boxShadow = 'none';
-            });
-        });
     </script>
 </body>
 </html>

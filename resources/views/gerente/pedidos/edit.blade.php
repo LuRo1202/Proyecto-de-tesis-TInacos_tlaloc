@@ -1,5 +1,31 @@
 @php
     use Carbon\Carbon;
+    
+    // Estados siguientes permitidos según la regla de negocio (solo avanzar)
+    $transicionesEstado = [
+        'pendiente' => ['confirmado', 'cancelado'],
+        'confirmado' => ['enviado', 'cancelado'],
+        'enviado' => ['entregado', 'cancelado'],
+        'entregado' => [],
+        'cancelado' => []
+    ];
+    
+    $estadoActual = $pedido->estado;
+    $estadosSiguientes = $transicionesEstado[$estadoActual] ?? [];
+    
+    // Texto de ayuda según el estado
+    $mensajeAyudaEstado = '';
+    if ($estadoActual == 'entregado') {
+        $mensajeAyudaEstado = '⚠️ El pedido ya fue entregado. No se puede modificar el estado.';
+    } elseif ($estadoActual == 'cancelado') {
+        $mensajeAyudaEstado = '⚠️ El pedido está cancelado. No se puede modificar el estado.';
+    } elseif (empty($estadosSiguientes)) {
+        $mensajeAyudaEstado = 'ℹ️ Este pedido no puede cambiar de estado.';
+    } else {
+        $estadosTexto = ['confirmado' => 'Confirmado', 'enviado' => 'Enviado', 'entregado' => 'Entregado', 'cancelado' => 'Cancelado'];
+        $siguientesTexto = array_map(function($e) use ($estadosTexto) { return $estadosTexto[$e] ?? ucfirst($e); }, $estadosSiguientes);
+        $mensajeAyudaEstado = 'Solo puedes avanzar al siguiente estado: ' . implode(' o ', $siguientesTexto);
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -134,6 +160,12 @@
         .btn-success-custom {
             background: linear-gradient(135deg, var(--success), #218838);
             color: white;
+        }
+        
+        .btn-estado:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .resumen-pedido {
@@ -287,7 +319,7 @@
             gap: 3px;
         }
         
-        .btn-estado:hover {
+        .btn-estado:hover:not(:disabled) {
             transform: translateY(-1px);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
         }
@@ -391,6 +423,16 @@
             box-shadow: 0 3px 8px rgba(127, 173, 57, 0.2);
         }
         
+        .alert-info-custom {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+        
         @media (max-width: 1200px) {
             .main-content { margin-left: 70px; }
         }
@@ -456,6 +498,9 @@
                 </h1>
                 <div class="header-subtitle">
                     Gerente: {{ auth()->user()->nombre ?? 'Gerente' }}
+                    @if(!($puede_editar ?? true))
+                    | <span class="badge bg-warning text-dark"><i class="fas fa-lock"></i> Solo lectura</span>
+                    @endif
                 </div>
             </div>
             
@@ -533,39 +578,44 @@
                             @csrf
                             @method('PUT')
                             
-                            <!-- Estado del Pedido -->
+                            <!-- Estado del Pedido con reglas de negocio -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold mb-2">Estado del Pedido</label>
+                                
+                                @if($mensajeAyudaEstado)
+                                <div class="alert-info-custom mb-3">
+                                    <i class="fas fa-info-circle me-2"></i> {!! $mensajeAyudaEstado !!}
+                                </div>
+                                @endif
+                                
                                 <div class="btn-estado-group">
-                                    <button type="button" class="btn-estado btn-pendiente {{ $pedido->estado == 'pendiente' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('pendiente', this)">
-                                        <i class="fas fa-clock"></i>
-                                        <span>Pendiente</span>
-                                    </button>
+                                    @php
+                                        $botones = [
+                                            'pendiente' => ['icono' => 'fa-clock', 'texto' => 'Pendiente', 'clase' => 'btn-pendiente'],
+                                            'confirmado' => ['icono' => 'fa-check-circle', 'texto' => 'Confirmado', 'clase' => 'btn-confirmado'],
+                                            'enviado' => ['icono' => 'fa-truck', 'texto' => 'Enviado', 'clase' => 'btn-enviado'],
+                                            'entregado' => ['icono' => 'fa-box-open', 'texto' => 'Entregado', 'clase' => 'btn-entregado'],
+                                            'cancelado' => ['icono' => 'fa-times', 'texto' => 'Cancelado', 'clase' => 'btn-cancelado']
+                                        ];
+                                    @endphp
                                     
-                                    <button type="button" class="btn-estado btn-confirmado {{ $pedido->estado == 'confirmado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('confirmado', this)">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>Confirmado</span>
-                                    </button>
-                                    
-                                    <button type="button" class="btn-estado btn-enviado {{ $pedido->estado == 'enviado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('enviado', this)">
-                                        <i class="fas fa-truck"></i>
-                                        <span>Enviado</span>
-                                    </button>
-                                    
-                                    <button type="button" class="btn-estado btn-entregado {{ $pedido->estado == 'entregado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('entregado', this)">
-                                        <i class="fas fa-box-open"></i>
-                                        <span>Entregado</span>
-                                    </button>
-                                    
-                                    <button type="button" class="btn-estado btn-cancelado {{ $pedido->estado == 'cancelado' ? 'active' : '' }}" 
-                                            onclick="seleccionarEstado('cancelado', this)">
-                                        <i class="fas fa-times"></i>
-                                        <span>Cancelado</span>
-                                    </button>
+                                    @foreach($botones as $estado => $info)
+                                        @php
+                                            $puedeSeleccionar = ($estado == $estadoActual) || in_array($estado, $estadosSiguientes);
+                                            $esActivo = ($pedido->estado == $estado);
+                                        @endphp
+                                        
+                                        <button type="button" 
+                                                class="btn-estado {{ $info['clase'] }} {{ $esActivo ? 'active' : '' }}"
+                                                onclick="seleccionarEstado('{{ $estado }}', this)"
+                                                {{ !$puedeSeleccionar ? 'disabled' : '' }}>
+                                            <i class="fas {{ $info['icono'] }}"></i>
+                                            <span>{{ $info['texto'] }}</span>
+                                            @if(!$puedeSeleccionar && $estado != $estadoActual)
+                                                <small class="d-block" style="font-size: 0.6rem;">❌ No permitido</small>
+                                            @endif
+                                        </button>
+                                    @endforeach
                                 </div>
                                 <input type="hidden" name="estado" id="inputEstado" value="{{ $pedido->estado }}">
                             </div>
@@ -581,7 +631,8 @@
                                     <label class="form-label">Fecha de Entrega</label>
                                     <input type="date" name="fecha_entrega" class="form-control-sm w-100" 
                                            value="{{ $pedido->fecha_entrega ? Carbon::parse($pedido->fecha_entrega)->format('Y-m-d') : '' }}"
-                                           {{ $pedido->estado == 'entregado' ? 'required' : '' }}>
+                                           {{ $pedido->estado == 'entregado' ? 'required' : '' }}
+                                           {{ $estadoActual == 'entregado' || $estadoActual == 'cancelado' ? 'disabled' : '' }}>
                                 </div>
                             </div>
                             
@@ -589,7 +640,8 @@
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Distancia (km)</label>
                                     <input type="number" name="distancia_km" class="form-control-sm w-100" step="0.01" min="0"
-                                           value="{{ $pedido->distancia_km }}" placeholder="Ej: 3.5">
+                                           value="{{ $pedido->distancia_km }}" placeholder="Ej: 3.5"
+                                           {{ $estadoActual == 'entregado' || $estadoActual == 'cancelado' ? 'disabled' : '' }}>
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
@@ -598,20 +650,21 @@
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="pago_confirmado" id="pagoConfirmado" value="1"
                                                 {{ $pedido->pago_confirmado ? 'checked' : '' }}
-                                                {{ $pedido->estado == 'cancelado' ? 'disabled' : '' }}>
+                                                {{ $estadoActual == 'cancelado' ? 'disabled' : '' }}>
                                             <label class="form-check-label small" for="pagoConfirmado">Pago Confirmado</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="cobertura_verificada" id="coberturaVerificada" value="1"
                                                 {{ $pedido->cobertura_verificada ? 'checked' : '' }}
-                                                {{ $pedido->estado == 'cancelado' ? 'disabled' : '' }}>
+                                                {{ $estadoActual == 'cancelado' ? 'disabled' : '' }}>
                                             <label class="form-check-label small" for="coberturaVerificada">Cobertura verificada</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Reasignación de Vendedor -->
+                            <!-- Reasignación de Vendedor (solo si no está entregado o cancelado) -->
+                            @if($estadoActual != 'entregado' && $estadoActual != 'cancelado')
                             <div class="row g-2 mb-4">
                                 <div class="col-12">
                                     <label class="form-label fw-bold">Reasignar Vendedor Responsable</label>
@@ -627,20 +680,28 @@
                                     </select>
                                 </div>
                             </div>
+                            @endif
                             
                             <div class="mb-4">
                                 <label class="form-label">Notas Internas</label>
                                 <textarea name="notas" class="form-control-sm w-100" rows="4" 
-                                          placeholder="Notas adicionales...">{{ $pedido->notas }}</textarea>
+                                          placeholder="Notas adicionales..."
+                                          {{ $estadoActual == 'entregado' || $estadoActual == 'cancelado' ? 'disabled' : '' }}>{{ $pedido->notas }}</textarea>
                             </div>
                             
                             <div class="d-flex justify-content-between gap-2">
                                 <a href="{{ route('gerente.pedidos.ver', $pedido->id) }}" class="btn-custom btn-secondary-custom">
                                     <i class="fas fa-times"></i> Cancelar
                                 </a>
+                                @if($estadoActual != 'entregado' && $estadoActual != 'cancelado')
                                 <button type="submit" class="btn-custom btn-success-custom">
                                     <i class="fas fa-save"></i> Guardar Cambios
                                 </button>
+                                @else
+                                <div class="alert alert-secondary mb-0 py-2 px-3 small">
+                                    <i class="fas fa-lock me-1"></i> Este pedido no puede ser editado
+                                </div>
+                                @endif
                             </div>
                         </form>
                     </div>
@@ -736,38 +797,40 @@
                                 <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
                             </a>
                             
-                            @if($pedido->estado != 'cancelado' && $pedido->estado != 'entregado')
+                            @if($estadoActual != 'cancelado' && $estadoActual != 'entregado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'cancelar', 'id' => $pedido->id]) }}" 
                                class="btn-accion" style="background: linear-gradient(135deg, var(--danger), #c82333); color: white;">
                                 <i class="fas fa-times"></i> Cancelar Pedido
                             </a>
                             @endif
                             
-                            @if(!$pedido->pago_confirmado && $pedido->estado != 'cancelado')
+                            @if(!$pedido->pago_confirmado && $estadoActual != 'cancelado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'confirmar_pago', 'id' => $pedido->id]) }}" 
                                class="btn-accion" style="background: linear-gradient(135deg, var(--warning), #e0a800); color: #000;">
                                 <i class="fas fa-money-check"></i> Confirmar Pago
                             </a>
                             @endif
                             
-                            @if($pedido->pago_confirmado && $pedido->estado != 'cancelado')
+                            @if($pedido->pago_confirmado && $estadoActual != 'cancelado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'desconfirmar_pago', 'id' => $pedido->id]) }}" 
                                class="btn-accion" style="background: linear-gradient(135deg, var(--info), #138496); color: white;">
                                 <i class="fas fa-times-circle"></i> Desconfirmar Pago
                             </a>
                             @endif
                             
-                            @if($vendedor_actual_id != auth()->id() && auth()->id())
+                            @if($vendedor_actual_id != auth()->id() && auth()->id() && $estadoActual != 'entregado' && $estadoActual != 'cancelado')
                             <a href="{{ route('gerente.pedidos.procesar', ['accion' => 'tomar_control', 'id' => $pedido->id]) }}" 
                                class="btn-accion" style="background: linear-gradient(135deg, var(--warning), #e0a800); color: #000;">
                                 <i class="fas fa-hand-paper"></i> Tomar Control
                             </a>
                             @endif
 
-                            <!-- Botón de eliminar -->
+                            <!-- Botón de eliminar (solo si no está entregado) -->
+                            @if($estadoActual != 'entregado')
                             <button type="button" class="btn-accion" style="background: linear-gradient(135deg, #6c757d, #495057); color: white;" onclick="confirmarEliminacion()">
                                 <i class="fas fa-trash-alt"></i> Eliminar Pedido
                             </button>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -820,8 +883,24 @@
         });
         @endif
 
-        // Función para seleccionar estado
+        // Variables de estado desde PHP
+        const estadoActual = '{{ $estadoActual }}';
+        const estadosSiguientes = @json($estadosSiguientes);
+        
+        // Función para seleccionar estado (solo si está permitido)
         function seleccionarEstado(estado, elemento) {
+            // Verificar si el estado es permitido
+            if (estado !== estadoActual && !estadosSiguientes.includes(estado)) {
+                Swal.fire({
+                    title: 'Cambio no permitido',
+                    html: `No puedes cambiar el estado de <strong>${getEstadoTexto(estadoActual)}</strong> a <strong>${getEstadoTexto(estado)}</strong>.<br><br>
+                           <small>Solo puedes avanzar al siguiente estado del flujo del pedido.</small>`,
+                    icon: 'warning',
+                    confirmButtonColor: '#7fad39'
+                });
+                return;
+            }
+            
             document.getElementById('inputEstado').value = estado;
             
             // Quitar clase active de todos los botones
@@ -844,13 +923,33 @@
             
             // Si se selecciona "cancelado", deshabilitar checkboxes
             if (estado === 'cancelado') {
-                document.getElementById('pagoConfirmado').disabled = true;
-                document.getElementById('coberturaVerificada').disabled = true;
-                document.getElementById('pagoConfirmado').checked = false;
+                const pagoCheck = document.getElementById('pagoConfirmado');
+                const coberturaCheck = document.getElementById('coberturaVerificada');
+                if (pagoCheck) {
+                    pagoCheck.disabled = true;
+                    pagoCheck.checked = false;
+                }
+                if (coberturaCheck) {
+                    coberturaCheck.disabled = true;
+                    coberturaCheck.checked = false;
+                }
             } else {
-                document.getElementById('pagoConfirmado').disabled = false;
-                document.getElementById('coberturaVerificada').disabled = false;
+                const pagoCheck = document.getElementById('pagoConfirmado');
+                const coberturaCheck = document.getElementById('coberturaVerificada');
+                if (pagoCheck) pagoCheck.disabled = false;
+                if (coberturaCheck) coberturaCheck.disabled = false;
             }
+        }
+        
+        function getEstadoTexto(estado) {
+            const estados = {
+                'pendiente': 'Pendiente',
+                'confirmado': 'Confirmado',
+                'enviado': 'Enviado',
+                'entregado': 'Entregado',
+                'cancelado': 'Cancelado'
+            };
+            return estados[estado] || estado;
         }
 
         function confirmarEliminacion() {
@@ -918,9 +1017,19 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            @if($pedido->estado == 'cancelado')
-            document.getElementById('pagoConfirmado').disabled = true;
-            document.getElementById('coberturaVerificada').disabled = true;
+            @if($estadoActual == 'cancelado')
+                const pagoCheck = document.getElementById('pagoConfirmado');
+                const coberturaCheck = document.getElementById('coberturaVerificada');
+                if (pagoCheck) pagoCheck.disabled = true;
+                if (coberturaCheck) coberturaCheck.disabled = true;
+            @endif
+            
+            @if($estadoActual == 'entregado')
+                const form = document.getElementById('formEditarPedido');
+                if (form) {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) submitBtn.disabled = true;
+                }
             @endif
         });
     </script>

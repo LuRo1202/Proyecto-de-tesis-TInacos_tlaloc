@@ -361,7 +361,7 @@
             font-size: 0.875rem;
             margin-top: 5px;
         }
-        /* Barra de fortaleza de contraseña */
+        
         .strength-meter {
             height: 6px;
             background-color: #e9ecef;
@@ -376,58 +376,15 @@
             border-radius: 3px;
         }
 
-        .strength-meter-fill.weak {
-            background-color: #dc3545;
-            width: 20%;
-        }
+        .strength-meter-fill.weak { background-color: #dc3545; width: 20%; }
+        .strength-meter-fill.fair { background-color: #ffc107; width: 40%; }
+        .strength-meter-fill.good { background-color: #17a2b8; width: 60%; }
+        .strength-meter-fill.strong { background-color: #28a745; width: 80%; }
+        .strength-meter-fill.very-strong { background-color: #20c997; width: 100%; }
 
-        .strength-meter-fill.fair {
-            background-color: #ffc107;
-            width: 40%;
-        }
+        .password-requirements .valid i { color: #28a745; }
+        .password-requirements .invalid i { color: #6c757d; }
 
-        .strength-meter-fill.good {
-            background-color: #17a2b8;
-            width: 60%;
-        }
-
-        .strength-meter-fill.strong {
-            background-color: #28a745;
-            width: 80%;
-        }
-
-        .strength-meter-fill.very-strong {
-            background-color: #20c997;
-            width: 100%;
-        }
-
-        /* Estilos para requisitos */
-        .password-requirements .valid i {
-            color: #28a745;
-        }
-
-        .password-requirements .invalid i {
-            color: #6c757d;
-        }
-
-        /* Tooltips de ayuda */
-        .requirement-help {
-            cursor: help;
-            border-bottom: 1px dotted #6c757d;
-        }
-
-        /* Animación para sugerencias */
-        .suggestion-btn {
-            transition: all 0.2s ease;
-        }
-
-        .suggestion-btn:hover {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-                /* Estilo para el botón generador */
         .input-group .btn-outline-secondary {
             border-color: #dee2e6;
             background: white;
@@ -445,7 +402,6 @@
             font-size: 1rem;
         }
 
-        /* Animación al hacer clic */
         @keyframes shake {
             0%, 100% { transform: rotate(0); }
             25% { transform: rotate(15deg); }
@@ -469,23 +425,12 @@
             </div>
             
             <div class="register-body">
-                @if($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        <strong>Por favor corrige los siguientes errores:</strong>
-                        <ul class="mb-0 mt-2">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
+                <!-- ELIMINÉ EL BLOQUE DE ERRORES FEOS -->
                 
                 <form method="POST" action="{{ route('cliente.register.store') }}" id="formRegistro">
-                    
                     @csrf
                     <input type="hidden" name="redirect_to" value="{{ request()->get('redirect_to') }}">
+                    
                     <!-- Nombre -->
                     <div class="mb-3">
                         <label class="form-label">Nombre completo *</label>
@@ -493,15 +438,13 @@
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
                             <input type="text" 
                                    name="nombre" 
-                                   class="form-control @error('nombre') is-invalid @enderror" 
+                                   id="nombre"
+                                   class="form-control" 
                                    placeholder="Ej: Jose Pérez"
                                    value="{{ old('nombre') }}"
                                    required
                                    autofocus>
                         </div>
-                        @error('nombre')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                     
                     <!-- Email -->
@@ -511,14 +454,12 @@
                             <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                             <input type="email" 
                                    name="email" 
-                                   class="form-control @error('email') is-invalid @enderror" 
+                                   id="email"
+                                   class="form-control" 
                                    placeholder="correo@ejemplo.com"
                                    value="{{ old('email') }}"
                                    required>
                         </div>
-                        @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                     
                     <!-- Teléfono -->
@@ -528,15 +469,14 @@
                             <span class="input-group-text"><i class="fas fa-phone"></i></span>
                             <input type="tel" 
                                    name="telefono" 
-                                   class="form-control @error('telefono') is-invalid @enderror" 
+                                   id="telefono"
+                                   class="form-control" 
                                    placeholder="55 1234 5678"
                                    value="{{ old('telefono') }}"
                                    required>
                         </div>
-                        @error('telefono')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
+                    
                     <!-- Password -->
                     <div class="mb-3">
                         <label class="form-label">Contraseña *</label>
@@ -545,10 +485,9 @@
                             <input type="password" 
                                 name="password" 
                                 id="password"
-                                class="form-control @error('password') is-invalid @enderror" 
+                                class="form-control" 
                                 placeholder="Crea una contraseña segura"
                                 required>
-                            <!-- BOTÓN GENERADOR DE CONTRASEÑA (NUEVO) -->
                             <button type="button" 
                                     class="btn btn-outline-secondary" 
                                     onclick="generarContraseña()"
@@ -560,18 +499,13 @@
                                 <i class="fas fa-eye" id="togglePasswordIcon"></i>
                             </span>
                         </div>
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                         
-                        <!-- Requisitos de contraseña mejorados -->
                         <div class="password-requirements" id="passwordRequirements">
                             <small class="fw-bold text-muted mb-2 d-block">
                                 <i class="fas fa-shield-alt me-1"></i>
                                 Tu contraseña debe tener:
                             </small>
                             
-                            <!-- Barra de fortaleza -->
                             <div class="strength-meter mb-3">
                                 <div class="strength-meter-fill" id="strengthFill"></div>
                             </div>
@@ -611,9 +545,6 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Password -->
-                    
                     
                     <!-- Confirm Password -->
                     <div class="mb-4">
@@ -656,12 +587,10 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-    // Función para mostrar/ocultar contraseña
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const icon = inputId === 'password' ? 
@@ -679,12 +608,10 @@
             }
         }
 
-        // Función para actualizar cada requisito
         function updateRequirement(elementId, isValid, validText, invalidText) {
             const element = document.getElementById(elementId);
             if (!element) return;
             
-            // Limpiar clases
             element.classList.remove('valid', 'invalid');
             
             if (isValid) {
@@ -696,62 +623,35 @@
             }
         }
 
-        // Función para calcular fortaleza
         function calculateStrength(validations) {
-            const weights = {
-                length: 2,
-                number: 1,
-                uppercase: 1,
-                lowercase: 1,
-                special: 2,
-                noSequential: 1
-            };
-            
             let score = 0;
-            let maxScore = 0;
-            
-            for (let [key, value] of Object.entries(validations)) {
-                maxScore += weights[key];
-                if (value) score += weights[key];
-            }
-            
-            // Normalizar a 0-5
-            const normalizedScore = Math.round((score / maxScore) * 5);
+            if (validations.length) score++;
+            if (validations.number) score++;
+            if (validations.uppercase) score++;
+            if (validations.lowercase) score++;
+            if (validations.special) score++;
+            if (validations.noSequential) score++;
             
             let level = '';
             let color = '';
             
-            if (normalizedScore <= 1) {
-                level = 'Muy débil';
-                color = '#dc3545';
-            } else if (normalizedScore === 2) {
-                level = 'Débil';
-                color = '#ff6b6b';
-            } else if (normalizedScore === 3) {
-                level = 'Regular';
-                color = '#ffc107';
-            } else if (normalizedScore === 4) {
-                level = 'Buena';
-                color = '#17a2b8';
-            } else if (normalizedScore === 5) {
-                level = 'Excelente';
-                color = '#28a745';
-            }
+            if (score <= 1) { level = 'Muy débil'; color = '#dc3545'; }
+            else if (score === 2) { level = 'Débil'; color = '#ff6b6b'; }
+            else if (score === 3) { level = 'Regular'; color = '#ffc107'; }
+            else if (score === 4) { level = 'Buena'; color = '#17a2b8'; }
+            else if (score >= 5) { level = 'Excelente'; color = '#28a745'; }
             
-            return { score: normalizedScore, level, color };
+            return { score, level, color };
         }
 
-        // Función para actualizar medidor de fortaleza
         function updateStrengthMeter(strength) {
             const fill = document.getElementById('strengthFill');
             const text = document.getElementById('strengthText');
             
             if (!fill || !text) return;
             
-            // Reset clases
             fill.className = 'strength-meter-fill';
             
-            // Aplicar clase según fortaleza
             if (strength.score <= 1) {
                 fill.classList.add('weak');
                 text.innerHTML = `<span style="color: ${strength.color}">🔴 Contraseña ${strength.level}</span>`;
@@ -764,39 +664,15 @@
             } else if (strength.score === 4) {
                 fill.classList.add('strong');
                 text.innerHTML = `<span style="color: ${strength.color}">🟢 Contraseña ${strength.level}</span>`;
-            } else if (strength.score === 5) {
+            } else if (strength.score >= 5) {
                 fill.classList.add('very-strong');
                 text.innerHTML = `<span style="color: ${strength.color}">💚 Contraseña ${strength.level}</span>`;
             }
         }
 
-        // Función para usar sugerencia
-        function useSuggestion(btn) {
-            const suggestion = btn.textContent;
-            const passwordInput = document.getElementById('password');
-            const confirmInput = document.getElementById('password_confirmation');
-            
-            passwordInput.value = suggestion;
-            confirmInput.value = suggestion;
-            
-            // Disparar eventos
-            passwordInput.dispatchEvent(new Event('input'));
-            confirmInput.dispatchEvent(new Event('input'));
-            
-            Swal.fire({
-                icon: 'info',
-                title: 'Contraseña sugerida',
-                text: 'Hemos usado la contraseña sugerida. Puedes modificarla si lo deseas.',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        }
-
-        // Validación principal de contraseña
         document.getElementById('password').addEventListener('input', function() {
             const password = this.value;
             
-            // Validaciones completas
             const validations = {
                 length: password.length >= 8,
                 number: /\d/.test(password),
@@ -806,7 +682,6 @@
                 noSequential: !/(?:012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i.test(password)
             };
             
-            // Actualizar cada requisito
             updateRequirement('req-length', validations.length, '8+ caracteres ', '8+ caracteres');
             updateRequirement('req-number', validations.number, 'números ', 'números');
             updateRequirement('req-uppercase', validations.uppercase, 'mayúsculas ', 'mayúsculas');
@@ -814,28 +689,13 @@
             updateRequirement('req-special', validations.special, '1 carácter especial ', '1 carácter especial');
             updateRequirement('req-no-sequential', validations.noSequential, 'Sin secuencias ', 'Sin secuencias (123, abc)');
             
-            // Calcular y mostrar fortaleza
             const strength = calculateStrength(validations);
             updateStrengthMeter(strength);
             
-            // Mostrar/ocultar sugerencias
-            const suggestionsBox = document.getElementById('suggestionsBox');
-            if (suggestionsBox) {
-                if (password.length > 0 && strength.score < 3) {
-                    suggestionsBox.style.display = 'block';
-                } else {
-                    suggestionsBox.style.display = 'none';
-                }
-            }
-            
-            // Validar coincidencia
             const confirm = document.getElementById('password_confirmation').value;
-            if (confirm) {
-                validarCoincidencia();
-            }
+            if (confirm) validarCoincidencia();
         });
 
-        // Validar coincidencia de contraseñas
         document.getElementById('password_confirmation').addEventListener('input', validarCoincidencia);
         
         function validarCoincidencia() {
@@ -852,12 +712,59 @@
             }
         }
 
-        // Validar formulario antes de enviar (VERSIÓN COMPLETA)
+        // GENERAR CONTRASEÑA
+        function generarContraseña() {
+            const longitud = 12;
+            const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const minusculas = 'abcdefghijklmnopqrstuvwxyz';
+            const numeros = '0123456789';
+            const especiales = '!@#$%^&*_+-=';
+            
+            let contraseña = '';
+            
+            contraseña += mayusculas[Math.floor(Math.random() * mayusculas.length)];
+            contraseña += minusculas[Math.floor(Math.random() * minusculas.length)];
+            contraseña += numeros[Math.floor(Math.random() * numeros.length)];
+            contraseña += especiales[Math.floor(Math.random() * especiales.length)];
+            
+            const todos = mayusculas + minusculas + numeros + especiales;
+            for (let i = contraseña.length; i < longitud; i++) {
+                contraseña += todos[Math.floor(Math.random() * todos.length)];
+            }
+            
+            contraseña = contraseña.split('').sort(() => Math.random() - 0.5).join('');
+            
+            const passwordInput = document.getElementById('password');
+            const confirmInput = document.getElementById('password_confirmation');
+            
+            passwordInput.value = contraseña;
+            confirmInput.value = contraseña;
+            
+            passwordInput.dispatchEvent(new Event('input'));
+            confirmInput.dispatchEvent(new Event('input'));
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Contraseña generada!',
+                html: `
+                    <p>Hemos generado una contraseña segura para ti:</p>
+                    <div style="font-family: monospace; font-size: 1.2rem; padding: 10px; background: #e9ecef; border-radius: 5px;">
+                        ${contraseña}
+                    </div>
+                    <p class="text-muted small mt-2">La contraseña se ha copiado al portapapeles</p>
+                `,
+                confirmButtonColor: '#7fad39',
+                confirmButtonText: 'Listo'
+            });
+            
+            navigator.clipboard.writeText(contraseña).catch(() => {});
+        }
+
+        // VALIDAR FORMULARIO ANTES DE ENVIAR
         document.getElementById('formRegistro').addEventListener('submit', function(e) {
             const password = document.getElementById('password').value;
             const confirm = document.getElementById('password_confirmation').value;
             
-            // Validar TODOS los requisitos
             const validations = {
                 length: password.length >= 8,
                 number: /\d/.test(password),
@@ -871,24 +778,17 @@
             
             if (!allValid) {
                 e.preventDefault();
-                
-                // Construir lista de lo que falta
                 let missingItems = [];
-                if (!validations.length) missingItems.push('🔴 8+ caracteres');
-                if (!validations.number) missingItems.push('🔴 1 número');
-                if (!validations.uppercase) missingItems.push('🔴 1 mayúscula');
-                if (!validations.lowercase) missingItems.push('🔴 1 minúscula');
-                if (!validations.special) missingItems.push('🔴 1 carácter especial');
-                if (!validations.noSequential) missingItems.push('🔴 Sin secuencias (123, abc)');
+                if (!validations.length) missingItems.push('• 8+ caracteres');
+                if (!validations.number) missingItems.push('• 1 número');
+                if (!validations.uppercase) missingItems.push('• 1 mayúscula');
+                if (!validations.lowercase) missingItems.push('• 1 minúscula');
+                if (!validations.special) missingItems.push('• 1 carácter especial');
+                if (!validations.noSequential) missingItems.push('• Sin secuencias (123, abc)');
                 
                 Swal.fire({
                     title: 'Contraseña no segura',
-                    html: `
-                        <p>Tu contraseña necesita:</p>
-                        <ul style="text-align: left; margin-top: 10px;">
-                            ${missingItems.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    `,
+                    html: `<p>Tu contraseña necesita:</p><ul style="text-align: left;">${missingItems.map(item => `<li>${item}</li>`).join('')}</ul>`,
                     icon: 'warning',
                     confirmButtonColor: '#7fad39',
                     confirmButtonText: 'Entendido'
@@ -896,7 +796,6 @@
                 return false;
             }
             
-            // Validar coincidencia
             if (password !== confirm) {
                 e.preventDefault();
                 Swal.fire({
@@ -907,84 +806,66 @@
                 });
                 return false;
             }
+            
+            // Mostrar loading
+            const btn = document.getElementById('btnRegistro');
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
         });
 
-                // Generador de contraseñas seguras (AGREGAR ESTO)
-        function generarContraseña() {
-            // Configuración
-            const longitud = 12;
-            const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const minusculas = 'abcdefghijklmnopqrstuvwxyz';
-            const numeros = '0123456789';
-            const especiales = '!@#$%^&*_+-=';
-            
-            let contraseña = '';
-            
-            // Asegurar al menos uno de cada tipo
-            contraseña += mayusculas[Math.floor(Math.random() * mayusculas.length)];
-            contraseña += minusculas[Math.floor(Math.random() * minusculas.length)];
-            contraseña += numeros[Math.floor(Math.random() * numeros.length)];
-            contraseña += especiales[Math.floor(Math.random() * especiales.length)];
-            
-            // Completar el resto aleatoriamente
-            const todos = mayusculas + minusculas + numeros + especiales;
-            for (let i = contraseña.length; i < longitud; i++) {
-                contraseña += todos[Math.floor(Math.random() * todos.length)];
-            }
-            
-            // Mezclar la contraseña
-            contraseña = contraseña.split('').sort(() => Math.random() - 0.5).join('');
-            
-            // Asignar a los campos
-            const passwordInput = document.getElementById('password');
-            const confirmInput = document.getElementById('password_confirmation');
-            
-            passwordInput.value = contraseña;
-            confirmInput.value = contraseña;
-            
-            // Disparar eventos de validación
-            passwordInput.dispatchEvent(new Event('input'));
-            confirmInput.dispatchEvent(new Event('input'));
-            
-            // Mostrar mensaje de éxito
+        // ============================================================
+        // MOSTRAR ERRORES DEL SERVIDOR CON SWEETALERT (CORREGIDO)
+        // ============================================================
+        @if($errors->any())
+            document.addEventListener('DOMContentLoaded', function() {
+                let errorMessage = '';
+                @foreach($errors->all() as $error)
+                    let errorText = '{{ $error }}';
+                    // Traducir mensajes de validación de Laravel
+                    if (errorText === 'validation.unique') {
+                        errorMessage += '• El correo electrónico ya está registrado<br>';
+                    } else if (errorText.includes('email')) {
+                        errorMessage += '• El correo electrónico no es válido<br>';
+                    } else if (errorText.includes('required')) {
+                        errorMessage += '• Todos los campos son obligatorios<br>';
+                    } else if (errorText.includes('min')) {
+                        errorMessage += '• La contraseña debe tener al menos 8 caracteres<br>';
+                    } else if (errorText.includes('confirmed')) {
+                        errorMessage += '• Las contraseñas no coinciden<br>';
+                    } else if (errorText.includes('telefono')) {
+                        errorMessage += '• El teléfono ya está registrado<br>';
+                    } else {
+                        errorMessage += '• ' + errorText + '<br>';
+                    }
+                @endforeach
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de registro',
+                    html: errorMessage,
+                    confirmButtonColor: '#7fad39',
+                    confirmButtonText: 'Intentar de nuevo'
+                });
+            });
+        @endif
+
+        @if(session('success'))
             Swal.fire({
                 icon: 'success',
-                title: '¡Contraseña generada!',
-                html: `
-                    <p>Hemos generado una contraseña segura para ti:</p>
-                    <div class="alert alert-info" style="font-family: monospace; font-size: 1.2rem; padding: 10px; background: #e9ecef;">
-                        ${contraseña}
-                    </div>
-                    <p class="text-muted small">La contraseña se ha copiado al portapapeles</p>
-                `,
-                confirmButtonColor: '#7fad39',
-                confirmButtonText: 'Listo'
+                title: '¡Registro exitoso!',
+                text: '{{ session('success') }}',
+                timer: 3000,
+                showConfirmButton: false
             });
-            
-            // Copiar al portapapeles
-            navigator.clipboard.writeText(contraseña).catch(() => {
-                // Si no se puede copiar, ignorar
-            });
-        }
-
-        // Mensajes de sesión
-        @if(session('success'))
-        Swal.fire({
-            icon: 'success',
-            title: '¡Registro exitoso!',
-            text: '{{ session('success') }}',
-            timer: 2000,
-            showConfirmButton: false
-        });
         @endif
 
         @if(session('error'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: '{{ session('error') }}',
-            confirmButtonColor: '#7fad39'
-        });
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '{{ session('error') }}',
+                confirmButtonColor: '#7fad39'
+            });
         @endif
     </script>
 </body>

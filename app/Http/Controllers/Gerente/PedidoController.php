@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Gerente;
 
 use App\Http\Controllers\Controller;
+use App\Traits\NotificaPedidoTrait;  // ← TRAIT PARA NOTIFICACIONES
 use Illuminate\Http\Request;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
@@ -11,18 +12,41 @@ use App\Models\Producto;
 use App\Models\Usuario;
 use App\Models\Sucursal;
 use App\Models\Cliente;
+use App\Mail\ClienteBienvenidaMail; 
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class PedidoController extends Controller
 {
+    use NotificaPedidoTrait;  // ← USA EL TRAIT
+
     protected $sucursal;
     protected $sucursalId;
     protected $sucursalNombre;
     
     const ESTADOS_CON_STOCK = ['pendiente', 'confirmado', 'enviado', 'entregado'];
     const ESTADO_SIN_STOCK = 'cancelado';
+    
+    // Mapa de transiciones de estado permitidas (solo avanzar)
+    const TRANSICIONES_ESTADO = [
+        'pendiente' => ['confirmado', 'cancelado'],
+        'confirmado' => ['enviado', 'cancelado'],
+        'enviado' => ['entregado', 'cancelado'],
+        'entregado' => [],  // No puede cambiar desde entregado
+        'cancelado' => []   // No puede cambiar desde cancelado
+    ];
+    
+    // Mapa de acciones permitidas por estado
+    const ACCIONES_POR_ESTADO = [
+        'pendiente' => ['confirmar', 'cancelar', 'confirmar_pago', 'tomar_control'],
+        'confirmado' => ['enviar', 'cancelar', 'desconfirmar_pago', 'tomar_control'],
+        'enviado' => ['entregar', 'cancelar', 'tomar_control'],
+        'entregado' => ['tomar_control'],
+        'cancelado' => ['tomar_control']
+    ];
 
     public function __construct()
     {
@@ -48,6 +72,43 @@ class PedidoController extends Controller
             'sucursal_nombre' => $this->sucursalNombre,
             'sucursal_id' => $this->sucursalId
         ]);
+    }
+
+    /**
+     * Verifica si el usuario autenticado es responsable del pedido
+     */
+    private function esResponsableDelPedido($pedidoId)
+    {
+        return DB::table('pedido_responsables')
+            ->where('pedido_id', $pedidoId)
+            ->where('usuario_id', auth()->id())
+            ->exists();
+    }
+
+    /**
+     * Verifica si el usuario autenticado es el vendedor responsable o gerente
+     */
+    private function puedeEditarPedido($pedidoId)
+    {
+        $user = auth()->user();
+        
+        // Los gerentes pueden editar si son responsables
+        if ($user->rol === 'gerente') {
+            return $this->esResponsableDelPedido($pedidoId);
+        }
+        
+        // Los vendedores pueden editar si son responsables
+        if ($user->rol === 'vendedor') {
+            return $this->esResponsableDelPedido($pedidoId);
+        }
+        
+        // Admin puede editar cualquier pedido de su sucursal
+        if ($user->rol === 'admin') {
+            $pedido = Pedido::find($pedidoId);
+            return $pedido && $pedido->sucursal_id == $this->sucursalId;
+        }
+        
+        return false;
     }
 
     private function tieneStockDescontado($pedido)
@@ -153,6 +214,37 @@ class PedidoController extends Controller
         }
     }
 
+    /**
+     * Valida que la transición de estado sea permitida (solo avanzar)
+     */
+    private function validarTransicionEstado($estadoActual, $nuevoEstado)
+    {
+        if ($estadoActual == $nuevoEstado) {
+            return true;
+        }
+        
+        $transiciones = self::TRANSICIONES_ESTADO;
+        
+        if (!isset($transiciones[$estadoActual])) {
+            return false;
+        }
+        
+        return in_array($nuevoEstado, $transiciones[$estadoActual]);
+    }
+
+    /**
+     * Generate a random password for new clients
+     */
+    private function generateRandomPassword($length = 8)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%&';
+        $password = '';
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        return $password;
+    }
+
     public function index(Request $request)
     {
         $pedidos_pendientes_count = Pedido::where('estado', 'pendiente')
@@ -255,7 +347,6 @@ class PedidoController extends Controller
             'productos_bajos_count' => $productos_bajos_count
         ]);
 
-        // Excluir productos de ejemplo
         $productos = Producto::where('activo', true)
             ->where('nombre', 'NOT LIKE', '%ejemplo%')
             ->where('codigo', 'NOT LIKE', '%EJEMPLO%')
@@ -282,6 +373,7 @@ class PedidoController extends Controller
         $cliente_datos = [
             'nombre' => $request->get('cliente', ''),
             'telefono' => $request->get('telefono', ''),
+            'email' => $request->get('email', ''),
             'ciudad' => $request->get('ciudad', ''),
             'estado' => $request->get('estado', ''),
             'direccion' => $request->get('direccion', ''),
@@ -448,8 +540,63 @@ class PedidoController extends Controller
 
         try {
             DB::beginTransaction();
+            
+            // ===== NUEVO: BUSCAR O CREAR CLIENTE (como en Vendedor) =====
+            $cliente = null;
+            
+            // Buscar cliente por teléfono o email
+            if (!empty($request->cliente_telefono) || !empty($request->cliente_email)) {
+                $cliente = Cliente::where('telefono', $request->cliente_telefono)
+                            ->orWhere('email', $request->cliente_email)
+                            ->first();
+            }
+            
+
+            // Si NO existe y tiene email, CREAR EL CLIENTE AUTOMÁTICAMENTE
+
+            // Si NO existe y tiene email, CREAR EL CLIENTE AUTOMÁTICAMENTE
+            $clienteCreado = false;
+            $password = null;
+            if (!$cliente && !empty($request->cliente_email)) {
+                $password = $this->generateRandomPassword();
+                
+                $cliente = Cliente::create([
+                    'nombre' => $request->cliente_nombre,
+                    'email' => $request->cliente_email,
+                    'password' => Hash::make($password),
+                    'telefono' => $request->cliente_telefono,
+                    'direccion' => $request->cliente_direccion,
+                    'ciudad' => $request->cliente_ciudad,
+                    'estado' => $request->cliente_estado,
+                    'codigo_postal' => $request->codigo_postal,
+                    'activo' => true,
+                    'email_verified_at' => now()
+                ]);
+                
+                $clienteCreado = true;
+                Log::info('Cliente creado automáticamente desde pedido (gerente): ' . $cliente->id . ' - Email: ' . $cliente->email);
+                
+                try {
+                    // 1. Generar token usando el sistema de reset password
+                    $token = \Illuminate\Support\Facades\Password::broker('clientes')->createToken($cliente);
+                    
+                    // 2. Construir la URL que usa tu vista reset-password-form.blade.php
+                   
+                    $resetUrl = route('cliente.reset.form', ['token' => $token, 'email' => $cliente->email]);
+                    
+                    // 3. Enviar tu EMAIL BONITO de bienvenida
+                    Mail::to($cliente->email)->send(new ClienteBienvenidaMail($cliente, $resetUrl));
+                    
+                    Log::info('Email de bienvenida BONITO enviado a: ' . $cliente->email);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error al enviar email de bienvenida: ' . $e->getMessage());
+                }
+            }
+            
 
             $pedido = Pedido::create([
+                'cliente_id' => $cliente ? $cliente->id : null,  // ← NUEVO: guardar cliente_id
                 'folio' => $folio,
                 'cliente_nombre' => $request->cliente_nombre,
                 'cliente_telefono' => $request->cliente_telefono,
@@ -464,8 +611,8 @@ class PedidoController extends Controller
                 'total' => $total,
                 'notas' => $request->notas,
                 'estado' => 'pendiente',
-                'metodo_pago' => 'manual',
-                'pago_confirmado' => false
+                'metodo_pago' => 'manual',  // ← PEDIDO MANUAL
+                'pago_confirmado' => false   // ← PAGO NO CONFIRMADO
             ]);
 
             foreach ($productos_data as $producto) {
@@ -501,11 +648,18 @@ class PedidoController extends Controller
 
             session()->forget('cobertura_verificada');
 
+            // Mensaje personalizado
+            $mensaje = "Pedido {$folio} creado correctamente en tu sucursal. Queda pendiente de confirmación de pago.";
+            
+            if ($clienteCreado) {
+                $mensaje .= " Se ha registrado al cliente con acceso al sistema. Email: {$cliente->email}";
+            }
+
             return redirect()->route('gerente.pedidos')
                 ->with('swal', [
                     'type' => 'success',
                     'title' => '¡Pedido creado!',
-                    'message' => "Pedido {$folio} creado correctamente en tu sucursal"
+                    'message' => $mensaje
                 ]);
 
         } catch (\Exception $e) {
@@ -565,14 +719,7 @@ class PedidoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        $puede_editar = false;
-        if ($responsable) {
-            if ($responsable->id == auth()->id()) {
-                $puede_editar = true;
-            }
-        } else {
-            $puede_editar = true;
-        }
+        $puede_editar = $this->puedeEditarPedido($id);
 
         $historial = PedidoHistorial::with('usuario')
             ->where('pedido_id', $id)
@@ -610,6 +757,16 @@ class PedidoController extends Controller
                 ]);
         }
 
+        // *** VALIDACIÓN: Solo el responsable puede editar ***
+        if (!$this->puedeEditarPedido($id)) {
+            return redirect()->route('gerente.pedidos.ver', $id)
+                ->with('swal', [
+                    'type' => 'error',
+                    'title' => 'Acceso Denegado',
+                    'message' => 'No eres responsable de este pedido. No puedes editarlo. Solo puedes verlo.'
+                ]);
+        }
+
         $pedido->fecha = Carbon::parse($pedido->fecha);
 
         $vendedores = Usuario::where('rol', 'vendedor')
@@ -640,6 +797,9 @@ class PedidoController extends Controller
 
         $usuario_id = auth()->id();
         $usuario_nombre = auth()->user()->nombre ?? 'Gerente';
+        
+        // Estados siguientes permitidos para la vista
+        $estadosSiguientes = self::TRANSICIONES_ESTADO[$pedido->estado] ?? [];
 
         return view('gerente.pedidos.edit', compact(
             'pedido',
@@ -648,7 +808,8 @@ class PedidoController extends Controller
             'vendedor_actual_id',
             'historial',
             'usuario_id',
-            'usuario_nombre'
+            'usuario_nombre',
+            'estadosSiguientes'
         ));
     }
 
@@ -668,6 +829,16 @@ class PedidoController extends Controller
                 ]);
         }
 
+        // *** VALIDACIÓN: Solo el responsable puede editar ***
+        if (!$this->puedeEditarPedido($id)) {
+            return redirect()->route('gerente.pedidos.ver', $id)
+                ->with('swal', [
+                    'type' => 'error',
+                    'title' => 'Acceso Denegado',
+                    'message' => 'No eres responsable de este pedido. No puedes editarlo.'
+                ]);
+        }
+
         $request->validate([
             'estado' => 'required|in:pendiente,confirmado,enviado,entregado,cancelado',
             'fecha_entrega' => 'nullable|date',
@@ -677,6 +848,28 @@ class PedidoController extends Controller
             'cobertura_verificada' => 'nullable|boolean',
             'vendedor_responsable' => 'nullable|exists:usuarios,id'
         ]);
+
+        $estadoActual = $pedido->estado;
+        $nuevoEstado = $request->estado;
+
+        // *** VALIDACIÓN: Transición de estado permitida (solo avanzar) ***
+        if (!$this->validarTransicionEstado($estadoActual, $nuevoEstado)) {
+            $estadosTexto = [
+                'pendiente' => 'Pendiente',
+                'confirmado' => 'Confirmado', 
+                'enviado' => 'Enviado',
+                'entregado' => 'Entregado',
+                'cancelado' => 'Cancelado'
+            ];
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('swal', [
+                    'type' => 'error',
+                    'title' => 'Cambio de estado no permitido',
+                    'message' => "No puedes cambiar el estado de '{$estadosTexto[$estadoActual]}' a '{$estadosTexto[$nuevoEstado]}'. Solo puedes avanzar en el flujo del pedido."
+                ]);
+        }
 
         $usuario_id = auth()->id();
 
@@ -697,6 +890,10 @@ class PedidoController extends Controller
 
             $this->sincronizarStockPorEstado($pedido, $request->estado);
 
+            // Guardar estado anterior ANTES de actualizar
+            $estadoAnterior = $pedido->estado;
+            $pagoConfirmadoAnterior = $pedido->pago_confirmado;
+
             $pedido->update([
                 'estado' => $request->estado,
                 'pago_confirmado' => $request->has('pago_confirmado'),
@@ -706,6 +903,18 @@ class PedidoController extends Controller
                 'cobertura_verificada' => $request->has('cobertura_verificada'),
                 'fecha_confirmacion' => $fecha_confirmacion
             ]);
+
+            // ===== NOTIFICACIONES =====
+            // Enviar notificación si cambió el estado
+            if ($estadoAnterior != $pedido->estado) {
+                $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
+            }
+            
+            // Enviar notificación de pago confirmado SOLO si es pago en línea (no manual)
+            if ($request->has('pago_confirmado') && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
+                $this->enviarNotificacionPagoConfirmado($pedido);
+            }
+            // ===== FIN NOTIFICACIONES =====
 
             $detalles = "Estado cambiado a: " . $request->estado . ". " . 
                        ($request->has('pago_confirmado') ? "Pago confirmado. " : "") . 
@@ -782,7 +991,7 @@ class PedidoController extends Controller
 
             DB::commit();
 
-            return redirect()->route('gerente.pedidos.editar', $id)
+            return redirect()->route('gerente.pedidos.ver', $id)
                 ->with('swal', [
                     'type' => 'success',
                     'title' => '¡Actualizado!',
@@ -819,10 +1028,38 @@ class PedidoController extends Controller
                 ]);
         }
 
+        // *** VALIDACIÓN: Verificar si es responsable para acciones críticas ***
+        $accionesCriticas = ['confirmar', 'enviar', 'entregar', 'cancelar', 'confirmar_pago', 'desconfirmar_pago'];
+        
+        if (in_array($accion, $accionesCriticas) && !$this->esResponsableDelPedido($id)) {
+            return redirect()->route('gerente.pedidos.ver', $id)
+                ->with('swal', [
+                    'type' => 'error',
+                    'title' => 'Acceso Denegado',
+                    'message' => 'No eres responsable de este pedido. No puedes realizar esta acción.'
+                ]);
+        }
+
+        // *** VALIDACIÓN: Acción permitida según estado actual ***
+        $accionesPermitidas = self::ACCIONES_POR_ESTADO[$pedido->estado] ?? [];
+        
+        if (!in_array($accion, $accionesPermitidas)) {
+            return redirect()->route('gerente.pedidos.ver', $id)
+                ->with('swal', [
+                    'type' => 'error',
+                    'title' => 'Acción no permitida',
+                    'message' => "No puedes realizar '{$accion}' en un pedido con estado '{$pedido->estado}'."
+                ]);
+        }
+
         $usuario_id = auth()->id();
 
         try {
             DB::beginTransaction();
+
+            // Guardar estado anterior ANTES de hacer cambios
+            $estadoAnterior = $pedido->estado;
+            $pagoConfirmadoAnterior = $pedido->pago_confirmado;
 
             switch ($accion) {
                 case 'cancelar':
@@ -900,6 +1137,18 @@ class PedidoController extends Controller
             }
 
             $pedido->save();
+
+            // ===== NOTIFICACIONES =====
+            // Enviar notificación si cambió el estado
+            if ($estadoAnterior != $pedido->estado) {
+                $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
+            }
+            
+            // Enviar notificación de pago confirmado SOLO si es pago en línea (no manual)
+            if ($accion == 'confirmar_pago' && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
+                $this->enviarNotificacionPagoConfirmado($pedido);
+            }
+            // ===== FIN NOTIFICACIONES =====
 
             PedidoHistorial::create([
                 'pedido_id' => $id,

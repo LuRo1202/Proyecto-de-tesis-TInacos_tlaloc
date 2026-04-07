@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Traits\NotificaPedidoTrait;  // ← TRAIT PARA NOTIFICACIONES
 use Illuminate\Http\Request;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
@@ -16,6 +17,36 @@ use Carbon\Carbon;
 
 class PedidoController extends Controller
 {
+    use NotificaPedidoTrait;  // ← USA EL TRAIT
+
+    // ===== REGLAS DE NEGOCIO: Solo avanzar en estados =====
+    const TRANSICIONES_ESTADO = [
+        'pendiente' => ['confirmado', 'cancelado'],
+        'confirmado' => ['enviado', 'cancelado'],
+        'enviado' => ['entregado', 'cancelado'],
+        'entregado' => [],
+        'cancelado' => []
+    ];
+    // ====================================================
+
+    /**
+     * Validar que la transición de estado sea permitida (solo avanzar)
+     */
+    private function validarTransicionEstado($estadoActual, $nuevoEstado)
+    {
+        if ($estadoActual == $nuevoEstado) {
+            return true;
+        }
+        
+        $transiciones = self::TRANSICIONES_ESTADO;
+        
+        if (!isset($transiciones[$estadoActual])) {
+            return false;
+        }
+        
+        return in_array($nuevoEstado, $transiciones[$estadoActual]);
+    }
+
     /**
      * Lista todos los pedidos con filtros
      */
@@ -125,7 +156,17 @@ class PedidoController extends Controller
                 return $item;
             });
         
-        return view('admin.pedidos.show', compact('pedido', 'items', 'responsable', 'usuarios_sucursal', 'historial'));
+        // Estados siguientes permitidos para la vista
+        $estadosSiguientes = self::TRANSICIONES_ESTADO[$pedido->estado] ?? [];
+        
+        return view('admin.pedidos.show', compact(
+            'pedido', 
+            'items', 
+            'responsable', 
+            'usuarios_sucursal', 
+            'historial',
+            'estadosSiguientes'
+        ));
     }
 
     /**
@@ -182,6 +223,29 @@ class PedidoController extends Controller
             'responsable_id' => 'nullable|exists:usuarios,id'
         ]);
 
+        $estadoActual = $pedido->estado;
+        $nuevoEstado = $request->estado;
+
+        // ===== REGLA DE NEGOCIO: Validar que solo se pueda avanzar =====
+        if (!$this->validarTransicionEstado($estadoActual, $nuevoEstado)) {
+            $estadosTexto = [
+                'pendiente' => 'Pendiente',
+                'confirmado' => 'Confirmado', 
+                'enviado' => 'Enviado',
+                'entregado' => 'Entregado',
+                'cancelado' => 'Cancelado'
+            ];
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('swal_pedido', [
+                    'type' => 'error',
+                    'title' => 'Cambio no permitido',
+                    'message' => "No puedes cambiar el estado de '{$estadosTexto[$estadoActual]}' a '{$estadosTexto[$nuevoEstado]}'. Solo puedes avanzar en el flujo del pedido."
+                ]);
+        }
+        // ===== FIN DE LA VALIDACIÓN =====
+
         $fecha_confirmacion = $pedido->fecha_confirmacion;
         if ($request->estado == 'confirmado' && !$pedido->fecha_confirmacion) {
             $fecha_confirmacion = now();
@@ -199,6 +263,10 @@ class PedidoController extends Controller
             $this->descontarStock($pedido);
         }
 
+        // Guardar estado anterior ANTES de actualizar (para la notificación)
+        $estadoAnterior = $pedido->estado;
+        $pagoConfirmadoAnterior = $pedido->pago_confirmado;
+
         $pedido->update([
             'estado' => $request->estado,
             'pago_confirmado' => $request->has('pago_confirmado'),
@@ -209,6 +277,18 @@ class PedidoController extends Controller
             'cobertura_verificada' => $request->has('cobertura_verificada'),
             'fecha_confirmacion' => $fecha_confirmacion
         ]);
+
+        // ===== NOTIFICACIONES =====
+        // Enviar notificación si cambió el estado
+        if ($estadoAnterior != $pedido->estado) {
+            $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
+        }
+        
+        // Enviar notificación de pago confirmado SOLO si es pago en línea (no manual)
+        if ($request->has('pago_confirmado') && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
+            $this->enviarNotificacionPagoConfirmado($pedido);
+        }
+        // ===== FIN NOTIFICACIONES =====
 
         $usuario_id = auth()->check() ? auth()->id() : 1;
         if (!is_numeric($usuario_id)) {
@@ -248,7 +328,6 @@ class PedidoController extends Controller
             'fecha' => now()
         ]);
 
-        // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
         return redirect()->route('admin.pedidos.ver', $id)
             ->with('swal_pedido', [
                 'type' => 'success',
@@ -287,7 +366,6 @@ class PedidoController extends Controller
             
             DB::commit();
             
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos')
                 ->with('swal_pedido', [
                     'type' => 'success',
@@ -298,7 +376,6 @@ class PedidoController extends Controller
             DB::rollBack();
             Log::error('Error al eliminar pedido: ' . $e->getMessage());
             
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos')
                 ->with('swal_pedido', [
                     'type' => 'error',
@@ -309,7 +386,7 @@ class PedidoController extends Controller
     }
 
     /**
-     * Procesa acciones sobre el pedido - ✅ REGRESA STOCK AL CANCELAR
+     * Procesa acciones sobre el pedido - ✅ CON VALIDACIÓN DE SOLO AVANZAR
      */
     public function procesar(Request $request, $accion, $id)
     {
@@ -325,12 +402,41 @@ class PedidoController extends Controller
         
         if (!array_key_exists($accion, $acciones_permitidas)) {
             return redirect()->route('admin.pedidos.ver', $id)
-                ->with('swal_pedido', [  // ✅ CORREGIDO
+                ->with('swal_pedido', [
                     'type' => 'error',
                     'title' => 'Error',
                     'message' => 'Acción no válida'
                 ]);
         }
+        
+        // ===== VALIDACIÓN: Solo permitir acciones según estado actual =====
+        $accionesPorEstado = [
+            'pendiente' => ['confirmar', 'cancelar', 'confirmar_pago'],
+            'confirmado' => ['enviar', 'cancelar', 'confirmar_pago'],
+            'enviado' => ['entregar', 'cancelar', 'confirmar_pago'],
+            'entregado' => ['confirmar_pago'],
+            'cancelado' => []
+        ];
+        
+        $accionesPermitidasParaEstado = $accionesPorEstado[$pedido->estado] ?? [];
+        
+        if ($accion != 'confirmar_pago' && !in_array($accion, $accionesPermitidasParaEstado)) {
+            $estadosTexto = [
+                'pendiente' => 'Pendiente',
+                'confirmado' => 'Confirmado', 
+                'enviado' => 'Enviado',
+                'entregado' => 'Entregado',
+                'cancelado' => 'Cancelado'
+            ];
+            
+            return redirect()->route('admin.pedidos.ver', $id)
+                ->with('swal_pedido', [
+                    'type' => 'error',
+                    'title' => 'Acción no permitida',
+                    'message' => "No puedes realizar la acción '{$accion}' en un pedido con estado '{$estadosTexto[$pedido->estado]}'."
+                ]);
+        }
+        // ===== FIN DE VALIDACIÓN =====
         
         try {
             DB::beginTransaction();
@@ -339,6 +445,10 @@ class PedidoController extends Controller
             if (!is_numeric($usuario_id)) {
                 $usuario_id = 1;
             }
+            
+            // Guardar estado anterior ANTES de hacer cambios
+            $estadoAnterior = $pedido->estado;
+            $pagoConfirmadoAnterior = $pedido->pago_confirmado;
             
             if ($accion == 'confirmar_pago') {
                 $pedido->pago_confirmado = true;
@@ -354,6 +464,13 @@ class PedidoController extends Controller
                 ]);
                 
                 $mensaje = 'Pago confirmado correctamente';
+                
+                // ===== NOTIFICACIÓN DE PAGO CONFIRMADO (solo si no es manual) =====
+                if ($pedido->metodo_pago != 'manual') {
+                    $this->enviarNotificacionPagoConfirmado($pedido);
+                }
+                // ===== FIN NOTIFICACIÓN =====
+                
             } else {
                 $nuevo_estado = $acciones_permitidas[$accion];
                 
@@ -379,11 +496,16 @@ class PedidoController extends Controller
                 ]);
                 
                 $mensaje = "Pedido {$nuevo_estado} correctamente";
+                
+                // ===== NOTIFICACIÓN DE CAMBIO DE ESTADO =====
+                if ($estadoAnterior != $pedido->estado) {
+                    $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
+                }
+                // ===== FIN NOTIFICACIÓN =====
             }
             
             DB::commit();
             
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos.ver', $id)
                 ->with('swal_pedido', [
                     'type' => 'success',
@@ -395,7 +517,6 @@ class PedidoController extends Controller
             DB::rollBack();
             Log::error('Error al procesar pedido: ' . $e->getMessage());
             
-            // ✅ CORREGIDO: Cambiado de 'swal' a 'swal_pedido'
             return redirect()->route('admin.pedidos.ver', $id)
                 ->with('swal_pedido', [
                     'type' => 'error',

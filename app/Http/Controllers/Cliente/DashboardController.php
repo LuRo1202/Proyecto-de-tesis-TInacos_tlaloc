@@ -8,6 +8,9 @@ use App\Models\Pedido;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -34,7 +37,6 @@ class DashboardController extends Controller
         
         $pedidosRecientes = $pedidos->take(5);
         
-        // Calcular el contador del carrito
         $cart = session()->get('carrito', []);
         $cartCount = count($cart);
         
@@ -54,7 +56,6 @@ class DashboardController extends Controller
     {
         $cliente = Auth::guard('cliente')->user();
         
-        // Calcular el contador del carrito
         $cart = session()->get('carrito', []);
         $cartCount = count($cart);
         
@@ -63,8 +64,6 @@ class DashboardController extends Controller
 
     /**
      * Actualizar datos del cliente
-     * SOLO el teléfono se actualiza en los pedidos
-     * La dirección SOLO se actualiza en la tabla de clientes
      */
     public function actualizarDireccion(Request $request)
     {
@@ -84,10 +83,8 @@ class DashboardController extends Controller
 
         $cliente = Auth::guard('cliente')->user();
         
-        // Guardar teléfono anterior para el mensaje
         $telefonoAnterior = $cliente->telefono;
         
-        // ===== 1. ACTUALIZAR DATOS DEL CLIENTE (TODOS LOS CAMPOS) =====
         $cliente->update([
             'telefono' => $request->telefono,
             'direccion' => $request->direccion,
@@ -96,22 +93,15 @@ class DashboardController extends Controller
             'codigo_postal' => $request->codigo_postal
         ]);
 
-        // ===== 2. ACTUALIZAR SOLO EL TELÉFONO EN LOS PEDIDOS =====
-        // La dirección NO se actualiza en los pedidos para mantener el histórico
         $pedidosActualizados = $cliente->pedidos()
             ->update([
                 'cliente_telefono' => $request->telefono
-                // 👇 NO se actualizan: cliente_direccion, cliente_ciudad, cliente_estado, codigo_postal
             ]);
 
-        // Mensaje personalizado
         $mensaje = 'Datos actualizados correctamente';
         
-        // Solo mencionar pedidos si realmente se actualizó el teléfono y hay cambios
         if ($request->telefono && $request->telefono !== $telefonoAnterior && $pedidosActualizados > 0) {
-            $mensaje .= " y se actualizó el teléfono";
-        } elseif ($request->telefono && $request->telefono === $telefonoAnterior) {
-            $mensaje .= "";
+            $mensaje .= " y se actualizó el teléfono en tus pedidos";
         }
 
         return redirect()->route('cliente.dashboard')
@@ -119,7 +109,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Mostrar todos los pedidos del cliente (con filtros)
+     * Mostrar todos los pedidos del cliente
      */
     public function pedidos(Request $request)
     {
@@ -133,7 +123,6 @@ class DashboardController extends Controller
         
         $pedidos = $query->orderBy('created_at', 'desc')->paginate(10);
         
-        // Calcular el contador del carrito
         $cart = session()->get('carrito', []);
         $cartCount = count($cart);
         
@@ -151,7 +140,6 @@ class DashboardController extends Controller
             ->with(['items.producto', 'sucursal', 'historial'])
             ->findOrFail($id);
 
-        // Calcular el contador del carrito
         $cart = session()->get('carrito', []);
         $cartCount = count($cart);
 
@@ -163,71 +151,130 @@ class DashboardController extends Controller
      */
     public function cancelarPedido($id)
     {
-        $cliente = Auth::guard('cliente')->user();
-        
-        $pedido = $cliente->pedidos()
-            ->where('estado', 'pendiente')
-            ->findOrFail($id);
+        try {
+            $cliente = Auth::guard('cliente')->user();
+            
+            $pedido = $cliente->pedidos()
+                ->where('estado', 'pendiente')
+                ->findOrFail($id);
 
-        $pedido->update(['estado' => 'cancelado']);
+            // Guardar datos antes de cancelar
+            $folio = $pedido->folio;
+            $clienteNombre = $cliente->nombre;
+            $clienteEmail = $cliente->email;
+            $clienteTelefono = $cliente->telefono;
+            $total = $pedido->total;
 
-        $pedido->historial()->create([
-            'accion' => 'cancelado',
-            'detalles' => 'Pedido cancelado por el cliente',
-            'fecha' => now()
-        ]);
+            // Actualizar estado del pedido
+            $pedido->update(['estado' => 'cancelado']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pedido cancelado correctamente'
-        ]);
+            // Buscar el responsable del pedido (vendedor/gerente que lo creó o lo tiene asignado)
+            $responsable = DB::table('pedido_responsables')
+                ->where('pedido_id', $pedido->id)
+                ->first();
+            
+            // Si hay responsable, usar su ID; si no, usar ID del admin (1)
+            $usuario_id = $responsable ? $responsable->usuario_id : 1;
+
+            // Registrar historial con el responsable real
+            DB::table('pedido_historial')->insert([
+                'pedido_id' => $pedido->id,
+                'usuario_id' => $usuario_id,
+                'accion' => 'cancelado',
+                'detalles' => 'Pedido cancelado por el cliente: ' . $cliente->nombre,
+                'fecha' => now(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            // ============================================================
+            // ENVIAR CORREOS DE NOTIFICACIÓN
+            // ============================================================
+            
+            // 1. Correo para el CLIENTE (confirmación de cancelación)
+            $dataCliente = [
+                'cliente_nombre' => $clienteNombre,
+                'folio' => $folio,
+                'total' => $total,
+                'fecha_cancelacion' => now()->format('d/m/Y H:i:s')
+            ];
+            
+            Mail::send('emails.pedido-cancelado', $dataCliente, function($message) use ($clienteEmail) {
+                $message->to($clienteEmail)
+                        ->subject('🚫 Tu pedido ha sido cancelado - Tanques Tláloc');
+            });
+            
+            // 2. Correo para el ADMINISTRADOR (notificación de cancelación)
+            $adminEmail = env('MAIL_NOTIFICACIONES', 'rogeliolucas173@gmail.com');
+            
+            $dataAdmin = [
+                'cliente_nombre' => $clienteNombre,
+                'cliente_email' => $clienteEmail,
+                'cliente_telefono' => $clienteTelefono,
+                'folio' => $folio,
+                'total' => $total,
+                'fecha_cancelacion' => now()->format('d/m/Y H:i:s')
+            ];
+            
+            Mail::send('emails.pedido-cancelado-admin', $dataAdmin, function($message) use ($adminEmail) {
+                $message->to($adminEmail)
+                        ->subject('⚠️ ALERTA: Cliente canceló un pedido - Tanques Tláloc');
+            });
+            
+            Log::info('Correos de cancelación enviados para pedido: ' . $folio . ' - Cliente: ' . $clienteEmail . ' - Admin: ' . $adminEmail);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Pedido cancelado correctamente'
+            ]);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El pedido no existe o ya no está pendiente'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cancelar el pedido: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Reordenar un pedido (agregar todos los productos al carrito)
+     * Reordenar un pedido
      */
     public function reordenarPedido($id)
     {
         $cliente = Auth::guard('cliente')->user();
         
         $pedido = $cliente->pedidos()
-            ->with(['items.producto', 'items.producto.color'])
+            ->with(['items.producto'])
             ->findOrFail($id);
 
-        // Obtener carrito actual de la sesión
         $carrito = session()->get('carrito', []);
         
-        // Agregar cada producto del pedido al carrito
         foreach ($pedido->items as $item) {
             $productoId = $item->producto_id;
             
             if (isset($carrito[$productoId])) {
-                // Si ya existe, aumentar cantidad
                 $carrito[$productoId]['cantidad'] += $item->cantidad;
             } else {
-                // Si no existe, crear nuevo item
+                $producto = $item->producto;
                 $carrito[$productoId] = [
-                    'id' => $item->producto_id,
-                    'codigo' => $item->producto->codigo ?? '',
+                    'id' => $productoId,
+                    'codigo' => $producto->codigo ?? '',
                     'nombre' => $item->producto_nombre,
                     'precio' => $item->precio,
                     'cantidad' => $item->cantidad,
-                    'litros' => $item->producto->litros ?? 0,
-                    'color' => $item->producto->color->nombre ?? '',
-                    'color_hex' => $item->producto->color->codigo_hex ?? '',
-                    'imagen' => $item->producto->imagen ?? ''
+                    'litros' => $producto->litros ?? 0,
+                    'imagen' => $producto->imagen ?? ''
                 ];
             }
         }
         
-        // Guardar carrito actualizado en sesión
         session(['carrito' => $carrito]);
-        
-        // Actualizar contador para el badge
-        $cartCount = count($carrito);
-        session(['cartCount' => $cartCount]);
 
-        // Redirigir al carrito con mensaje de éxito
         return redirect()->route('carrito')
             ->with('success', '¡Productos agregados al carrito correctamente!');
     }

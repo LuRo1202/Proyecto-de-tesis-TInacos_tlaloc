@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Vendedor;
 
 use App\Http\Controllers\Controller;
+use App\Traits\NotificaPedidoTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,10 +13,14 @@ use App\Models\PedidoResponsable;
 use App\Models\PedidoHistorial;
 use App\Models\Producto;
 use App\Models\Cliente;
+use App\Mail\ClienteBienvenidaMail;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 
 class PedidoController extends Controller
 {
+    use NotificaPedidoTrait;
+
     public function index(Request $request)
     {
         $usuario = Auth::user();
@@ -54,9 +59,6 @@ class PedidoController extends Controller
         ));
     }
 
-    /**
-     * Show the form for creating a new order
-     */
     public function create(Request $request)
     {
         $usuario = Auth::user();
@@ -68,7 +70,6 @@ class PedidoController extends Controller
                 ->with('error', 'No tienes una sucursal asignada.');
         }
         
-        // Obtener productos con existencias
         $productos = Producto::where('activo', 1)
             ->with(['sucursales' => function($query) use ($sucursal) {
                 $query->where('sucursal_id', $sucursal->id)
@@ -81,13 +82,11 @@ class PedidoController extends Controller
             $producto->existencias = $producto->sucursales->first()->pivot->existencias ?? 0;
         }
         
-        // Variables para precarga desde URL
         $producto_id = $request->get('producto_id');
         $cantidad = $request->get('cantidad', 1);
         $producto_precargado = null;
         $precio_con_oferta = 0;
         
-        // ===== CALCULAR OFERTA SI VIENE PRODUCTO PRECARGADO =====
         if ($producto_id) {
             $producto_precargado = Producto::with(['ofertas' => function($query) {
                     $query->where('activa', 1)
@@ -111,7 +110,6 @@ class PedidoController extends Controller
                     }
                 }
                 
-                // También obtener existencias en esta sucursal
                 $productoEnSucursal = $sucursal->productos()
                     ->where('producto_id', $producto_id)
                     ->first();
@@ -120,7 +118,6 @@ class PedidoController extends Controller
             }
         }
         
-        // Datos del cliente (por defecto vacíos)
         $cliente_datos = [
             'nombre' => '',
             'telefono' => '',
@@ -132,7 +129,6 @@ class PedidoController extends Controller
             'notas' => ''
         ];
         
-        // Si viene un teléfono en la URL, buscar al cliente
         if ($request->has('telefono') && !empty($request->telefono)) {
             $cliente = Cliente::where('telefono', $request->telefono)->first();
             
@@ -149,7 +145,6 @@ class PedidoController extends Controller
                 ];
             }
         }
-        // Si viene un cliente_id en la URL, buscar por ID
         elseif ($request->has('cliente_id') && !empty($request->cliente_id)) {
             $cliente = Cliente::find($request->cliente_id);
             
@@ -178,9 +173,6 @@ class PedidoController extends Controller
         ));
     }
 
-    /**
-     * Store a newly created order
-     */
     public function store(Request $request)
     {
         $usuario = Auth::user();
@@ -212,12 +204,10 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
             
-            // Buscar cliente por teléfono o correo
             $cliente = Cliente::where('telefono', $request->cliente_telefono)
                         ->orWhere('email', $request->cliente_email)
                         ->first();
             
-            // Si NO existe, CREAR EL CLIENTE AUTOMÁTICAMENTE
             if (!$cliente && !empty($request->cliente_email)) {
                 $password = $this->generateRandomPassword();
                 
@@ -235,9 +225,18 @@ class PedidoController extends Controller
                 ]);
                 
                 \Log::info('Cliente creado automáticamente desde pedido: ' . $cliente->id . ' - Email: ' . $cliente->email);
+                
+                try {
+                    $token = \Illuminate\Support\Facades\Password::broker('clientes')->createToken($cliente);
+                    $resetUrl = route('cliente.reset.form', ['token' => $token, 'email' => $cliente->email]);
+                    Mail::to($cliente->email)->send(new ClienteBienvenidaMail($cliente, $resetUrl));
+                    \Log::info('Email de bienvenida enviado a: ' . $cliente->email);
+                } catch (\Exception $e) {
+                    \Log::error('Error al enviar email de bienvenida: ' . $e->getMessage());
+                }
             }
             
-            $fecha = date('ymd');
+            $fecha = Carbon::now('America/Mexico_City')->format('ymd');
             $numero = str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
             $folio = 'PED-' . $fecha . '-' . $numero;
             
@@ -246,7 +245,6 @@ class PedidoController extends Controller
             
             foreach ($request->productos as $index => $producto_id) {
                 if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
-                    // ===== IMPORTANTE: Cargar producto con OFERTAS =====
                     $producto = Producto::with(['ofertas' => function($query) {
                             $query->where('activa', 1)
                                 ->where('fecha_inicio', '<=', now())
@@ -256,7 +254,6 @@ class PedidoController extends Controller
                     
                     $cantidad = $request->cantidades[$index];
                     
-                    // Verificar existencias
                     $existencias = DB::table('producto_sucursal')
                         ->where('producto_id', $producto_id)
                         ->where('sucursal_id', $sucursal->id)
@@ -266,7 +263,6 @@ class PedidoController extends Controller
                         throw new \Exception("No hay suficientes existencias de {$producto->nombre}. Disponibles: {$existencias}");
                     }
                     
-                    // ===== CALCULAR PRECIO CON OFERTA =====
                     $precioUnitario = $producto->precio;
                     
                     if ($producto->ofertas->isNotEmpty()) {
@@ -286,13 +282,12 @@ class PedidoController extends Controller
                         'producto_id' => $producto_id,
                         'producto_nombre' => $producto->nombre,
                         'cantidad' => $cantidad,
-                        'precio' => $precioUnitario, // PRECIO CON OFERTA
+                        'precio' => $precioUnitario,
                         'precio_original' => $producto->precio
                     ];
                 }
             }
             
-            // Crear el pedido
             $pedido = Pedido::create([
                 'cliente_id' => $cliente ? $cliente->id : null,
                 'folio' => $folio,
@@ -306,38 +301,34 @@ class PedidoController extends Controller
                 'metodo_pago' => 'manual',
                 'pago_confirmado' => 1,
                 'estado' => 'pendiente',
-                'fecha' => now(),
+                'fecha' => Carbon::now('America/Mexico_City'),
                 'notas' => $request->notas,
                 'sucursal_id' => $sucursal->id,
                 'distancia_km' => $request->distancia_km,
                 'cobertura_verificada' => 1
             ]);
             
-            // Guardar los items del pedido
             foreach ($productos_data as $item) {
                 PedidoItem::create([
                     'pedido_id' => $pedido->id,
                     'producto_id' => $item['producto_id'],
                     'producto_nombre' => $item['producto_nombre'],
                     'cantidad' => $item['cantidad'],
-                    'precio' => $item['precio'] // PRECIO CON OFERTA
+                    'precio' => $item['precio']
                 ]);
                 
-                // Reducir existencias
                 DB::table('producto_sucursal')
                     ->where('producto_id', $item['producto_id'])
                     ->where('sucursal_id', $sucursal->id)
                     ->decrement('existencias', $item['cantidad']);
             }
             
-            // Asignar responsable
             PedidoResponsable::create([
                 'pedido_id' => $pedido->id,
                 'usuario_id' => $usuario_id,
                 'fecha_asignacion' => now()
             ]);
             
-            // Registrar historial
             PedidoHistorial::create([
                 'pedido_id' => $pedido->id,
                 'usuario_id' => $usuario_id,
@@ -350,7 +341,6 @@ class PedidoController extends Controller
             
             session()->forget('cobertura_verificada_vendedor');
             
-            // Mensaje personalizado
             if ($cliente && $cliente->wasRecentlyCreated) {
                 $mensaje = "¡Pedido #{$folio} creado exitosamente! Se ha registrado al cliente con acceso al sistema. Email: {$cliente->email}";
             } else {
@@ -371,9 +361,6 @@ class PedidoController extends Controller
         }
     }
 
-    /**
-     * Generate a random password for new clients
-     */
     private function generateRandomPassword($length = 8)
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%&';
@@ -422,17 +409,33 @@ class PedidoController extends Controller
         $pedido->historial = $historial;
 
         $esResponsable = $responsables->contains('usuario_id', $usuario_id);
+        
+        // ===== CORREGIDO: estados siguientes como ARRAY DIRECTO para el estado actual =====
+        $mapaEstados = [
+            'pendiente' => ['confirmado', 'cancelado'],
+            'confirmado' => ['enviado', 'cancelado'],
+            'enviado' => ['entregado', 'cancelado'],
+            'entregado' => [],
+            'cancelado' => []
+        ];
+        $estadosSiguientes = $mapaEstados[$pedido->estado] ?? [];
+        // ===== FIN CORRECCIÓN =====
 
-        // FUNCIONALIDAD CHIDA: Si ve el pedido y no tiene responsable, se asigna automáticamente
         if (!$esResponsable && $responsables->isEmpty()) {
             try {
                 DB::beginTransaction();
                 
-                PedidoResponsable::create([
-                    'pedido_id' => $pedido->id,
-                    'usuario_id' => $usuario_id,
-                    'fecha_asignacion' => now()
-                ]);
+                $yaExiste = PedidoResponsable::where('pedido_id', $pedido->id)
+                            ->where('usuario_id', $usuario_id)
+                            ->exists();
+                
+                if (!$yaExiste) {
+                    PedidoResponsable::create([
+                        'pedido_id' => $pedido->id,
+                        'usuario_id' => $usuario_id,
+                        'fecha_asignacion' => now()
+                    ]);
+                }
                 
                 PedidoHistorial::create([
                     'pedido_id' => $pedido->id,
@@ -444,7 +447,6 @@ class PedidoController extends Controller
                 
                 DB::commit();
                 
-                // Recargar responsables
                 $pedido->responsables = PedidoResponsable::where('pedido_id', $pedido->id)
                     ->with('usuario')
                     ->get();
@@ -456,7 +458,7 @@ class PedidoController extends Controller
             }
         }
 
-        return view('vendedor.pedidos.show', compact('pedido', 'esResponsable', 'sucursal'));
+        return view('vendedor.pedidos.show', compact('pedido', 'esResponsable', 'sucursal', 'estadosSiguientes'));
     }
 
     public function update(Request $request, $id)
@@ -498,14 +500,34 @@ class PedidoController extends Controller
             $nuevo_pago = $request->has('pago_confirmado') ? 1 : 0;
             $nueva_fecha = $request->fecha_entrega;
 
-            // ===== REGLA DE NEGOCIO: Manejo de stock al cancelar/descancelar =====
+            // Validar transición de estado
+            $mapaEstados = [
+                'pendiente' => ['confirmado', 'cancelado'],
+                'confirmado' => ['enviado', 'cancelado'],
+                'enviado' => ['entregado', 'cancelado'],
+                'entregado' => [],
+                'cancelado' => []
+            ];
+            
+            if ($nuevo_estado != $estado_actual && !in_array($nuevo_estado, $mapaEstados[$estado_actual])) {
+                $estadosTexto = [
+                    'pendiente' => 'Pendiente',
+                    'confirmado' => 'Confirmado', 
+                    'enviado' => 'Enviado',
+                    'entregado' => 'Entregado',
+                    'cancelado' => 'Cancelado'
+                ];
+                
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', "No puedes cambiar el estado de '{$estadosTexto[$estado_actual]}' a '{$estadosTexto[$nuevo_estado]}'. Solo puedes avanzar en el flujo del pedido.");
+            }
+
             $items = PedidoItem::where('pedido_id', $pedido->id)->get();
             
-            // Si se CANCELA (de activo a cancelado)
             if ($nuevo_estado == 'cancelado' && $estado_actual != 'cancelado') {
                 foreach ($items as $item) {
                     if ($item->producto_id) {
-                        // DEVOLVER stock
                         DB::table('producto_sucursal')
                             ->where('producto_id', $item->producto_id)
                             ->where('sucursal_id', $sucursal->id)
@@ -514,11 +536,9 @@ class PedidoController extends Controller
                 }
             }
             
-            // Si se DES-CANCELA (de cancelado a activo)
             if ($estado_actual == 'cancelado' && $nuevo_estado != 'cancelado') {
                 foreach ($items as $item) {
                     if ($item->producto_id) {
-                        // VOLVER A RESTAR stock (como cuando se creó)
                         DB::table('producto_sucursal')
                             ->where('producto_id', $item->producto_id)
                             ->where('sucursal_id', $sucursal->id)
@@ -527,10 +547,21 @@ class PedidoController extends Controller
                 }
             }
 
+            $estadoAnterior = $pedido->estado;
+            $pagoConfirmadoAnterior = $pedido->pago_confirmado;
+
             $pedido->estado = $nuevo_estado;
             $pedido->pago_confirmado = $nuevo_pago;
             $pedido->fecha_entrega = $nueva_fecha;
             $pedido->save();
+
+            if ($estadoAnterior != $pedido->estado) {
+                $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
+            }
+            
+            if ($nuevo_pago != $pagoConfirmadoAnterior && $nuevo_pago == 1 && $pedido->metodo_pago != 'manual') {
+                $this->enviarNotificacionPagoConfirmado($pedido);
+            }
 
             $comentario = $request->comentario ?? '';
 
@@ -569,11 +600,17 @@ class PedidoController extends Controller
                 ->first();
                 
             if (!$responsable) {
-                PedidoResponsable::create([
-                    'pedido_id' => $pedido->id,
-                    'usuario_id' => $usuario_id,
-                    'fecha_asignacion' => now()
-                ]);
+                $yaExiste = PedidoResponsable::where('pedido_id', $pedido->id)
+                            ->where('usuario_id', $usuario_id)
+                            ->exists();
+                
+                if (!$yaExiste) {
+                    PedidoResponsable::create([
+                        'pedido_id' => $pedido->id,
+                        'usuario_id' => $usuario_id,
+                        'fecha_asignacion' => now()
+                    ]);
+                }
             }
 
             DB::commit();
@@ -604,29 +641,26 @@ class PedidoController extends Controller
         $sucursal_id = $sucursal->id;
         $sucursalNombre = $sucursal->nombre;
 
-        $fechaHoy = Carbon::today();
+        $fechaHoy = Carbon::now('America/Mexico_City')->toDateString();
 
-        // ===== REGLAS DE NEGOCIO: Mis pedidos + disponibles =====
         $pedidos_hoy = Pedido::where('sucursal_id', $sucursal_id)
             ->whereDate('fecha', $fechaHoy)
             ->where(function($query) use ($usuario_id) {
-                $query->whereDoesntHave('responsables') // Sin asignar
+                $query->whereDoesntHave('responsables')
                       ->orWhereHas('responsables', function($q) use ($usuario_id) {
-                          $q->where('usuario_id', $usuario_id); // Mis pedidos
+                          $q->where('usuario_id', $usuario_id);
                       });
             })
             ->withCount('items as items_count')
             ->orderBy('fecha', 'desc')
             ->get();
 
-        // Cargar responsables para cada pedido
         foreach ($pedidos_hoy as $pedido) {
             $pedido->responsables = PedidoResponsable::where('pedido_id', $pedido->id)
                 ->with('usuario')
                 ->get();
         }
 
-        // Separar para estadísticas
         $misPedidos = $pedidos_hoy->filter(function($pedido) use ($usuario_id) {
             return $pedido->responsables->contains('usuario_id', $usuario_id);
         });

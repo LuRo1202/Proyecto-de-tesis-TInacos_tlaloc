@@ -27,6 +27,32 @@
         </div>
     </div>
 
+    <!-- Alerta informativa sobre estados permitidos -->
+    @php
+        $mensajeAyuda = '';
+        if ($pedido->estado == 'pendiente') {
+            $mensajeAyuda = 'Solo puedes avanzar a <strong>Confirmado</strong> o <strong>Cancelado</strong>';
+        } elseif ($pedido->estado == 'confirmado') {
+            $mensajeAyuda = 'Solo puedes avanzar a <strong>Enviado</strong> o <strong>Cancelado</strong>';
+        } elseif ($pedido->estado == 'enviado') {
+            $mensajeAyuda = 'Solo puedes avanzar a <strong>Entregado</strong> o <strong>Cancelado</strong>';
+        } elseif ($pedido->estado == 'entregado') {
+            $mensajeAyuda = 'Este pedido ya fue entregado. No se puede modificar.';
+        } elseif ($pedido->estado == 'cancelado') {
+            $mensajeAyuda = 'Este pedido está cancelado. No se puede modificar.';
+        }
+    @endphp
+    
+    @if($mensajeAyuda && !in_array($pedido->estado, ['entregado', 'cancelado']))
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-info-circle me-2"></i> {!! $mensajeAyuda !!}
+    </div>
+    @elseif(in_array($pedido->estado, ['entregado', 'cancelado']))
+    <div class="alert alert-secondary mb-3">
+        <i class="fas fa-lock me-2"></i> {!! $mensajeAyuda !!}
+    </div>
+    @endif
+
     <div class="row">
         <!-- Columna principal -->
         <div class="col-lg-8">
@@ -66,61 +92,37 @@
                             <tbody>
                                 @foreach($pedido->items as $item)
                                 @php
-                                    // Obtener información detallada del producto si existe
                                     $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color', 'categoria'])->find($item->producto_id) : null;
-                                    
-                                    // Determinar color, capacidad y código
                                     $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
                                     $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
                                     $capacidad = $productoInfo ? $productoInfo->litros : null;
                                     $codigo = $productoInfo ? $productoInfo->codigo : null;
-                                    
-                                    // Extraer información del código si no tenemos producto
-                                    if (!$productoInfo && $item->producto_nombre) {
-                                        // Intentar extraer información del nombre
-                                        if (preg_match('/(\d+)\s*litros?/', $item->producto_nombre, $matches)) {
-                                            $capacidad = $matches[1];
-                                        }
-                                    }
                                 @endphp
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             @if($colorNombre)
-                                            <span class="color-dot" style="background-color: {{ $colorHex }}; width: 16px; height: 16px; border-radius: 50%; display: inline-block; border: 1px solid #ddd;"></span>
+                                            <span class="color-dot" style="background-color: {{ $colorHex }};"></span>
                                             @endif
                                             <div>
                                                 <strong>{{ $item->producto_nombre }}</strong>
                                                 <div class="small text-muted">
                                                     @if($codigo)
                                                         <span class="badge bg-light text-dark me-1">Código: {{ $codigo }}</span>
-                                                    @elseif($item->producto_id)
-                                                        <span class="badge bg-light text-dark me-1">ID: {{ $item->producto_id }}</span>
                                                     @endif
-                                                    
                                                     @if($colorNombre)
-                                                        <span class="badge bg-light text-dark me-1">
-                                                            <span class="color-dot" style="background-color: {{ $colorHex }}; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 3px;"></span>
-                                                            Color: {{ $colorNombre }}
-                                                        </span>
+                                                        <span class="badge bg-light text-dark me-1">Color: {{ $colorNombre }}</span>
                                                     @endif
-                                                    
                                                     @if($capacidad)
-                                                        <span class="badge bg-light text-dark me-1">
-                                                            <i class="fas fa-tint" style="color: #7fad39;"></i> {{ $capacidad }} litros
-                                                        </span>
+                                                        <span class="badge bg-light text-dark me-1">{{ $capacidad }} litros</span>
                                                     @endif
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-primary">{{ $item->cantidad }}</span>
-                                    </td>
+                                    <td class="text-center"><span class="badge bg-primary">{{ $item->cantidad }}</span></td>
                                     <td class="text-end">${{ number_format($item->precio, 2) }}</td>
-                                    <td class="text-end fw-bold">
-                                        ${{ number_format($item->cantidad * $item->precio, 2) }}
-                                    </td>
+                                    <td class="text-end fw-bold">${{ number_format($item->cantidad * $item->precio, 2) }}</td>
                                 </tr>
                                 @endforeach
                                 <tr class="table-light">
@@ -135,7 +137,8 @@
                 </div>
             </div>
 
-            <!-- Formulario de actualización CON BOTONES DE ESTADO -->
+            <!-- Formulario de actualización (solo si no está entregado o cancelado) -->
+            @if(!in_array($pedido->estado, ['entregado', 'cancelado']))
             <div class="card mb-3">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Actualizar Estado del Pedido</h5>
@@ -145,39 +148,36 @@
                         @csrf
                         @method('PUT')
                         
-                        <!-- BOTONES DE ESTADO (como en admin) -->
                         <div class="mb-4">
                             <label class="form-label fw-bold mb-3">Selecciona el nuevo estado:</label>
                             <div class="btn-estado-group">
-                                <button type="button" class="btn-estado btn-pendiente {{ $pedido->estado == 'pendiente' ? 'active' : '' }}" 
-                                        onclick="seleccionarEstado('pendiente')">
-                                    <i class="fas fa-clock fa-lg"></i>
-                                    <span>Pendiente</span>
-                                </button>
+                                @php
+                                    $botones = [
+                                        'pendiente' => ['icono' => 'fa-clock', 'texto' => 'Pendiente', 'clase' => 'btn-pendiente'],
+                                        'confirmado' => ['icono' => 'fa-check-circle', 'texto' => 'Confirmado', 'clase' => 'btn-confirmado'],
+                                        'enviado' => ['icono' => 'fa-truck', 'texto' => 'Enviado', 'clase' => 'btn-enviado'],
+                                        'entregado' => ['icono' => 'fa-box-open', 'texto' => 'Entregado', 'clase' => 'btn-entregado'],
+                                        'cancelado' => ['icono' => 'fa-times-circle', 'texto' => 'Cancelado', 'clase' => 'btn-cancelado']
+                                    ];
+                                @endphp
                                 
-                                <button type="button" class="btn-estado btn-confirmado {{ $pedido->estado == 'confirmado' ? 'active' : '' }}" 
-                                        onclick="seleccionarEstado('confirmado')">
-                                    <i class="fas fa-check-circle fa-lg"></i>
-                                    <span>Confirmado</span>
-                                </button>
-                                
-                                <button type="button" class="btn-estado btn-enviado {{ $pedido->estado == 'enviado' ? 'active' : '' }}" 
-                                        onclick="seleccionarEstado('enviado')">
-                                    <i class="fas fa-truck fa-lg"></i>
-                                    <span>Enviado</span>
-                                </button>
-                                
-                                <button type="button" class="btn-estado btn-entregado {{ $pedido->estado == 'entregado' ? 'active' : '' }}" 
-                                        onclick="seleccionarEstado('entregado')">
-                                    <i class="fas fa-box-open fa-lg"></i>
-                                    <span>Entregado</span>
-                                </button>
-                                
-                                <button type="button" class="btn-estado btn-cancelado {{ $pedido->estado == 'cancelado' ? 'active' : '' }}" 
-                                        onclick="seleccionarEstado('cancelado')">
-                                    <i class="fas fa-times-circle fa-lg"></i>
-                                    <span>Cancelado</span>
-                                </button>
+                                @foreach($botones as $estado => $info)
+                                    @php
+                                        $puedeSeleccionar = ($estado == $pedido->estado) || in_array($estado, $estadosSiguientes);
+                                        $esActivo = ($pedido->estado == $estado);
+                                    @endphp
+                                    
+                                    <button type="button" 
+                                            class="btn-estado {{ $info['clase'] }} {{ $esActivo ? 'active' : '' }}"
+                                            onclick="seleccionarEstado('{{ $estado }}', this)"
+                                            {{ !$puedeSeleccionar ? 'disabled' : '' }}>
+                                        <i class="fas {{ $info['icono'] }} fa-lg"></i>
+                                        <span>{{ $info['texto'] }}</span>
+                                        @if(!$puedeSeleccionar && $estado != $pedido->estado)
+                                            <small class="d-block" style="font-size: 0.6rem;">❌ No permitido</small>
+                                        @endif
+                                    </button>
+                                @endforeach
                             </div>
                             <input type="hidden" name="estado" id="inputEstado" value="{{ $pedido->estado }}">
                         </div>
@@ -212,6 +212,7 @@
                     </form>
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Columna lateral -->
@@ -323,7 +324,6 @@
         font-size: 0.9rem;
     }
     
-    /* ===== BOTONES DE ESTADO (COMO EN ADMIN) ===== */
     .btn-estado-group {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -344,12 +344,17 @@
         align-items: center;
         gap: 6px;
         width: 100%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    .btn-estado:hover {
+    .btn-estado:hover:not(:disabled) {
         transform: translateY(-3px);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-estado:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
     }
     
     .btn-estado.active {
@@ -358,129 +363,63 @@
         transform: scale(1.02);
     }
     
-    .btn-estado i {
-        font-size: 1.3rem;
-    }
+    .btn-estado i { font-size: 1.3rem; }
     
-    .btn-pendiente { 
-        background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); 
-        color: #856404; 
-    }
-    .btn-confirmado { 
-        background: linear-gradient(135deg, #d1ecf1 0%, #b6e4f0 100%); 
-        color: #0c5460; 
-    }
-    .btn-enviado { 
-        background: linear-gradient(135deg, #cce5ff 0%, #b8d9ff 100%); 
-        color: #004085; 
-    }
-    .btn-entregado { 
-        background: linear-gradient(135deg, #d4edda 0%, #c1e6cf 100%); 
-        color: #155724; 
-    }
-    .btn-cancelado { 
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); 
-        color: #721c24; 
-    }
+    .btn-pendiente { background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); color: #856404; }
+    .btn-confirmado { background: linear-gradient(135deg, #d1ecf1 0%, #b6e4f0 100%); color: #0c5460; }
+    .btn-enviado { background: linear-gradient(135deg, #cce5ff 0%, #b8d9ff 100%); color: #004085; }
+    .btn-entregado { background: linear-gradient(135deg, #d4edda 0%, #c1e6cf 100%); color: #155724; }
+    .btn-cancelado { background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); color: #721c24; }
     
-    /* Color dot para variantes */
     .color-dot {
         width: 16px;
         height: 16px;
         border-radius: 50%;
         display: inline-block;
         border: 1px solid #ddd;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
-    /* Responsive */
     @media (max-width: 768px) {
-        .btn-estado-group {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .btn-estado {
-            padding: 10px 5px;
-            font-size: 0.75rem;
-        }
-        .btn-estado i {
-            font-size: 1.1rem;
-        }
+        .btn-estado-group { grid-template-columns: repeat(2, 1fr); }
+        .btn-estado { padding: 10px 5px; font-size: 0.75rem; }
+        .btn-estado i { font-size: 1.1rem; }
     }
-    
-    @media (max-width: 480px) {
-        .btn-estado-group {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    /* Animaciones */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(5px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .btn-estado {
-        animation: fadeIn 0.3s ease-out;
-    }
-    
-    .btn-estado:nth-child(1) { animation-delay: 0.05s; }
-    .btn-estado:nth-child(2) { animation-delay: 0.1s; }
-    .btn-estado:nth-child(3) { animation-delay: 0.15s; }
-    .btn-estado:nth-child(4) { animation-delay: 0.2s; }
-    .btn-estado:nth-child(5) { animation-delay: 0.25s; }
+    @media (max-width: 480px) { .btn-estado-group { grid-template-columns: 1fr; } }
 </style>
 @endsection
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Mostrar mensaje de éxito con SweetAlert2
-        @if(session('success'))
+    // $estadosSiguientes es un array directo desde el controlador
+    // Ejemplo: si estadoActual = 'pendiente', entonces estadosSiguientes = ['confirmado', 'cancelado']
+    const estadosSiguientes = @json($estadosSiguientes);
+    const estadoActual = '{{ $pedido->estado }}';
+    
+    function seleccionarEstado(estado, elemento) {
+        // Validar si el estado está permitido
+        if (estado !== estadoActual && !estadosSiguientes.includes(estado)) {
+            const estadosTexto = {
+                'pendiente': 'Pendiente', 'confirmado': 'Confirmado',
+                'enviado': 'Enviado', 'entregado': 'Entregado', 'cancelado': 'Cancelado'
+            };
             Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: '{{ session('success') }}',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                position: 'top-end',
-                toast: true
+                title: 'Cambio no permitido',
+                html: `No puedes cambiar el estado de <strong>${estadosTexto[estadoActual]}</strong> a <strong>${estadosTexto[estado]}</strong>.<br><br><small>Solo puedes avanzar al siguiente estado del flujo del pedido.</small>`,
+                icon: 'warning',
+                confirmButtonColor: '#7fad39'
             });
-        @endif
+            return;
+        }
         
-        // Mostrar mensaje de error con SweetAlert2
-        @if(session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: '{{ session('error') }}',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                position: 'top-end',
-                toast: true
-            });
-        @endif
-    });
-
-    // Función para seleccionar estado (como en admin)
-    function seleccionarEstado(estado) {
         document.getElementById('inputEstado').value = estado;
         
         document.querySelectorAll('.btn-estado').forEach(btn => {
             btn.classList.remove('active');
         });
         
-        event.currentTarget.classList.add('active');
+        elemento.classList.add('active');
         
-        // Mensaje según el estado seleccionado
         let mensaje = '';
         if (estado === 'cancelado') {
             mensaje = 'Al cancelar, los productos regresarán al inventario';
@@ -497,12 +436,10 @@
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true
+            timer: 2000
         });
     }
 
-    // Confirmación para actualizar pedido
     document.getElementById('updateForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -535,11 +472,9 @@
             confirmButtonColor: color,
             cancelButtonColor: '#6c757d',
             confirmButtonText: esCancelacion ? 'Sí, cancelar' : 'Sí, actualizar',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
+            cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Mostrar loading
                 Swal.fire({
                     title: 'Procesando...',
                     text: 'Por favor espera',
@@ -548,10 +483,35 @@
                         Swal.showLoading();
                         this.submit();
                     }
-
                 });
             }
         });
     });
+    
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '{{ session('success') }}',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+        });
+    @endif
+    
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+        });
+    @endif
 </script>
 @endsection

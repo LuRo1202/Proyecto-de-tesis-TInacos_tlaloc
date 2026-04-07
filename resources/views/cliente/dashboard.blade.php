@@ -16,7 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;900&display=swap" rel="stylesheet">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <!-- CSS Personalizado (TODOS LOS ESTILOS GLOBALES) -->
+    <!-- CSS Personalizado -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="icon" href="{{ asset('assets/img/logo.jpeg') }}">
     
@@ -24,9 +24,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
-        /* ===== SOLO ESTILOS EXCLUSIVOS DEL DASHBOARD ===== */
-        
-        /* VARIABLES GLOBALES - Solo las que necesita el dashboard */
         :root {
             --naranja: #ff6600;
             --naranja-oscuro: #e55a00;
@@ -42,17 +39,9 @@
             color: var(--texto-principal);
         }
 
-        /* ===== ESTILOS MÓVIL (hasta 991px) ===== */
         @media (max-width: 991px) {
-            .dashboard-section {
-                padding: 20px 0;
-            }
-
-            .container-custom {
-                padding: 0 15px;
-            }
-
-            /* Welcome Card Móvil */
+            .dashboard-section { padding: 20px 0; }
+            .container-custom { padding: 0 15px; }
             .welcome-card-mobile {
                 background: white;
                 border-radius: 12px;
@@ -63,7 +52,6 @@
                 position: relative;
                 overflow: hidden;
             }
-
             .welcome-card-mobile::after {
                 content: '';
                 position: absolute;
@@ -73,26 +61,14 @@
                 height: 100%;
                 background: linear-gradient(to bottom, #7fad39, #ff6600);
             }
-
-            .greeting-mobile {
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 5px;
-                color: #333;
-            }
-
-            .greeting-mobile span {
-                color: #7fad39;
-            }
-
-            /* Stats Grid Móvil */
+            .greeting-mobile { font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; color: #333; }
+            .greeting-mobile span { color: #7fad39; }
             .stats-grid-mobile {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin: 15px 0;
             }
-
             .stat-card-mobile {
                 background: white;
                 border-radius: 10px;
@@ -101,7 +77,6 @@
                 border: 1px solid #ebebeb;
                 text-align: center;
             }
-
             .stat-icon-mobile {
                 width: 45px;
                 height: 45px;
@@ -114,53 +89,22 @@
                 color: #7fad39;
                 font-size: 1.2rem;
             }
-
-            .stat-number-mobile {
-                font-size: 1.6rem;
-                font-weight: 700;
-                color: #333;
-                line-height: 1.2;
-            }
-
-            .stat-label-mobile {
-                font-size: 0.7rem;
-                color: #666;
-                font-weight: 500;
-                text-transform: uppercase;
-            }
-
-            /* Actions Grid Móvil */
-            .actions-section-mobile {
-                margin: 15px 0;
-            }
-
+            .stat-number-mobile { font-size: 1.6rem; font-weight: 700; color: #333; line-height: 1.2; }
+            .stat-label-mobile { font-size: 0.7rem; color: #666; font-weight: 500; text-transform: uppercase; }
+            .actions-section-mobile { margin: 15px 0; }
             .section-title-mobile {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 12px;
             }
-
-            .section-title-mobile h3 {
-                font-size: 1.1rem;
-                font-weight: 700;
-                color: #333;
-                margin: 0;
-            }
-
-            .section-title-mobile a {
-                color: #7fad39;
-                text-decoration: none;
-                font-size: 0.85rem;
-                font-weight: 600;
-            }
-
+            .section-title-mobile h3 { font-size: 1.1rem; font-weight: 700; color: #333; margin: 0; }
+            .section-title-mobile a { color: #7fad39; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
             .actions-grid-mobile {
                 display: grid;
                 grid-template-columns: repeat(4, 1fr);
                 gap: 8px;
             }
-
             .action-btn-mobile {
                 background: white;
                 border: 1px solid #ebebeb;
@@ -171,33 +115,11 @@
                 color: #333;
                 transition: all 0.2s;
             }
-
-            .action-btn-mobile i {
-                font-size: 1.3rem;
-                color: #7fad39;
-                display: block;
-                margin-bottom: 3px;
-            }
-
-            .action-btn-mobile span {
-                font-size: 0.65rem;
-                font-weight: 600;
-            }
-
-            .action-btn-mobile:hover {
-                background: #7fad39;
-                color: white;
-            }
-
-            .action-btn-mobile:hover i {
-                color: white;
-            }
-
-            /* Orders List Móvil */
-            .orders-list-mobile {
-                margin: 15px 0;
-            }
-
+            .action-btn-mobile i { font-size: 1.3rem; color: #7fad39; display: block; margin-bottom: 3px; }
+            .action-btn-mobile span { font-size: 0.65rem; font-weight: 600; }
+            .action-btn-mobile:hover { background: #7fad39; color: white; }
+            .action-btn-mobile:hover i { color: white; }
+            .orders-list-mobile { margin: 15px 0; }
             .order-item-mobile {
                 background: white;
                 border-radius: 12px;
@@ -210,7 +132,6 @@
                 gap: 12px;
                 cursor: pointer;
             }
-
             .order-icon-mobile {
                 width: 50px;
                 height: 50px;
@@ -223,41 +144,21 @@
                 font-size: 1.2rem;
                 flex-shrink: 0;
             }
-
-            .order-info-mobile {
-                flex: 1;
-            }
-
+            .order-info-mobile { flex: 1; }
             .order-header-mobile {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 5px;
             }
-
-            .order-folio-mobile {
-                font-weight: 700;
-                color: #333;
-                font-size: 0.9rem;
-            }
-
-            .order-date-mobile {
-                font-size: 0.65rem;
-                color: #666;
-            }
-
+            .order-folio-mobile { font-weight: 700; color: #333; font-size: 0.9rem; }
+            .order-date-mobile { font-size: 0.65rem; color: #666; }
             .order-footer-mobile {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
             }
-
-            .order-total-mobile {
-                font-weight: 700;
-                color: #7fad39;
-                font-size: 0.95rem;
-            }
-
+            .order-total-mobile { font-weight: 700; color: #7fad39; font-size: 0.95rem; }
             .order-status-mobile {
                 font-size: 0.6rem;
                 padding: 4px 10px;
@@ -266,8 +167,6 @@
                 min-width: 70px;
                 text-align: center;
             }
-
-            /* Account Card Móvil */
             .account-card-mobile {
                 background: white;
                 border-radius: 12px;
@@ -276,33 +175,14 @@
                 box-shadow: 0 2px 8px rgba(0,0,0,0.03);
                 border: 1px solid #ebebeb;
             }
-
             .account-field-mobile {
                 margin-bottom: 15px;
                 padding-bottom: 15px;
                 border-bottom: 1px solid #ebebeb;
             }
-
-            .account-field-mobile:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-                padding-bottom: 0;
-            }
-
-            .field-label-mobile {
-                font-size: 0.65rem;
-                color: #999;
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-                margin-bottom: 3px;
-            }
-
-            .field-value-mobile {
-                font-weight: 600;
-                color: #333;
-                font-size: 0.95rem;
-            }
-
+            .account-field-mobile:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+            .field-label-mobile { font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+            .field-value-mobile { font-weight: 600; color: #333; font-size: 0.95rem; }
             .btn-edit-mobile {
                 background: #ff6600;
                 color: white;
@@ -317,17 +197,8 @@
                 transition: all 0.2s;
                 margin-top: 15px;
             }
-
-            .btn-edit-mobile:hover {
-                background: #e55a00;
-                color: white;
-            }
-
-            .btn-edit-mobile i {
-                margin-right: 8px;
-            }
-
-            /* Botón Flotante Móvil */
+            .btn-edit-mobile:hover { background: #e55a00; color: white; }
+            .btn-edit-mobile i { margin-right: 8px; }
             .fab-mobile {
                 position: fixed;
                 bottom: 20px;
@@ -347,32 +218,13 @@
                 z-index: 100;
                 border: 3px solid white;
             }
-
-            .fab-mobile:hover {
-                transform: scale(1.1);
-                background: #e55a00;
-                color: white;
-            }
-
-            /* Ocultar elementos de desktop */
-            .desktop-only {
-                display: none;
-            }
+            .fab-mobile:hover { transform: scale(1.1); background: #e55a00; color: white; }
+            .desktop-only { display: none; }
         }
 
-        /* ===== ESTILOS DESKTOP (992px en adelante) ===== */
         @media (min-width: 992px) {
-            .dashboard-section {
-                padding: 40px 0;
-            }
-
-            .container-custom {
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 0 20px;
-            }
-
-            /* Welcome Card Desktop */
+            .dashboard-section { padding: 40px 0; }
+            .container-custom { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
             .welcome-dashboard {
                 background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.7) 100%),
                             url('{{ asset('assets/img/hero/hero-foreground.png') }}') no-repeat center center;
@@ -384,7 +236,6 @@
                 position: relative;
                 overflow: hidden;
             }
-
             .welcome-dashboard::before {
                 content: '💧';
                 position: absolute;
@@ -394,31 +245,15 @@
                 opacity: 0.1;
                 transform: rotate(15deg);
             }
-
-            .welcome-dashboard h1 {
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 10px;
-            }
-
-            .welcome-dashboard h1 span {
-                color: #7fad39;
-            }
-
-            .welcome-dashboard p {
-                font-size: 1.1rem;
-                opacity: 0.9;
-                margin-bottom: 0;
-            }
-
-            /* Stats Grid Desktop */
+            .welcome-dashboard h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+            .welcome-dashboard h1 span { color: #7fad39; }
+            .welcome-dashboard p { font-size: 1.1rem; opacity: 0.9; margin-bottom: 0; }
             .stats-grid {
                 display: grid;
                 grid-template-columns: repeat(4, 1fr);
                 gap: 20px;
                 margin-bottom: 40px;
             }
-
             .stat-card {
                 background: white;
                 border: 1px solid #ebebeb;
@@ -428,13 +263,11 @@
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
                 text-align: center;
             }
-
             .stat-card:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 15px 30px rgba(127, 173, 57, 0.15);
                 border-color: #7fad39;
             }
-
             .stat-icon {
                 width: 60px;
                 height: 60px;
@@ -448,36 +281,19 @@
                 font-size: 1.5rem;
                 transition: all 0.3s ease;
             }
-
             .stat-card:hover .stat-icon {
                 background: #7fad39;
                 color: white;
                 transform: rotateY(360deg);
             }
-
-            .stat-number {
-                font-size: 2rem;
-                font-weight: 800;
-                color: #2c3e50;
-                margin-bottom: 5px;
-            }
-
-            .stat-label {
-                font-size: 0.85rem;
-                color: #7f8c8d;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-
-            /* Quick Actions Desktop */
+            .stat-number { font-size: 2rem; font-weight: 800; color: #2c3e50; margin-bottom: 5px; }
+            .stat-label { font-size: 0.85rem; color: #7f8c8d; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
             .quick-actions-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                 gap: 20px;
                 margin-bottom: 40px;
             }
-
             .quick-action-card {
                 background: white;
                 border-radius: 16px;
@@ -490,13 +306,11 @@
                 text-decoration: none;
                 display: block;
             }
-
             .quick-action-card:hover {
                 transform: translateY(-8px);
                 box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
                 border-color: #7fad39;
             }
-
             .quick-action-overlay {
                 height: 100%;
                 display: flex;
@@ -508,32 +322,10 @@
                 text-align: center;
                 transition: all 0.3s ease;
             }
-
-            .quick-action-overlay i {
-                font-size: 2.5rem;
-                margin-bottom: 12px;
-                color: #7fad39;
-                transition: transform 0.3s ease;
-            }
-
-            .quick-action-card:hover i {
-                transform: scale(1.15);
-            }
-
-            .quick-action-overlay h4 {
-                font-size: 1.1rem;
-                font-weight: 700;
-                margin: 0;
-                color: #2d3436;
-            }
-
-            .quick-action-overlay p {
-                font-size: 0.85rem;
-                color: #636e72;
-                margin-top: 5px;
-            }
-
-            /* Orders Section Desktop */
+            .quick-action-overlay i { font-size: 2.5rem; margin-bottom: 12px; color: #7fad39; transition: transform 0.3s ease; }
+            .quick-action-card:hover i { transform: scale(1.15); }
+            .quick-action-overlay h4 { font-size: 1.1rem; font-weight: 700; margin: 0; color: #2d3436; }
+            .quick-action-overlay p { font-size: 0.85rem; color: #636e72; margin-top: 5px; }
             .orders-section {
                 margin-bottom: 40px;
                 background: white;
@@ -541,7 +333,6 @@
                 padding: 25px;
                 box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
             }
-
             .section-header {
                 display: flex;
                 justify-content: space-between;
@@ -550,7 +341,6 @@
                 flex-wrap: wrap;
                 gap: 10px;
             }
-
             .section-header h2 {
                 font-size: 1.8rem;
                 font-weight: 800;
@@ -559,7 +349,6 @@
                 display: inline-block;
                 margin: 0;
             }
-
             .section-header h2::after {
                 content: '';
                 position: absolute;
@@ -570,7 +359,6 @@
                 background: linear-gradient(to right, #7fad39, #ff6600);
                 border-radius: 2px;
             }
-
             .section-header a {
                 color: #7fad39;
                 text-decoration: none;
@@ -583,22 +371,9 @@
                 align-items: center;
                 gap: 5px;
             }
-
-            .section-header a:hover {
-                background: #7fad39;
-                color: white;
-            }
-
-            .table-responsive {
-                overflow-x: auto;
-                border-radius: 12px;
-            }
-
-            .table-custom {
-                width: 100%;
-                border-collapse: collapse;
-            }
-
+            .section-header a:hover { background: #7fad39; color: white; }
+            .table-responsive { overflow-x: auto; border-radius: 12px; }
+            .table-custom { width: 100%; border-collapse: collapse; }
             .table-custom thead th {
                 background: #2c3e50;
                 color: white;
@@ -609,23 +384,12 @@
                 letter-spacing: 0.5px;
                 border: none;
             }
-
             .table-custom tbody tr {
                 transition: all 0.2s ease;
                 border-bottom: 1px solid #edf2f7;
             }
-
-            .table-custom tbody tr:hover {
-                background: #f8fafc;
-            }
-
-            .table-custom td {
-                padding: 15px 20px;
-                vertical-align: middle;
-                font-size: 0.95rem;
-                color: #2d3748;
-            }
-
+            .table-custom tbody tr:hover { background: #f8fafc; }
+            .table-custom td { padding: 15px 20px; vertical-align: middle; font-size: 0.95rem; color: #2d3748; }
             .folio-badge {
                 font-weight: 700;
                 color: #7fad39;
@@ -637,13 +401,7 @@
                 font-family: 'Courier New', monospace;
                 border: 1px solid rgba(127, 173, 57, 0.2);
             }
-
-            .action-buttons {
-                display: flex;
-                gap: 8px;
-                align-items: center;
-            }
-
+            .action-buttons { display: flex; gap: 8px; align-items: center; }
             .btn-action-table {
                 width: 38px;
                 height: 38px;
@@ -659,32 +417,10 @@
                 font-size: 1rem;
                 border: 1px solid #edf2f7;
             }
-
-            .btn-view {
-                background: #ebf8ff;
-                color: #3182ce;
-                border: 1px solid #bee3f8;
-            }
-
-            .btn-view:hover {
-                background: #3182ce;
-                color: white;
-                border-color: #3182ce;
-            }
-
-            .btn-cancel {
-                background: #fff5f5;
-                color: #e53e3e;
-                border: 1px solid #fed7d7;
-            }
-
-            .btn-cancel:hover {
-                background: #e53e3e;
-                color: white;
-                border-color: #e53e3e;
-            }
-
-            /* Account Section Desktop */
+            .btn-view { background: #ebf8ff; color: #3182ce; border: 1px solid #bee3f8; }
+            .btn-view:hover { background: #3182ce; color: white; border-color: #3182ce; }
+            .btn-cancel { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
+            .btn-cancel:hover { background: #e53e3e; color: white; border-color: #e53e3e; }
             .account-section {
                 background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
                 border-radius: 12px;
@@ -692,14 +428,12 @@
                 margin-top: 40px;
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             }
-
             .account-grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
                 margin: 20px 0;
             }
-
             .account-item {
                 background: white;
                 border-radius: 10px;
@@ -708,32 +442,13 @@
                 border-left: 4px solid #7fad39;
                 transition: all 0.3s;
             }
-
             .account-item:hover {
                 transform: translateY(-3px);
                 box-shadow: 0 10px 20px rgba(127, 173, 57, 0.1);
             }
-
-            .account-item i {
-                font-size: 1.3rem;
-                color: #7fad39;
-                margin-bottom: 10px;
-            }
-
-            .account-item .label {
-                font-size: 0.7rem;
-                color: #7f8c8d;
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-                margin-bottom: 3px;
-            }
-
-            .account-item .value {
-                font-size: 1rem;
-                font-weight: 600;
-                color: #2c3e50;
-            }
-
+            .account-item i { font-size: 1.3rem; color: #7fad39; margin-bottom: 10px; }
+            .account-item .label { font-size: 0.7rem; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+            .account-item .value { font-size: 1rem; font-weight: 600; color: #2c3e50; }
             .btn-edit-account {
                 background: #ff6600;
                 color: white;
@@ -745,28 +460,12 @@
                 display: inline-block;
                 text-decoration: none;
             }
-
-            .btn-edit-account:hover {
-                background: #e55a00;
-                transform: translateY(-2px);
-                color: white;
-            }
-
-            .btn-edit-account i {
-                margin-right: 8px;
-            }
-
-            /* Ocultar elementos móviles */
-            .mobile-only {
-                display: none;
-            }
-
-            .fab-mobile {
-                display: none;
-            }
+            .btn-edit-account:hover { background: #e55a00; transform: translateY(-2px); color: white; }
+            .btn-edit-account i { margin-right: 8px; }
+            .mobile-only { display: none; }
+            .fab-mobile { display: none; }
         }
 
-        /* ===== BADGES DE ESTADO MEJORADOS ===== */
         .status-badge {
             padding: 8px 16px;
             border-radius: 30px;
@@ -779,48 +478,13 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             transition: all 0.2s ease;
         }
+        .status-badge:hover { transform: translateY(-2px); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+        .status-badge.status-pendiente { background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); color: #856404; border-left: 3px solid #ffc107; }
+        .status-badge.status-confirmado { background: linear-gradient(135deg, #7ee7aa 0%, #5ba36a 100%); color: #0c5460; border-left: 3px solid #17a2b8; }
+        .status-badge.status-enviado { background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%); color: #004085; border-left: 3px solid #007bff; }
+        .status-badge.status-entregado { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724; border-left: 3px solid #28a745; }
+        .status-badge.status-cancelado { background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); color: #721c24; border-left: 3px solid #dc3545; }
 
-        .status-badge:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
-        }
-
-        /* Estado Pendiente */
-        .status-badge.status-pendiente {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
-            color: #856404;
-            border-left: 3px solid #ffc107;
-        }
-
-        /* Estado Confirmado - AZUL CLARO */
-        .status-badge.status-confirmado {
-            background: linear-gradient(135deg, #7ee7aa 0%, #5ba36a 100%);
-            color: #0c5460;
-            border-left: 3px solid #17a2b8;
-        }
-
-        /* Estado Enviado - AZUL MÁS OSCURO */
-        .status-badge.status-enviado {
-            background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
-            color: #004085;
-            border-left: 3px solid #007bff;
-        }
-
-        /* Estado Entregado */
-        .status-badge.status-entregado {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-            border-left: 3px solid #28a745;
-        }
-
-        /* Estado Cancelado */
-        .status-badge.status-cancelado {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
-            color: #721c24;
-            border-left: 3px solid #dc3545;
-        }
-
-        /* Versión móvil de badges */
         .order-status-mobile {
             font-size: 0.6rem;
             padding: 4px 10px;
@@ -829,57 +493,16 @@
             min-width: 70px;
             text-align: center;
         }
+        .order-status-mobile.status-pendiente { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .order-status-mobile.status-confirmado { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .order-status-mobile.status-enviado { background: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+        .order-status-mobile.status-entregado { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .order-status-mobile.status-cancelado { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-        .order-status-mobile.status-pendiente {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
+        .empty-state { text-align: center; padding: 40px 20px; background: white; border-radius: 12px; }
+        .empty-state i { font-size: 3rem; color: #ebebeb; margin-bottom: 15px; }
+        .empty-state p { color: #7f8c8d; margin-bottom: 20px; }
 
-        .order-status-mobile.status-confirmado {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .order-status-mobile.status-enviado {
-            background: #cce5ff;
-            color: #004085;
-            border: 1px solid #b8daff;
-        }
-
-        .order-status-mobile.status-entregado {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .order-status-mobile.status-cancelado {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* Empty State compartido */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            background: white;
-            border-radius: 12px;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            color: #ebebeb;
-            margin-bottom: 15px;
-        }
-
-        .empty-state p {
-            color: #7f8c8d;
-            margin-bottom: 20px;
-        }
-
-        /* ===== BUSCADOR SUPERIOR ===== */
         .top-search-section {
             background: linear-gradient(135deg, #7fad39 0%, #5d8c29 100%);
             padding: 25px 0;
@@ -887,7 +510,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .top-search-section::before {
             content: '';
             position: absolute;
@@ -895,18 +517,13 @@
             left: 0;
             right: 0;
             height: 100%;
-            background: linear-gradient(45deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.08) 50%, 
-                transparent 100%);
+            background: linear-gradient(45deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
             animation: shine 3s infinite linear;
         }
-
         @keyframes shine {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
         }
-
         .top-search-section::after {
             content: '';
             position: absolute;
@@ -914,12 +531,8 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.6) 50%, 
-                transparent 100%);
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
         }
-
         .top-search-container {
             max-width: 800px;
             margin: 0 auto;
@@ -929,7 +542,6 @@
             z-index: 1;
             padding: 0 15px;
         }
-
         .top-search-container h4 {
             font-weight: 700;
             font-size: 2rem;
@@ -940,19 +552,16 @@
             justify-content: center;
             gap: 10px;
         }
-
         .top-search-container h4 i {
             color: #ffdd40;
             font-size: 2rem;
             filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
             animation: bounce 2s infinite;
         }
-
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
         }
-
         .top-search-container p {
             color: rgba(255, 255, 255, 0.95);
             font-size: 1.2rem;
@@ -961,23 +570,13 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
             letter-spacing: 0.5px;
         }
-
         @media (max-width: 768px) {
-            .top-search-section {
-                padding: 20px 0;
-            }
-            .top-search-container h4 {
-                font-size: 1.6rem;
-            }
-            .top-search-container h4 i {
-                font-size: 1.6rem;
-            }
-            .top-search-container p {
-                font-size: 1rem;
-            }
+            .top-search-section { padding: 20px 0; }
+            .top-search-container h4 { font-size: 1.6rem; }
+            .top-search-container h4 i { font-size: 1.6rem; }
+            .top-search-container p { font-size: 1rem; }
         }
 
-        /* ===== TARJETA DE ACCIONES RÁPIDAS ===== */
         .quick-actions-container {
             background: white;
             border-radius: 20px;
@@ -987,12 +586,10 @@
             border: 1px solid rgba(127, 173, 57, 0.1);
             transition: all 0.3s ease;
         }
-
         .quick-actions-container:hover {
             box-shadow: 0 15px 40px rgba(127, 173, 57, 0.1);
             border-color: rgba(127, 173, 57, 0.2);
         }
-
         .quick-actions-header {
             display: flex;
             align-items: center;
@@ -1002,7 +599,6 @@
             border-bottom: 2px solid #f0f0f0;
             position: relative;
         }
-
         .quick-actions-header::after {
             content: '';
             position: absolute;
@@ -1013,7 +609,6 @@
             background: linear-gradient(90deg, #7fad39, #ff6600);
             border-radius: 2px;
         }
-
         .quick-actions-header .header-icon {
             width: 50px;
             height: 50px;
@@ -1026,571 +621,238 @@
             font-size: 1.5rem;
             box-shadow: 0 5px 15px rgba(127, 173, 57, 0.3);
         }
-
-        .quick-actions-header .header-text h3 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .quick-actions-header .header-text p {
-            font-size: 0.9rem;
-            color: #666;
-            margin: 0;
-        }
-
+        .quick-actions-header .header-text h3 { font-size: 1.4rem; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .quick-actions-header .header-text p { font-size: 0.9rem; color: #666; margin: 0; }
         .quick-actions-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
-
         @media (max-width: 768px) {
-            .quick-actions-container {
-                padding: 15px;
-                margin-bottom: 20px;
-            }
-            .quick-actions-header {
-                margin-bottom: 15px;
-                padding-bottom: 15px;
-            }
-            .quick-actions-header .header-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
-            }
-            .quick-actions-header .header-text h3 {
-                font-size: 1.2rem;
-            }
-            .quick-actions-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
+            .quick-actions-container { padding: 15px; margin-bottom: 20px; }
+            .quick-actions-header { margin-bottom: 15px; padding-bottom: 15px; }
+            .quick-actions-header .header-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .quick-actions-header .header-text h3 { font-size: 1.2rem; }
+            .quick-actions-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         }
-
-        @media (max-width: 480px) {
-            .quick-actions-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+        @media (max-width: 480px) { .quick-actions-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <!-- ===== HEADER COMPARTIDO ===== -->
     <nav class="navbar navbar-expand-lg navbar-light main-navbar sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tanques Tlaloc">
             </a>
-            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tienda') }}">Tienda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('contacto') }}">Contacto</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('cliente.dashboard') }}">Mi Cuenta</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('tienda') }}">Tienda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('contacto') }}">Contacto</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ route('cliente.dashboard') }}">Mi Cuenta</a></li>
                 </ul>
-                
                 <div class="d-none d-lg-flex align-items-center">
                     @if(auth('cliente')->check())
                         <div class="dropdown me-3">
                             <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user me-2"></i>
-                                {{ auth('cliente')->user()->nombre }}
+                                <i class="fas fa-user me-2"></i>{{ auth('cliente')->user()->nombre }}
                             </button>
                             <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item active" href="{{ route('cliente.dashboard') }}">
-                                        <i class="fas fa-tachometer-alt me-2"></i>Mi Cuenta
-                                    </a>
-                                </li>
+                                <li><a class="dropdown-item active" href="{{ route('cliente.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Mi Cuenta</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                        </button>
+                                        <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</button>
                                     </form>
                                 </li>
                             </ul>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-primary me-3">
-                            <i class="fas fa-user me-2"></i>Login
-                        </a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary me-3"><i class="fas fa-user me-2"></i>Login</a>
                     @endauth
-                    
                     <a href="{{ route('carrito') }}" class="btn btn-primary position-relative">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-badge">{{ $cartCount ?? 0 }}</span>
                     </a>
                 </div>
-                
                 <div class="d-lg-none mt-3">
                     @if(auth('cliente')->check())
                         <div class="d-grid gap-2">
-                            <span class="btn btn-outline-primary w-100 mb-2 disabled">
-                                <i class="fas fa-user me-2"></i>
-                                {{ auth('cliente')->user()->nombre }}
-                            </span>
+                            <span class="btn btn-outline-primary w-100 mb-2 disabled"><i class="fas fa-user me-2"></i>{{ auth('cliente')->user()->nombre }}</span>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="btn btn-danger w-100">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                </button>
+                                <button type="submit" class="btn btn-danger w-100"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</button>
                             </form>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2">
-                            <i class="fas fa-user me-2"></i>Iniciar Sesión
-                        </a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2"><i class="fas fa-user me-2"></i>Iniciar Sesión</a>
                     @endif
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- ===== BUSCADOR SUPERIOR COMPARTIDO ===== -->
     <section class="top-search-section">
         <div class="container">
             <div class="top-search-container">
-                <h4>
-                    <i class="fas fa-search me-2"></i>Mi Cuenta Tláloc
-                </h4>
+                <h4><i class="fas fa-search me-2"></i>Mi Cuenta Tláloc</h4>
                 <p>Gestiona tus pedidos y datos personales</p>
             </div>
         </div>
     </section>
 
-    <!-- ===== DASHBOARD CONTENT ===== -->
     <section class="dashboard-section">
         <div class="container-custom">
 
-            <!-- ===== VERSIÓN MÓVIL ===== -->
+            <!-- VERSIÓN MÓVIL -->
             <div class="mobile-only">
-
-                <!-- WELCOME CARD MÓVIL -->
                 <div class="welcome-card-mobile">
-                    <div class="greeting-mobile">
-                        ¡Hola, <span>{{ explode(' ', $cliente->nombre)[0] }}</span>!
-                    </div>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0;">
-                        Gestiona tus pedidos y datos personales
-                    </p>
+                    <div class="greeting-mobile">¡Hola, <span>{{ explode(' ', $cliente->nombre)[0] }}</span>!</div>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 0;">Gestiona tus pedidos y datos personales</p>
                 </div>
 
-                <!-- STATS MÓVIL -->
                 <div class="stats-grid-mobile">
-                    <div class="stat-card-mobile">
-                        <div class="stat-icon-mobile">
-                            <i class="fas fa-box-open"></i>
-                        </div>
-                        <div class="stat-number-mobile">{{ $estadisticas['total_pedidos'] }}</div>
-                        <div class="stat-label-mobile">Pedidos</div>
-                    </div>
-
-                    <div class="stat-card-mobile">
-                        <div class="stat-icon-mobile">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-number-mobile">{{ $estadisticas['pendientes'] + $estadisticas['enviados'] }}</div>
-                        <div class="stat-label-mobile">Activos</div>
-                    </div>
-
-                    <div class="stat-card-mobile">
-                        <div class="stat-icon-mobile">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-number-mobile">{{ $estadisticas['entregados'] }}</div>
-                        <div class="stat-label-mobile">Entregados</div>
-                    </div>
-
-                    <div class="stat-card-mobile">
-                        <div class="stat-icon-mobile">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                        <div class="stat-number-mobile">${{ number_format($estadisticas['total_gastado'], 0) }}</div>
-                        <div class="stat-label-mobile">Gastado</div>
-                    </div>
+                    <div class="stat-card-mobile"><div class="stat-icon-mobile"><i class="fas fa-box-open"></i></div><div class="stat-number-mobile">{{ $estadisticas['total_pedidos'] }}</div><div class="stat-label-mobile">Pedidos</div></div>
+                    <div class="stat-card-mobile"><div class="stat-icon-mobile"><i class="fas fa-clock"></i></div><div class="stat-number-mobile">{{ $estadisticas['pendientes'] + $estadisticas['enviados'] }}</div><div class="stat-label-mobile">Activos</div></div>
+                    <div class="stat-card-mobile"><div class="stat-icon-mobile"><i class="fas fa-check-circle"></i></div><div class="stat-number-mobile">{{ $estadisticas['entregados'] }}</div><div class="stat-label-mobile">Entregados</div></div>
+                    <div class="stat-card-mobile"><div class="stat-icon-mobile"><i class="fas fa-wallet"></i></div><div class="stat-number-mobile">${{ number_format($estadisticas['total_gastado'], 0) }}</div><div class="stat-label-mobile">Gastado</div></div>
                 </div>
 
-                <!-- ACCIONES RÁPIDAS MÓVIL -->
                 <div class="actions-section-mobile">
-                    <div class="section-title-mobile">
-                        <h3>Acciones rápidas</h3>
-                    </div>
-
+                    <div class="section-title-mobile"><h3>Acciones rápidas</h3></div>
                     <div class="actions-grid-mobile">
-                        <a href="{{ route('tienda') }}" class="action-btn-mobile">
-                            <i class="fas fa-store"></i>
-                            <span>Tienda</span>
-                        </a>
-                        <a href="/cliente/pedidos" class="action-btn-mobile">
-                            <i class="fas fa-truck"></i>
-                            <span>Pedidos</span>
-                        </a>
-                        <a href="/cliente/completar-perfil" class="action-btn-mobile">
-                            <i class="fas fa-user"></i>
-                            <span>Perfil</span>
-                        </a>
-                        <a href="#" class="action-btn-mobile" onclick="confirmarLogout(event)">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Salir</span>
-                        </a>
+                        <a href="{{ route('tienda') }}" class="action-btn-mobile"><i class="fas fa-store"></i><span>Tienda</span></a>
+                        <a href="{{ route('cliente.pedidos') }}" class="action-btn-mobile"><i class="fas fa-truck"></i><span>Pedidos</span></a>
+                        <a href="{{ route('cliente.completar-perfil') }}" class="action-btn-mobile"><i class="fas fa-user"></i><span>Perfil</span></a>
+                        <a href="#" class="action-btn-mobile" onclick="confirmarLogout(event)"><i class="fas fa-sign-out-alt"></i><span>Salir</span></a>
                     </div>
                 </div>
 
-                <!-- PEDIDOS RECIENTES MÓVIL -->
                 <div class="actions-section-mobile">
-                    <div class="section-title-mobile">
-                        <h3>Pedidos recientes</h3>
-                        <a href="/cliente/pedidos">Ver todos <i class="fas fa-chevron-right"></i></a>
-                    </div>
-
+                    <div class="section-title-mobile"><h3>Pedidos recientes</h3><a href="{{ route('cliente.pedidos') }}">Ver todos <i class="fas fa-chevron-right"></i></a></div>
                     <div class="orders-list-mobile">
                         @forelse($pedidosRecientes->take(3) as $pedido)
-                        <div class="order-item-mobile" onclick="window.location.href='/cliente/pedido/{{ $pedido->id }}'">
+                        <div class="order-item-mobile" onclick="window.location.href='{{ route('cliente.pedido.ver', $pedido->id) }}'">
                             <div class="order-icon-mobile">
-                                @if($pedido->estado == 'entregado')
-                                    <i class="fas fa-check-circle"></i>
-                                @elseif($pedido->estado == 'pendiente')
-                                    <i class="fas fa-clock"></i>
-                                @elseif($pedido->estado == 'enviado')
-                                    <i class="fas fa-truck"></i>
-                                @elseif($pedido->estado == 'confirmado')
-                                    <i class="fas fa-check"></i>
-                                @else
-                                    <i class="fas fa-box"></i>
-                                @endif
+                                @if($pedido->estado == 'entregado') <i class="fas fa-check-circle"></i>
+                                @elseif($pedido->estado == 'pendiente') <i class="fas fa-clock"></i>
+                                @elseif($pedido->estado == 'enviado') <i class="fas fa-truck"></i>
+                                @elseif($pedido->estado == 'confirmado') <i class="fas fa-check"></i>
+                                @else <i class="fas fa-box"></i> @endif
                             </div>
                             <div class="order-info-mobile">
-                                <div class="order-header-mobile">
-                                    <span class="order-folio-mobile">#{{ $pedido->folio }}</span>
-                                    <span class="order-date-mobile">{{ $pedido->created_at->format('d/m/Y') }}</span>
-                                </div>
+                                <div class="order-header-mobile"><span class="order-folio-mobile">#{{ $pedido->folio }}</span><span class="order-date-mobile">{{ $pedido->created_at->format('d/m/Y') }}</span></div>
                                 <div class="order-footer-mobile">
                                     <span class="order-total-mobile">${{ number_format($pedido->total, 0) }}</span>
-                                    @php
-                                        $statusClass = match($pedido->estado) {
-                                            'pendiente' => 'status-pendiente',
-                                            'confirmado' => 'status-confirmado',
-                                            'enviado' => 'status-enviado',
-                                            'entregado' => 'status-entregado',
-                                            'cancelado' => 'status-cancelado',
-                                            default => ''
-                                        };
-                                    @endphp
+                                    @php $statusClass = match($pedido->estado) {
+                                        'pendiente' => 'status-pendiente', 'confirmado' => 'status-confirmado',
+                                        'enviado' => 'status-enviado', 'entregado' => 'status-entregado',
+                                        'cancelado' => 'status-cancelado', default => ''
+                                    }; @endphp
                                     <span class="order-status-mobile {{ $statusClass }}">{{ ucfirst($pedido->estado) }}</span>
                                 </div>
                             </div>
                         </div>
                         @empty
-                        <div class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <p>Aún no tienes pedidos</p>
-                            <a href="{{ route('tienda') }}" class="btn btn-primary">
-                                <i class="fas fa-store me-2"></i>Ir a la tienda
-                            </a>
-                        </div>
+                        <div class="empty-state"><i class="fas fa-box-open"></i><p>Aún no tienes pedidos</p><a href="{{ route('tienda') }}" class="btn btn-primary"><i class="fas fa-store me-2"></i>Ir a la tienda</a></div>
                         @endforelse
                     </div>
                 </div>
 
-                <!-- DATOS DE CUENTA MÓVIL -->
                 <div class="account-card-mobile">
-                    <div class="section-title-mobile" style="margin-bottom: 15px;">
-                        <h3>Mis datos</h3>
-                    </div>
-
-                    <div class="account-field-mobile">
-                        <div class="field-label-mobile">Nombre completo</div>
-                        <div class="field-value-mobile">{{ $cliente->nombre }}</div>
-                    </div>
-
-                    <div class="account-field-mobile">
-                        <div class="field-label-mobile">Correo electrónico</div>
-                        <div class="field-value-mobile">{{ $cliente->email }}</div>
-                    </div>
-
-                    <div class="account-field-mobile">
-                        <div class="field-label-mobile">Teléfono</div>
-                        <div class="field-value-mobile">{{ $cliente->telefono ?? 'No registrado' }}</div>
-                    </div>
-
-                    <div class="account-field-mobile">
-                        <div class="field-label-mobile">Dirección de envío</div>
-                        <div class="field-value-mobile">
-                            @if($cliente->direccion)
-                                {{ $cliente->direccion }}, {{ $cliente->ciudad }}, {{ $cliente->estado }}
-                            @else
-                                No registrada
-                            @endif
-                        </div>
-                    </div>
-
-                    <a href="/cliente/completar-perfil" class="btn-edit-mobile">
-                        <i class="fas fa-edit"></i> Editar información
-                    </a>
+                    <div class="section-title-mobile" style="margin-bottom: 15px;"><h3>Mis datos</h3></div>
+                    <div class="account-field-mobile"><div class="field-label-mobile">Nombre completo</div><div class="field-value-mobile">{{ $cliente->nombre }}</div></div>
+                    <div class="account-field-mobile"><div class="field-label-mobile">Correo electrónico</div><div class="field-value-mobile">{{ $cliente->email }}</div></div>
+                    <div class="account-field-mobile"><div class="field-label-mobile">Teléfono</div><div class="field-value-mobile">{{ $cliente->telefono ?? 'No registrado' }}</div></div>
+                    <div class="account-field-mobile"><div class="field-label-mobile">Dirección de envío</div><div class="field-value-mobile">@if($cliente->direccion){{ $cliente->direccion }}, {{ $cliente->ciudad }}, {{ $cliente->estado }}@else No registrada @endif</div></div>
+                    <a href="{{ route('cliente.completar-perfil') }}" class="btn-edit-mobile"><i class="fas fa-edit"></i> Editar información</a>
                 </div>
 
-                <!-- BOTÓN FLOTANTE MÓVIL -->
-                <a href="{{ route('tienda') }}" class="fab-mobile">
-                    <i class="fas fa-plus"></i>
-                </a>
+                <a href="{{ route('tienda') }}" class="fab-mobile"><i class="fas fa-plus"></i></a>
+            </div>
 
-            </div> <!-- Fin mobile-only -->
-
-            <!-- ===== VERSIÓN DESKTOP ===== -->
+            <!-- VERSIÓN DESKTOP -->
             <div class="desktop-only">
+                <div class="welcome-dashboard"><h1>¡Hola, <span>{{ explode(' ', $cliente->nombre)[0] }}</span>!</h1><p>Bienvenido a tu panel de control. Aquí puedes gestionar todos tus pedidos y datos personales.</p></div>
 
-                <!-- WELCOME CARD DESKTOP -->
-                <div class="welcome-dashboard">
-                    <h1>¡Hola, <span>{{ explode(' ', $cliente->nombre)[0] }}</span>!</h1>
-                    <p>Bienvenido a tu panel de control. Aquí puedes gestionar todos tus pedidos y datos personales.</p>
-                </div>
-
-                <!-- STATS DESKTOP -->
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-box-open"></i></div>
-                        <div class="stat-number">{{ $estadisticas['total_pedidos'] }}</div>
-                        <div class="stat-label">Pedidos Totales</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                        <div class="stat-number">{{ $estadisticas['pendientes'] + $estadisticas['enviados'] }}</div>
-                        <div class="stat-label">Pedidos Activos</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                        <div class="stat-number">{{ $estadisticas['entregados'] }}</div>
-                        <div class="stat-label">Entregados</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-                        <div class="stat-number">${{ number_format($estadisticas['total_gastado'], 0) }}</div>
-                        <div class="stat-label">Total Gastado</div>
-                    </div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-box-open"></i></div><div class="stat-number">{{ $estadisticas['total_pedidos'] }}</div><div class="stat-label">Pedidos Totales</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-number">{{ $estadisticas['pendientes'] + $estadisticas['enviados'] }}</div><div class="stat-label">Pedidos Activos</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-number">{{ $estadisticas['entregados'] }}</div><div class="stat-label">Entregados</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="fas fa-wallet"></i></div><div class="stat-number">${{ number_format($estadisticas['total_gastado'], 0) }}</div><div class="stat-label">Total Gastado</div></div>
                 </div>
 
-                <!-- ACCIONES RÁPIDAS DESKTOP -->
                 <div class="quick-actions-container">
-                    <div class="quick-actions-header">
-                        <div class="header-icon">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <div class="header-text">
-                            <h3>Acciones Rápidas</h3>
-                            <p>Lo que necesitas al alcance de un clic</p>
-                        </div>
-                    </div>
-                    
+                    <div class="quick-actions-header"><div class="header-icon"><i class="fas fa-bolt"></i></div><div class="header-text"><h3>Acciones Rápidas</h3><p>Lo que necesitas al alcance de un clic</p></div></div>
                     <div class="quick-actions-grid">
-                        <a href="{{ route('tienda') }}" class="quick-action-card card-tienda">
-                            <div class="quick-action-overlay">
-                                <i class="fas fa-store"></i>
-                                <h4>Tienda</h4>
-                                <p>Explorar productos</p>
-                            </div>
-                        </a>
-
-                        <a href="{{ route('cliente.pedidos') }}" class="quick-action-card card-pedidos">
-                            <div class="quick-action-overlay">
-                                <i class="fas fa-truck"></i>
-                                <h4>Mis Pedidos</h4>
-                                <p>Rastreo y detalles</p>
-                            </div>
-                        </a>
-
-                        <a href="{{ route('cliente.completar-perfil') }}" class="quick-action-card card-perfil">
-                            <div class="quick-action-overlay">
-                                <i class="fas fa-user-circle"></i>
-                                <h4>Mi Perfil</h4>
-                                <p>Gestionar cuenta</p>
-                            </div>
-                        </a>
-
-                        <a href="#" class="quick-action-card card-salir" onclick="confirmarLogout(event)">
-                            <div class="quick-action-overlay">
-                                <i class="fas fa-power-off"></i>
-                                <h4>Salir</h4>
-                                <p>Cerrar sesión</p>
-                            </div>
-                        </a>
+                        <a href="{{ route('tienda') }}" class="quick-action-card card-tienda"><div class="quick-action-overlay"><i class="fas fa-store"></i><h4>Tienda</h4><p>Explorar productos</p></div></a>
+                        <a href="{{ route('cliente.pedidos') }}" class="quick-action-card card-pedidos"><div class="quick-action-overlay"><i class="fas fa-truck"></i><h4>Mis Pedidos</h4><p>Rastreo y detalles</p></div></a>
+                        <a href="{{ route('cliente.completar-perfil') }}" class="quick-action-card card-perfil"><div class="quick-action-overlay"><i class="fas fa-user-circle"></i><h4>Mi Perfil</h4><p>Gestionar cuenta</p></div></a>
+                        <a href="#" class="quick-action-card card-salir" onclick="confirmarLogout(event)"><div class="quick-action-overlay"><i class="fas fa-power-off"></i><h4>Salir</h4><p>Cerrar sesión</p></div></a>
                     </div>
                 </div>
 
-                <!-- PEDIDOS RECIENTES DESKTOP -->
                 <div class="orders-section">
-                    <div class="section-header">
-                        <h2>Pedidos Recientes</h2>
-                        <a href="/cliente/pedidos">Ver Todos <i class="fas fa-arrow-right ms-2"></i></a>
-                    </div>
-
+                    <div class="section-header"><h2>Pedidos Recientes</h2><a href="{{ route('cliente.pedidos') }}">Ver Todos <i class="fas fa-arrow-right ms-2"></i></a></div>
                     @if($pedidosRecientes->count() > 0)
                     <div class="table-responsive">
                         <table class="table-custom">
-                            <thead>
-                                <tr>
-                                    <th>Folio</th>
-                                    <th>Fecha</th>
-                                    <th>Total</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>Folio</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead>
                             <tbody>
                                 @foreach($pedidosRecientes as $pedido)
                                 <tr>
                                     <td><span class="folio-badge">#{{ $pedido->folio }}</span></td>
                                     <td>{{ $pedido->created_at->format('d/m/Y') }}</td>
                                     <td>${{ number_format($pedido->total, 2) }}</td>
-                                    <td>
-                                        @php
-                                            $statusClass = match($pedido->estado) {
-                                                'pendiente' => 'status-pendiente',
-                                                'confirmado' => 'status-confirmado',
-                                                'enviado' => 'status-enviado',
-                                                'entregado' => 'status-entregado',
-                                                'cancelado' => 'status-cancelado',
-                                                default => ''
-                                            };
-                                        @endphp
-                                        <span class="status-badge {{ $statusClass }}">{{ ucfirst($pedido->estado) }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="/cliente/pedido/{{ $pedido->id }}" class="btn-action-table btn-view"><i class="fas fa-eye"></i></a>
-                                            @if($pedido->estado == 'pendiente')
-                                            <button class="btn-action-table btn-cancel" onclick="confirmarCancelacion({{ $pedido->id }})"><i class="fas fa-times"></i></button>
-                                            @endif
-                                        </div>
-                                    </td>
+                                    <td>@php $statusClass = match($pedido->estado) {
+                                        'pendiente' => 'status-pendiente', 'confirmado' => 'status-confirmado',
+                                        'enviado' => 'status-enviado', 'entregado' => 'status-entregado',
+                                        'cancelado' => 'status-cancelado', default => ''
+                                    }; @endphp<span class="status-badge {{ $statusClass }}">{{ ucfirst($pedido->estado) }}</span></td>
+                                    <td><div class="action-buttons"><a href="{{ route('cliente.pedido.ver', $pedido->id) }}" class="btn-action-table btn-view"><i class="fas fa-eye"></i></a>@if($pedido->estado == 'pendiente')<button class="btn-action-table btn-cancel" onclick="confirmarCancelacion({{ $pedido->id }})"><i class="fas fa-times"></i></button>@endif</div></td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                     @else
-                    <div class="empty-state">
-                        <i class="fas fa-box-open"></i>
-                        <p>Aún no has realizado ningún pedido</p>
-                        <a href="{{ route('tienda') }}" class="btn btn-primary"><i class="fas fa-store me-2"></i>Ir a la Tienda</a>
-                    </div>
+                    <div class="empty-state"><i class="fas fa-box-open"></i><p>Aún no has realizado ningún pedido</p><a href="{{ route('tienda') }}" class="btn btn-primary"><i class="fas fa-store me-2"></i>Ir a la Tienda</a></div>
                     @endif
                 </div>
 
-                <!-- DATOS DE CUENTA DESKTOP -->
                 <div class="account-section">
-                    <div class="section-header">
-                        <h2>Mis Datos</h2>
-                    </div>
-
+                    <div class="section-header"><h2>Mis Datos</h2></div>
                     <div class="account-grid">
-                        <div class="account-item">
-                            <i class="fas fa-user"></i>
-                            <div class="label">Nombre Completo</div>
-                            <div class="value">{{ $cliente->nombre }}</div>
-                        </div>
-                        <div class="account-item">
-                            <i class="fas fa-envelope"></i>
-                            <div class="label">Correo Electrónico</div>
-                            <div class="value">{{ $cliente->email }}</div>
-                        </div>
-                        <div class="account-item">
-                            <i class="fas fa-phone"></i>
-                            <div class="label">Teléfono</div>
-                            <div class="value">{{ $cliente->telefono ?? 'No registrado' }}</div>
-                        </div>
-                        <div class="account-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div class="label">Dirección de Envío</div>
-                            <div class="value">
-                                @if($cliente->direccion)
-                                    {{ $cliente->direccion }}<br>
-                                    {{ $cliente->ciudad }}, {{ $cliente->estado }}
-                                @else
-                                    No registrada
-                                @endif
-                            </div>
-                        </div>
+                        <div class="account-item"><i class="fas fa-user"></i><div class="label">Nombre Completo</div><div class="value">{{ $cliente->nombre }}</div></div>
+                        <div class="account-item"><i class="fas fa-envelope"></i><div class="label">Correo Electrónico</div><div class="value">{{ $cliente->email }}</div></div>
+                        <div class="account-item"><i class="fas fa-phone"></i><div class="label">Teléfono</div><div class="value">{{ $cliente->telefono ?? 'No registrado' }}</div></div>
+                        <div class="account-item"><i class="fas fa-map-marker-alt"></i><div class="label">Dirección de Envío</div><div class="value">@if($cliente->direccion){{ $cliente->direccion }}<br>{{ $cliente->ciudad }}, {{ $cliente->estado }}@else No registrada @endif</div></div>
                     </div>
-
-                    <a href="/cliente/completar-perfil" class="btn-edit-account">
-                        <i class="fas fa-edit me-2"></i>Editar Información
-                    </a>
+                    <a href="{{ route('cliente.completar-perfil') }}" class="btn-edit-account"><i class="fas fa-edit me-2"></i>Editar Información</a>
                 </div>
-
-            </div> <!-- Fin desktop-only -->
-
+            </div>
         </div>
     </section>
 
-    <!-- ===== FOOTER COMPARTIDO ===== -->
     <footer class="main-footer">
         <div class="container">
             <div class="row">
-                <div class="col-md-4">
-                    <div class="footer-brand">
-                        <img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tanques Tlaloc">
-                        <h5>Tanques Tlaloc</h5>
-                        <p>Especialistas en ROTOMOLDEO</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="footer-links">
-                        <h6>Enlaces Rápidos</h6>
-                        <ul>
-                            <li><a href="{{ route('tienda') }}">Tienda</a></li>
-                            <li><a href="/cliente/pedidos">Mis Pedidos</a></li>
-                            <li><a href="/cliente/completar-perfil">Mi Perfil</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="footer-links">
-                        <h6>Ayuda</h6>
-                        <ul>
-                            <li><a href="{{ route('contacto') }}">Contacto</a></li>
-                            <li><a href="#" onclick="contactarWhatsApp(event)">Soporte WhatsApp</a></li>
-                        </ul>
-                    </div>
-                </div>
+                <div class="col-md-4"><div class="footer-brand"><img src="{{ asset('assets/img/logo-transparente.png') }}" alt="Tanques Tlaloc"><h5>Tanques Tlaloc</h5><p>Especialistas en ROTOMOLDEO</p></div></div>
+                <div class="col-md-4"><div class="footer-links"><h6>Enlaces Rápidos</h6><ul><li><a href="{{ route('tienda') }}">Tienda</a></li><li><a href="{{ route('cliente.pedidos') }}">Mis Pedidos</a></li><li><a href="{{ route('cliente.completar-perfil') }}">Mi Perfil</a></li></ul></div></div>
+                <div class="col-md-4"><div class="footer-links"><h6>Ayuda</h6><ul><li><a href="{{ route('contacto') }}">Contacto</a></li><li><a href="#" onclick="contactarWhatsApp(event)">Soporte WhatsApp</a></li></ul></div></div>
             </div>
-            <div class="row mt-4">
-                <div class="col-12 text-center">
-                    <p class="small text-white-50 mb-0">
-                        &copy; {{ date('Y') }} Tanques Tlaloc. Todos los derechos reservados.
-                    </p>
-                </div>
-            </div>
+            <div class="row mt-4"><div class="col-12 text-center"><p class="small text-white-50 mb-0">&copy; {{ date('Y') }} Tanques Tlaloc. Todos los derechos reservados.</p></div></div>
         </div>
     </footer>
 
-    <!-- FORMULARIO LOGOUT -->
-    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
-        @csrf
-    </form>
+    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">@csrf</form>
 
-    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -1626,7 +888,37 @@
                 cancelButtonText: 'Volver'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '/cliente/pedido/' + id + '/cancelar';
+                    Swal.fire({
+                        title: 'Cancelando...',
+                        text: 'Por favor espera',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                    
+                    fetch('/cliente/pedido/' + id + '/cancelar', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Cancelado!',
+                                text: data.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => { location.reload(); });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error al cancelar el pedido' });
+                    });
                 }
             });
         }

@@ -14,6 +14,7 @@ use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Exceptions\MPApiException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PagoController extends Controller
 {
@@ -181,17 +182,63 @@ class PagoController extends Controller
             $client = new PaymentClient();
             $payment = $client->get((int)$paymentId);
 
-            Log::info('Respuesta de MercadoPago:', [
+            Log::info('📊 Respuesta COMPLETA de MercadoPago:', [
                 'payment_id' => $paymentId,
                 'status' => $payment->status,
-                'external_reference' => $payment->external_reference ?? null
+                'status_detail' => $payment->status_detail,
+                'external_reference' => $payment->external_reference ?? null,
+                'payment_method_id' => $payment->payment_method_id ?? null,
+                'payment_type_id' => $payment->payment_type_id ?? null,
+                'transaction_amount' => $payment->transaction_amount ?? null,
+                'installments' => $payment->installments ?? null,
+                'issuer_id' => $payment->issuer_id ?? null,
+                'operation_type' => $payment->operation_type ?? null,
+                'date_created' => $payment->date_created ?? null,
+                'date_approved' => $payment->date_approved ?? null,
             ]);
+
+            if ($payment->status === 'rejected') {
+                Log::error('🔴🔴🔴 PAGO RECHAZADO - MOTIVO DETALLADO 🔴🔴🔴', [
+                    'payment_id' => $paymentId,
+                    'status_detail' => $payment->status_detail,
+                    'description' => $payment->description ?? 'Sin descripción',
+                    'payment_method_id' => $payment->payment_method_id,
+                    'card_holder_name' => $payment->card->cardholder->name ?? null,
+                    'card_first_six' => $payment->card->first_six_digits ?? null,
+                    'card_last_four' => $payment->card->last_four_digits ?? null,
+                    'issuer_id' => $payment->issuer_id ?? null,
+                    'authorization_code' => $payment->authorization_code ?? null,
+                    'error_message' => $payment->error_message ?? null,
+                    'refusal_reason' => $payment->refusal_reason ?? null,
+                ]);
+
+                $rejectReasons = [
+                    'cc_rejected_bad_filled_card_number' => '❌ Número de tarjeta incorrecto',
+                    'cc_rejected_bad_filled_date' => '❌ Fecha de expiración incorrecta',
+                    'cc_rejected_bad_filled_other' => '❌ Datos de la tarjeta incorrectos',
+                    'cc_rejected_bad_filled_security_code' => '❌ Código de seguridad (CVV) incorrecto',
+                    'cc_rejected_blacklist' => '🚫 Tarjeta en lista negra',
+                    'cc_rejected_call_for_authorize' => '📞 El banco requiere autorización, llama al banco',
+                    'cc_rejected_card_disabled' => '🔒 Tarjeta deshabilitada',
+                    'cc_rejected_duplicated_payment' => '🔄 Pago duplicado',
+                    'cc_rejected_high_risk' => '⚠️ Operación de alto riesgo',
+                    'cc_rejected_insufficient_amount' => '💰 Saldo insuficiente en la tarjeta',
+                    'cc_rejected_invalid_installments' => '📅 Número de cuotas inválido',
+                    'cc_rejected_max_attempts' => '🔄 Demasiados intentos, tarjeta bloqueada',
+                    'cc_rejected_other_reason' => '❓ Otra razón, contacta al banco',
+                    'cc_rejected_card_type_not_allowed' => '🚫 Tipo de tarjeta no permitida',
+                    'cc_rejected_credit_line' => '💳 Línea de crédito insuficiente',
+                    'cc_rejected_temporary_error' => '⏳ Error temporal, intenta de nuevo'
+                ];
+
+                $reason = $rejectReasons[$payment->status_detail] ?? '❓ Razón desconocida: ' . $payment->status_detail;
+                Log::error('🔴 MOTIVO LEGIBLE DEL RECHAZO: ' . $reason);
+            }
 
             if ($payment->status === 'approved') {
                 
                 $folio = $payment->external_reference;
                 
-                // 👈 SI NO VIENE external_reference, BUSCAR POR mp_payment_id
                 if (!$folio) {
                     Log::warning('Pago sin external_reference, buscando por payment_id');
                     $pagoPendiente = PagoPendiente::where('mp_payment_id', $paymentId)
@@ -266,28 +313,75 @@ class PagoController extends Controller
                             'cantidad' => $cantidad,
                             'precio' => $precio
                         ]);
+                        
+                        if (isset($checkoutData['cobertura']['sucursal_id'])) {
+                            DB::table('producto_sucursal')
+                                ->where('producto_id', $id)
+                                ->where('sucursal_id', $checkoutData['cobertura']['sucursal_id'])
+                                ->decrement('existencias', $cantidad);
+                            Log::info('📦 Stock descontado', [
+                                'producto_id' => $id, 
+                                'cantidad' => $cantidad,
+                                'sucursal_id' => $checkoutData['cobertura']['sucursal_id']
+                            ]);
+                        } else {
+                            Log::warning('⚠️ No se pudo descontar stock: sucursal_id no encontrado');
+                        }
                     }
                 }
 
                 DB::commit();
                 
                 $pagoPendiente->status = 'procesado';
+                $pagoPendiente->mp_payment_id = $paymentId;
                 $pagoPendiente->save();
+                
+                Log::info('=== INICIANDO LIMPIEZA DE CARRITO ===');
+                $carritoAntes = CarritoHelper::getCarrito();
+                Log::info('Carrito ANTES de vaciar:', ['carrito' => $carritoAntes]);
                 
                 CarritoHelper::vaciar();
                 session()->forget('checkout_data');
+                
+                $carritoDespues = CarritoHelper::getCarrito();
+                Log::info('Carrito DESPUÉS de vaciar:', ['carrito' => $carritoDespues]);
                 
                 Log::info('✅ Pago procesado exitosamente', ['folio' => $folio]);
                 
             } else {
                 Log::info('Pago no aprobado', ['payment_id' => $paymentId, 'status' => $payment->status]);
+                
+                $folio = $payment->external_reference;
+                
+                if (!$folio) {
+                    $pagoPendiente = PagoPendiente::where('mp_payment_id', $paymentId)
+                                        ->where('status', 'pendiente')
+                                        ->first();
+                    if ($pagoPendiente) {
+                        $folio = $pagoPendiente->folio;
+                    }
+                }
+                
+                if ($folio) {
+                    $pagoPendiente = PagoPendiente::where('folio', $folio)
+                                        ->where('status', 'pendiente')
+                                        ->first();
+                    
+                    if ($pagoPendiente) {
+                        $pagoPendiente->mp_payment_id = $paymentId;
+                        $pagoPendiente->status = 'rechazado';
+                        $pagoPendiente->save();
+                        Log::info('✅ Pago rechazado registrado', ['folio' => $folio, 'payment_id' => $paymentId]);
+                    }
+                }
             }
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error en procesarPago:', [
+            Log::error('❌ Error en procesarPago:', [
                 'payment_id' => $paymentId,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
@@ -326,22 +420,22 @@ class PagoController extends Controller
     }
 
     /**
-     * 🔥 PROCESAR PAGO DESDE EL BRICK - CORREGIDO CON external_reference
+     * 🔥 PROCESAR PAGO DESDE EL BRICK
      */
     public function processPayment(Request $request)
     {
-        Log::info('processPayment llamado - PRODUCCION', [
-            'folio' => $request->input('folio'),
-            'amount' => $request->input('amount'),
-            'preference_id' => $request->input('preference_id'),
-            'payment_method_id' => $request->input('paymentMethodId')
-        ]);
-
         $folio = $request->input('folio');
         $token = $request->input('token');
         $paymentMethodId = $request->input('paymentMethodId');
         $installments = $request->input('installments', 1);
         $issuerId = $request->input('issuerId');
+        
+        Log::info('processPayment llamado - PRODUCCION', [
+            'folio' => $folio,
+            'amount' => $request->input('amount'),
+            'payment_method_id' => $paymentMethodId,
+            'installments' => $installments
+        ]);
         
         if (!$folio) {
             return response()->json([
@@ -370,8 +464,29 @@ class PagoController extends Controller
 
         $checkoutData = $pagoPendiente->checkout_data;
         
+        Log::info('🔍 DATOS COMPLETOS DEL CLIENTE:', [
+            'folio' => $folio,
+            'email' => auth()->guard('cliente')->user()->email ?? $checkoutData['datos']['email'] ?? null,
+            'nombre' => $checkoutData['datos']['nombre'] ?? null,
+            'telefono' => $checkoutData['datos']['telefono'] ?? null,
+            'direccion' => $checkoutData['datos']['direccion'] ?? null,
+            'ciudad' => $checkoutData['datos']['ciudad'] ?? null,
+            'codigo_postal' => $checkoutData['datos']['codigo_postal'] ?? null
+        ]);
+        
         try {
             $client = new PaymentClient();
+            
+            $emailCliente = null;
+            
+            if (auth()->guard('cliente')->check()) {
+                $emailCliente = auth()->guard('cliente')->user()->email;
+            } elseif (!empty($checkoutData['datos']['email'])) {
+                $emailCliente = $checkoutData['datos']['email'];
+            } else {
+                $telefono = $checkoutData['datos']['telefono'] ?? 'cliente';
+                $emailCliente = $telefono . '@tanquestlaloc.com';
+            }
             
             $paymentData = [
                 "transaction_amount" => (float) $request->input('amount'),
@@ -379,13 +494,21 @@ class PagoController extends Controller
                 "description" => "Pedido " . $folio,
                 "installments" => (int) $installments,
                 "payment_method_id" => $paymentMethodId,
-                "external_reference" => $folio, // 👈 ESTA ES LA LÍNEA CRÍTICA QUE FALTABA
+                "external_reference" => $folio,
                 "payer" => [
-                    "email" => auth()->user()->email ?? $checkoutData['datos']['email'] ?? 'cliente@tanquestlaloc.com',
+                    "email" => $emailCliente,
+                    "first_name" => $checkoutData['datos']['nombre'] ?? 'Cliente',
+                    "last_name" => "",
+                    "phone" => [
+                        "number" => $checkoutData['datos']['telefono'] ?? null
+                    ],
+                    "address" => [
+                        "zip_code" => $checkoutData['datos']['codigo_postal'] ?? null,
+                        "street_name" => $checkoutData['datos']['direccion'] ?? null
+                    ]
                 ]
             ];
             
-            // 👈 SOLO AGREGAR issuer_id SI VIENE Y ES VÁLIDO
             if ($issuerId && is_numeric($issuerId) && $issuerId > 0) {
                 $paymentData["issuer_id"] = (int) $issuerId;
                 Log::info('Agregando issuer_id', ['issuer_id' => $issuerId]);

@@ -22,14 +22,12 @@
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
-    <!-- CSS Personalizado (TODOS LOS ESTILOS GLOBALES) -->
+    <!-- CSS Personalizado -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     
     <link rel="icon" href="{{ asset('assets/img/logo.jpeg') }}">
     
     <style>
-        /* ===== SOLO ESTILOS EXCLUSIVOS DE LA PÁGINA DE DETALLE ===== */
-        
         :root {
             --primary: #7fad39;
             --primary-dark: #5a8a20;
@@ -54,7 +52,6 @@
             flex-direction: column;
         }
 
-        /* ===== CONTENIDO PRINCIPAL ===== */
         .main-content {
             flex: 1;
             padding: 30px 0;
@@ -66,7 +63,6 @@
             padding: 0 20px;
         }
 
-        /* ===== PAGE HEADER ===== */
         .page-header {
             background: white;
             border-radius: 16px;
@@ -129,7 +125,6 @@
             gap: 10px;
         }
 
-        /* ===== BOTONES ===== */
         .btn-custom {
             padding: 10px 20px;
             border-radius: 10px;
@@ -173,8 +168,6 @@
             color: white;
         }
 
-        /* ===== BADGE ESTADO ===== */
-        /* ===== BADGE ESTADO ===== */
         .estado-principal {
             display: inline-flex;
             align-items: center;
@@ -217,6 +210,7 @@
             background: white;
             border-radius: 12px;
             padding: 20px;
+            margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             border: 1px solid var(--light-gray);
         }
@@ -245,7 +239,13 @@
             font-size: 0.85rem;
         }
 
-        /* ===== TIMELINE MEJORADO ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
         .timeline {
             position: relative;
             padding: 20px 0;
@@ -288,32 +288,12 @@
             font-size: 0.8rem;
         }
 
-        /* Colores para cada estado en el timeline */
-        .timeline-icon.pendiente {
-            border-color: #ffc107;
-            color: #856404;
-        }
-        .timeline-icon.confirmado {
-            border-color: #17a2b8;
-            color: #138496;
-        }
-        .timeline-icon.enviado {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-        .timeline-icon.entregado {
-            border-color: var(--success);
-            color: var(--success);
-        }
-        .timeline-icon.cancelado {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-
-        .timeline-icon.completed {
-            background: currentColor;
-            color: white;
-        }
+        .timeline-icon.pendiente { border-color: #ffc107; color: #856404; }
+        .timeline-icon.confirmado { border-color: #17a2b8; color: #138496; }
+        .timeline-icon.enviado { border-color: var(--primary); color: var(--primary); }
+        .timeline-icon.entregado { border-color: var(--success); color: var(--success); }
+        .timeline-icon.cancelado { border-color: var(--danger); color: var(--danger); }
+        .timeline-icon.completed { background: currentColor; color: white; }
 
         .timeline-content {
             background: var(--light);
@@ -338,7 +318,6 @@
             color: var(--gray);
         }
 
-        /* ===== TABLA DE PRODUCTOS MEJORADA ===== */
         .table-responsive {
             border-radius: 12px;
             overflow-x: auto;
@@ -365,20 +344,6 @@
             border-bottom: 1px solid var(--light-gray);
         }
 
-        .table tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Color dot para variantes */
-        .color-dot {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            display: inline-block;
-            border: 1px solid #ddd;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
         .producto-imagen {
             width: 50px;
             height: 50px;
@@ -392,24 +357,6 @@
             flex-shrink: 0;
         }
 
-        .producto-info {
-            flex: 1;
-        }
-
-        .producto-nombre {
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 4px;
-        }
-
-        .producto-detalle {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            font-size: 0.8rem;
-            color: var(--gray);
-        }
-
         .producto-badge {
             background: var(--light);
             padding: 2px 8px;
@@ -420,7 +367,14 @@
             gap: 4px;
         }
 
-        /* ===== TOTALES ===== */
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid #ddd;
+        }
+
         .totales-card {
             background: white;
             border-radius: 12px;
@@ -446,7 +400,6 @@
             padding-top: 15px;
         }
 
-        /* ===== ACCIONES ===== */
         .acciones-container {
             display: flex;
             gap: 10px;
@@ -454,115 +407,12 @@
             margin: 20px 0 30px;
         }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .header-title {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .page-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .header-actions {
-                justify-content: center;
-            }
-
-            .timeline::before {
-                left: 20px;
-            }
-
-            .timeline-item {
-                padding-left: 55px;
-            }
-
-            .timeline-icon {
-                left: 12px;
-                width: 24px;
-                height: 24px;
-                font-size: 0.7rem;
-            }
-
-            .table th, .table td {
-                padding: 12px 10px;
-                font-size: 0.85rem;
-            }
-
-            .producto-detalle {
-                flex-direction: column;
-                gap: 5px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .detalle-container {
-                padding: 0 15px;
-            }
-
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .acciones-container {
-                flex-direction: column;
-            }
-
-            .btn-custom {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .timeline-content {
-                padding: 12px;
-            }
-
-            .table-responsive {
-                margin: 0 -15px;
-                border-radius: 0;
-            }
-        }
-
-        /* ===== BUSCADOR SUPERIOR ===== */
         .top-search-section {
             background: linear-gradient(135deg, #7fad39 0%, #5d8c29 100%);
             padding: 25px 0;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             position: relative;
             overflow: hidden;
-        }
-
-        .top-search-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 100%;
-            background: linear-gradient(45deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.08) 50%, 
-                transparent 100%);
-            animation: shine 3s infinite linear;
-        }
-
-        @keyframes shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .top-search-section::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.6) 50%, 
-                transparent 100%);
         }
 
         .top-search-container {
@@ -589,7 +439,6 @@
         .top-search-container h4 i {
             color: #ffdd40;
             font-size: 2rem;
-            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
             animation: bounce 2s infinite;
         }
 
@@ -603,62 +452,21 @@
             font-size: 1.2rem;
             margin-bottom: 0;
             font-weight: 400;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-            letter-spacing: 0.5px;
         }
 
         @media (max-width: 768px) {
-            .top-search-section {
-                padding: 20px 0;
-            }
-            
-            .top-search-container h4 {
-                font-size: 1.6rem;
-            }
-            
-            .top-search-container h4 i {
-                font-size: 1.6rem;
-            }
-            
-            .top-search-container p {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .top-search-section {
-                padding: 15px 0;
-            }
-            
-            .top-search-container h4 {
-                font-size: 1.4rem;
-                flex-direction: column;
-                gap: 5px;
-            }
-            
-            .top-search-container h4 i {
-                font-size: 1.4rem;
-            }
-            
-            .top-search-container p {
-                font-size: 0.95rem;
-                padding: 0 10px;
-            }
-        }
-
-        .top-search-section {
-            animation: fadeInDown 0.6s ease-out;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            .detalle-container { padding: 0 15px; }
+            .page-header { flex-direction: column; align-items: stretch; }
+            .header-actions { justify-content: center; }
+            .header-title { flex-direction: column; text-align: center; }
+            .timeline::before { left: 20px; }
+            .timeline-item { padding-left: 55px; }
+            .timeline-icon { left: 12px; width: 24px; height: 24px; font-size: 0.7rem; }
+            .acciones-container { flex-direction: column; }
+            .btn-custom { width: 100%; justify-content: center; }
+            .top-search-container h4 { font-size: 1.6rem; }
+            .top-search-container h4 i { font-size: 1.6rem; }
+            .top-search-container p { font-size: 1rem; }
         }
     </style>
 </head>
@@ -679,21 +487,11 @@
             
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Inicio</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tienda') }}">Tienda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('contacto') }}">Contacto</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('cliente.dashboard') }}">Mi Cuenta</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('tienda') }}">Tienda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('tienda', ['categoria' => 2]) }}">Tinaco Bala</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('contacto') }}">Contacto</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ route('cliente.dashboard') }}">Mi Cuenta</a></li>
                 </ul>
                 
                 <div class="d-none d-lg-flex align-items-center">
@@ -704,26 +502,18 @@
                                 {{ auth('cliente')->user()->nombre }}
                             </button>
                             <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item active" href="{{ route('cliente.dashboard') }}">
-                                        <i class="fas fa-tachometer-alt me-2"></i>Mi Cuenta
-                                    </a>
-                                </li>
+                                <li><a class="dropdown-item active" href="{{ route('cliente.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Mi Cuenta</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                        </button>
+                                        <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</button>
                                     </form>
                                 </li>
                             </ul>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-primary me-3">
-                            <i class="fas fa-user me-2"></i>Login
-                        </a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary me-3"><i class="fas fa-user me-2"></i>Login</a>
                     @endauth
                     
                     <a href="{{ route('carrito') }}" class="btn btn-primary position-relative">
@@ -735,21 +525,14 @@
                 <div class="d-lg-none mt-3">
                     @if(auth('cliente')->check())
                         <div class="d-grid gap-2">
-                            <span class="btn btn-outline-primary w-100 mb-2 disabled">
-                                <i class="fas fa-user me-2"></i>
-                                {{ auth('cliente')->user()->nombre }}
-                            </span>
+                            <span class="btn btn-outline-primary w-100 mb-2 disabled"><i class="fas fa-user me-2"></i>{{ auth('cliente')->user()->nombre }}</span>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="btn btn-danger w-100">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                </button>
+                                <button type="submit" class="btn btn-danger w-100"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</button>
                             </form>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2">
-                            <i class="fas fa-user me-2"></i>Iniciar Sesión
-                        </a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2"><i class="fas fa-user me-2"></i>Iniciar Sesión</a>
                     @endif
                 </div>
             </div>
@@ -760,9 +543,7 @@
     <section class="top-search-section">
         <div class="container">
             <div class="top-search-container">
-                <h4>
-                    <i class="fas fa-box me-2"></i>Detalle del Pedido
-                </h4>
+                <h4><i class="fas fa-box me-2"></i>Detalle del Pedido</h4>
                 <p>Información completa y seguimiento</p>
             </div>
         </div>
@@ -775,21 +556,15 @@
             <!-- Header -->
             <div class="page-header">
                 <div class="header-title">
-                    <div class="header-icon">
-                        <i class="fas fa-box"></i>
-                    </div>
+                    <div class="header-icon"><i class="fas fa-box"></i></div>
                     <div class="header-text">
                         <h1>Pedido #{{ $pedido->folio }}</h1>
                         <p>{{ \Carbon\Carbon::parse($pedido->fecha ?? $pedido->created_at)->format('d/m/Y H:i') }}</p>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <a href="{{ route('cliente.pedidos') }}" class="btn-custom btn-secondary-custom">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </a>
-                    <a href="{{ route('tienda') }}" class="btn-custom btn-primary-custom">
-                        <i class="fas fa-store"></i> Tienda
-                    </a>
+                    <a href="{{ route('cliente.pedidos') }}" class="btn-custom btn-secondary-custom"><i class="fas fa-arrow-left"></i> Volver</a>
+                    <a href="{{ route('tienda') }}" class="btn-custom btn-primary-custom"><i class="fas fa-store"></i> Tienda</a>
                 </div>
             </div>
 
@@ -822,10 +597,7 @@
             <!-- Información del pedido -->
             <div class="info-grid">
                 <div class="info-card">
-                    <div class="info-card-title">
-                        <i class="fas fa-map-marker-alt"></i>
-                        Dirección de envío
-                    </div>
+                    <div class="info-card-title"><i class="fas fa-map-marker-alt"></i> Dirección de envío</div>
                     <div class="info-card-content">
                         {{ $pedido->cliente_direccion }}<br>
                         <small>{{ $pedido->cliente_ciudad }}, {{ $pedido->cliente_estado }} - C.P. {{ $pedido->codigo_postal }}</small>
@@ -833,10 +605,7 @@
                 </div>
 
                 <div class="info-card">
-                    <div class="info-card-title">
-                        <i class="fas fa-store"></i>
-                        Sucursal
-                    </div>
+                    <div class="info-card-title"><i class="fas fa-store"></i> Sucursal</div>
                     <div class="info-card-content">
                         {{ $pedido->sucursal->nombre ?? 'No asignada' }}<br>
                         <small>{{ $pedido->sucursal->direccion ?? '' }}</small>
@@ -844,10 +613,7 @@
                 </div>
 
                 <div class="info-card">
-                    <div class="info-card-title">
-                        <i class="fas fa-credit-card"></i>
-                        Método de pago
-                    </div>
+                    <div class="info-card-title"><i class="fas fa-credit-card"></i> Método de pago</div>
                     <div class="info-card-content">
                         {{ ucfirst(str_replace('_', ' ', $pedido->metodo_pago ?? 'manual')) }}
                         @if($pedido->pago_confirmado)
@@ -862,15 +628,12 @@
             <!-- Timeline de seguimiento -->
             @if(isset($historial) && $historial->count() > 0)
             <div class="info-card">
-                <div class="info-card-title">
-                    <i class="fas fa-history"></i>
-                    Seguimiento del pedido
-                </div>
+                <div class="info-card-title"><i class="fas fa-history"></i> Seguimiento del pedido</div>
                 <div class="timeline">
                     @foreach($historial as $evento)
                         @php
                             $timelineClass = match($evento->accion) {
-                                'pendiente' => 'pendiente',
+                                'pendiente', 'creado' => 'pendiente',
                                 'confirmado' => 'confirmado',
                                 'enviado' => 'enviado',
                                 'entregado' => 'entregado',
@@ -878,7 +641,7 @@
                                 default => 'pendiente'
                             };
                             $timelineIcono = match($evento->accion) {
-                                'pendiente' => 'fa-clock',
+                                'pendiente', 'creado' => 'fa-clock',
                                 'confirmado' => 'fa-check-circle',
                                 'enviado' => 'fa-truck',
                                 'entregado' => 'fa-check-double',
@@ -887,15 +650,13 @@
                             };
                         @endphp
                         <div class="timeline-item">
-                            <div class="timeline-icon {{ $timelineClass }} {{ $evento->accion === $pedido->estado ? 'completed' : '' }}">
+                            <div class="timeline-icon {{ $timelineClass }}">
                                 <i class="fas {{ $timelineIcono }}"></i>
                             </div>
                             <div class="timeline-content">
                                 <div class="timeline-date">{{ \Carbon\Carbon::parse($evento->fecha)->format('d/m/Y H:i') }}</div>
                                 <div class="timeline-title">{{ ucfirst($evento->accion) }}</div>
-                                @if($evento->detalles)
-                                    <div class="timeline-desc">{{ $evento->detalles }}</div>
-                                @endif
+                                @if($evento->detalles)<div class="timeline-desc">{{ $evento->detalles }}</div>@endif
                             </div>
                         </div>
                     @endforeach
@@ -903,86 +664,24 @@
             </div>
             @endif
 
-            <!-- Productos - VERSIÓN MEJORADA CON DETALLES DE VARIANTES -->
+            <!-- Productos -->
             <div class="info-card">
-                <div class="info-card-title">
-                    <i class="fas fa-boxes"></i>
-                    Productos
-                </div>
-
+                <div class="info-card-title"><i class="fas fa-boxes"></i> Productos</div>
                 <div class="table-responsive">
                     <table class="table">
                         <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Código</th>
-                                <th>Color</th>
-                                <th>Capacidad</th>
-                                <th class="text-center">Cantidad</th>
-                                <th class="text-end">Precio</th>
-                                <th class="text-end">Subtotal</th>
-                            </tr>
+                            <tr><th>Producto</th><th>Código</th><th class="text-center">Cantidad</th><th class="text-end">Precio</th><th class="text-end">Subtotal</th></tr>
                         </thead>
                         <tbody>
                             @foreach($pedido->items as $item)
-                            @php
-                                // Obtener información detallada del producto si existe
-                                $productoInfo = $item->producto_id ? \App\Models\Producto::with(['color'])->find($item->producto_id) : null;
-                                
-                                $colorNombre = $productoInfo && $productoInfo->color ? $productoInfo->color->nombre : null;
-                                $colorHex = $productoInfo && $productoInfo->color ? $productoInfo->color->codigo_hex : '#ccc';
-                                $codigo = $productoInfo ? $productoInfo->codigo : 'N/A';
-                                $litros = $productoInfo ? $productoInfo->litros : ($item->litros ?? null);
-                                
-                                // Si no hay productoInfo pero el item tiene producto_nombre, intentar extraer información
-                                if (!$productoInfo && $item->producto_nombre) {
-                                    // Intentar extraer código del nombre (ej: "TIN-225 - Tinaco 225 lts")
-                                    if (preg_match('/([A-Z0-9-]+)/', $item->producto_nombre, $matches)) {
-                                        $codigo = $matches[1];
-                                    }
-                                    // Intentar extraer litros
-                                    if (preg_match('/(\d+)\s*litros?/', $item->producto_nombre, $matches)) {
-                                        $litros = $matches[1];
-                                    }
-                                }
-                            @endphp
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="producto-imagen">
-                                            <i class="fas fa-box"></i>
-                                        </div>
-                                        <div class="producto-info">
-                                            <div class="producto-nombre">{{ $item->producto_nombre }}</div>
-                                        </div>
+                                        <div class="producto-imagen"><i class="fas fa-box"></i></div>
+                                        <div class="fw-bold">{{ $item->producto_nombre }}</div>
                                     </div>
                                 </td>
-                                <td>
-                                    <span class="producto-badge">
-                                        <i class="fas fa-barcode fa-xs me-1"></i>
-                                        {{ $codigo }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($colorNombre)
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="color-dot" style="background-color: {{ $colorHex }};"></span>
-                                        <span>{{ $colorNombre }}</span>
-                                    </div>
-                                    @else
-                                    <span class="text-muted">—</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($litros)
-                                    <span class="producto-badge">
-                                        <i class="fas fa-tint fa-xs me-1" style="color: var(--primary);"></i>
-                                        {{ $litros }} L
-                                    </span>
-                                    @else
-                                    <span class="text-muted">—</span>
-                                    @endif
-                                </td>
+                                <td><span class="producto-badge"><i class="fas fa-barcode fa-xs me-1"></i>{{ $item->producto_id ? \App\Models\Producto::find($item->producto_id)?->codigo ?? 'N/A' : 'N/A' }}</span></td>
                                 <td class="text-center"><strong>{{ $item->cantidad }}</strong></td>
                                 <td class="text-end">${{ number_format($item->precio, 2) }}</td>
                                 <td class="text-end fw-bold">${{ number_format($item->cantidad * $item->precio, 2) }}</td>
@@ -992,33 +691,18 @@
                     </table>
                 </div>
 
-                <!-- Totales -->
-                <div class="totales-card mt-3">
-                    <div class="total-row">
-                        <span>Subtotal:</span>
-                        <span class="fw-bold">${{ number_format($pedido->total, 2) }}</span>
-                    </div>
-                    <div class="total-row">
-                        <span>Envío:</span>
-                        <span class="fw-bold text-success">Gratis</span>
-                    </div>
-                    <div class="total-row final">
-                        <span>Total:</span>
-                        <span>${{ number_format($pedido->total, 2) }}</span>
-                    </div>
+                <div class="totales-card">
+                    <div class="total-row"><span>Subtotal:</span><span class="fw-bold">${{ number_format($pedido->total, 2) }}</span></div>
+                    <div class="total-row"><span>Envío:</span><span class="fw-bold text-success">Gratis</span></div>
+                    <div class="total-row final"><span>Total:</span><span>${{ number_format($pedido->total, 2) }}</span></div>
                 </div>
             </div>
 
-            <!-- Notas del pedido -->
+            <!-- Notas -->
             @if($pedido->notas)
             <div class="info-card">
-                <div class="info-card-title">
-                    <i class="fas fa-sticky-note"></i>
-                    Notas del pedido
-                </div>
-                <div class="info-card-content">
-                    {{ $pedido->notas }}
-                </div>
+                <div class="info-card-title"><i class="fas fa-sticky-note"></i> Notas del pedido</div>
+                <div class="info-card-content">{{ $pedido->notas }}</div>
             </div>
             @endif
 
@@ -1029,19 +713,6 @@
                         <i class="fas fa-times"></i> Cancelar pedido
                     </button>
                 @endif
-
-                @if($pedido->estado === 'entregado')
-                    <button onclick="reordenarPedido({{ $pedido->id }})" class="btn-custom btn-primary-custom">
-                        <i class="fas fa-redo-alt"></i> Reordenar productos
-                    </button>
-                @endif
-
-                @if($pedido->estado === 'pendiente' && !($pedido->pago_confirmado ?? false))
-                    <a href="#" class="btn-custom btn-primary-custom">
-                        <i class="fas fa-credit-card"></i> Pagar ahora
-                    </a>
-                @endif
-
                 <button onclick="window.print()" class="btn-custom btn-secondary-custom">
                     <i class="fas fa-print"></i> Imprimir
                 </button>
@@ -1082,15 +753,14 @@
             </div>
             <div class="row mt-4">
                 <div class="col-12 text-center">
-                    <p class="small text-white-50 mb-0">
-                        &copy; {{ date('Y') }} Tanques Tlaloc. Todos los derechos reservados.
-                    </p>
+                    <p class="small text-white-50 mb-0">&copy; {{ date('Y') }} Tanques Tlaloc. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">@csrf</form>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -1125,7 +795,14 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`/cliente/pedido/${id}/cancelar`, {
+                    Swal.fire({
+                        title: 'Procesando...',
+                        text: 'Cancelando pedido',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                    
+                    fetch('/cliente/pedido/' + id + '/cancelar', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1142,39 +819,27 @@
                                 text: data.message,
                                 timer: 2000,
                                 showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
+                            }).then(() => { location.reload(); });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'No se pudo cancelar el pedido'
                             });
                         }
                     })
                     .catch(error => {
+                        console.error('Error:', error);
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'No se pudo cancelar el pedido'
+                            text: 'Ocurrió un error al cancelar el pedido. Intenta de nuevo.'
                         });
                     });
                 }
             });
         }
 
-        function reordenarPedido(id) {
-            Swal.fire({
-                title: '¿Reordenar productos?',
-                text: 'Se agregarán todos los productos de este pedido a tu carrito',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#7fad39',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, agregar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '/cliente/reordenar/' + id;
-                }
-            });
-        }
-        
         @if(session('success'))
         Swal.fire({
             icon: 'success',
@@ -1182,6 +847,14 @@
             text: '{{ session('success') }}',
             timer: 2000,
             showConfirmButton: false
+        });
+        @endif
+
+        @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}'
         });
         @endif
     </script>

@@ -28,7 +28,6 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     
     <style>
-        /* Todos los estilos de tu checkout */
         .cobertura-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; border-radius: 10px; padding: 15px; margin: 15px 0; display: none; }
         .cobertura-error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 10px; padding: 15px; margin: 15px 0; display: none; }
         .verificar-cobertura-btn { background: linear-gradient(135deg, #7fad39, #5a8c29); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; transition: all 0.3s; width: 100%; }
@@ -47,7 +46,6 @@
         .cobertura-verificada-box { background: linear-gradient(135deg, #d4edda, #c3e6cb); border-left: 5px solid #28a745; border-radius: 12px; padding: 20px; margin: 20px 0; box-shadow: 0 5px 15px rgba(40, 167, 69, 0.2); animation: slideIn 0.5s ease; }
         @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Estilos específicos para pago */
         .info-pedido {
             background: #f8f9fa;
             border-left: 4px solid #7fad39;
@@ -65,9 +63,54 @@
         .security-badge i { color: #7fad39; margin: 0 5px; }
         .mercadopago-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
         .mercadopago-logo i { font-size: 2rem; color: #009ee3; }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #7fad39;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        .loading-overlay .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #7fad39;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-overlay p {
+            color: white;
+            margin-top: 15px;
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay (oculto por defecto) -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Procesando tu pago...</p>
+    </div>
+
     <!-- HEADER -->
     <nav class="navbar navbar-expand-lg navbar-light main-navbar sticky-top">
         <div class="container">
@@ -77,7 +120,7 @@
             <div class="d-lg-none d-flex align-items-center ms-auto me-3">
                 <a href="{{ route('carrito') }}" class="btn btn-primary position-relative btn-sm">
                     <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-badge">{{ session('checkout_data.cartCount') ?? 0 }}</span>
+                    <span class="cart-badge">{{ $cartCount ?? 0 }}</span>
                 </a>
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
@@ -113,7 +156,7 @@
                     @else
                         <a href="{{ route('login') }}" class="btn btn-outline-primary me-3"><i class="fas fa-user me-2"></i>Login</a>
                     @endauth
-                    <a href="{{ route('carrito') }}" class="btn btn-primary position-relative"><i class="fas fa-shopping-cart"></i><span class="cart-badge">{{ session('checkout_data.cartCount') ?? 0 }}</span></a>
+                    <a href="{{ route('carrito') }}" class="btn btn-primary position-relative"><i class="fas fa-shopping-cart"></i><span class="cart-badge">{{ $cartCount ?? 0 }}</span></a>
                 </div>
             </div>
         </div>
@@ -152,7 +195,6 @@
     <section class="checkout-form-section py-4 py-lg-5">
         <div class="container">
             <div class="row g-4">
-                <!-- Columna principal -->
                 <div class="col-lg-8">
                     <div class="checkout-form-card mb-4">
                         <h4 class="checkout-title"><i class="fas fa-credit-card me-2"></i>Finalizar Pago</h4>
@@ -178,7 +220,7 @@
                             @endif
                         </div>
 
-                        <!-- 🔥 CONTENEDOR DE CARD PAYMENT BRICK (NO PIDE LOGIN) -->
+                        <!-- CONTENEDOR DE CARD PAYMENT BRICK -->
                         <div id="wallet_container"></div>
                         
                         @else
@@ -191,7 +233,6 @@
                     </div>
                 </div>
                 
-                <!-- Columna lateral -->
                 <div class="col-lg-4">
                     <div class="order-summary-card">
                         <h4 class="order-title"><i class="fas fa-shield-alt me-2"></i>Pago Seguro</h4>
@@ -211,7 +252,6 @@
         </div>
     </section>
 
-    <!-- FOOTER -->
     <footer class="main-footer">
         <div class="container">
             <div class="row g-4">
@@ -262,9 +302,8 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 @if(isset($pedido) && $pedido)
 <script>
@@ -273,80 +312,73 @@
             locale: 'es-MX'
         });
         
-        // Obtener el folio del pedido
         const folio = '{{ $pedido["folio"] }}';
-        console.log('📋 Folio del pedido:', folio);
+        const total = Number({{ $pedido['total'] }});
+        const preferenceId = '{{ $preferenceId }}';
         
-        // 🔥 CARD PAYMENT BRICK - NO PIDE LOGIN
+        console.log('📋 Folio del pedido:', folio);
+        console.log('💰 Total:', total);
+        console.log('🔑 Preference ID:', preferenceId);
+        
         mp.bricks().create("cardPayment", "wallet_container", {
             initialization: {
-                amount: Number({{ $pedido['total'] }}),
-                preferenceId: "{{ $preferenceId }}"
+                amount: total,
+                preferenceId: preferenceId
             },
             callbacks: {
                 onReady: () => {
                     console.log('✅ Formulario de tarjeta listo');
                 },
-                onSubmit: (formData) => {
-                    console.log('📤 Enviando datos de pago...', formData);
+                onSubmit: (data) => {
+                    console.log('📤 Datos del Brick:', data);
                     
-                    // Agregar el folio a los datos del formulario
-                    const datosCompletos = {
-                        ...formData,
-                        folio: folio  // 👈 ESTO ES CRÍTICO
+                    const paymentData = {
+                        folio: folio,
+                        amount: total,
+                        token: data.token,
+                        paymentMethodId: data.payment_method_id,
+                        installments: data.installments || 1,
+                        issuerId: data.issuer_id || null
                     };
                     
-                    return new Promise((resolve, reject) => {
-                        // 👇 SOLO CAMBIA ESTA LÍNEA - USA LA RUTA DE TU web.php
-                        fetch('/pago/api/process-payment', {  // ← CAMBIA /pago/process POR /pago/api/process-payment
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify(datosCompletos)
-                        })
-                        .then(response => {
-                            console.log('📥 Respuesta recibida:', response);
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('📊 Datos de respuesta:', data);
-                            
-                            if(data.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: '¡Pago exitoso!',
-                                    text: 'Tu pedido ha sido confirmado',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.href = '{{ route("pago.success") }}?payment_id=' + data.payment_id + '&external_reference=' + folio;
-                                });
-                                resolve();
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: data.message || 'Error al procesar el pago'
-                                });
-                                reject();
-                            }
-                        })
-                        .catch(error => {
-                            console.error('❌ Error:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error de conexión',
-                                text: 'No se pudo conectar con el servidor'
-                            });
-                            reject();
-                        });
+                    console.log('📤 Enviando al servidor:', paymentData);
+                    
+                    // Mostrar loading overlay
+                    $('#loading-overlay').fadeIn();
+                    
+                    return fetch('{{ route("pago.api.process-payment") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(paymentData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('📥 Respuesta del servidor:', data);
+                        $('#loading-overlay').fadeOut();
+                        
+                        if(data.success) {
+                            // ✅ Pago exitoso - Redirigir directamente a éxito
+                            window.location.href = '{{ route("pago.success") }}?payment_id=' + data.payment_id + '&external_reference=' + folio;
+                        } else {
+                            // ❌ Pago rechazado - Redirigir directamente a fallo
+                            window.location.href = '{{ route("pago.failure") }}?external_reference=' + folio;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Error en fetch:', error);
+                        $('#loading-overlay').fadeOut();
+                        // Error de conexión - Redirigir a fallo
+                        window.location.href = '{{ route("pago.failure") }}?external_reference=' + folio;
                     });
                 },
                 onError: (error) => {
                     console.error('❌ Error en brick:', error);
-                    $('#wallet_container').html('<div class="alert alert-danger">Error al cargar el formulario de pago. Recarga la página.</div>');
+                    $('#loading-overlay').fadeOut();
+                    // Error en el brick - Redirigir a fallo
+                    window.location.href = '{{ route("pago.failure") }}?external_reference=' + folio;
                 }
             }
         });
