@@ -1,4 +1,15 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # 1. Asegurar que siempre se use HTTPS (si no, el POST se pierde)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 2. Evitar que se añadan o quiten slashes que rompan el POST
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # 3. Enviar todo a la carpeta public
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

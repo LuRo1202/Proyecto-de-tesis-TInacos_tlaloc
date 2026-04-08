@@ -12,6 +12,8 @@ use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Exceptions\MPApiException;
+use App\Mail\PedidoPagadoMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -332,6 +334,8 @@ class PagoController extends Controller
 
                 DB::commit();
                 
+                // ❌ CORREO ELIMINADO - Ya no se envía aquí
+                
                 $pagoPendiente->status = 'procesado';
                 $pagoPendiente->mp_payment_id = $paymentId;
                 $pagoPendiente->save();
@@ -396,6 +400,19 @@ class PagoController extends Controller
         }
 
         $pedido = Pedido::where('folio', $externalRef)->first();
+
+        // ============================================================
+        // ===== ENVIAR CORREO AL CLIENTE (SOLO AQUÍ, UNA VEZ) =====
+        // ============================================================
+        if ($pedido && $pedido->cliente && $pedido->cliente->email) {
+            try {
+                Mail::to($pedido->cliente->email)->send(new PedidoPagadoMail($pedido, $pedido->cliente));
+                Log::info('✅ Correo de pago confirmado enviado a: ' . $pedido->cliente->email);
+            } catch (\Exception $e) {
+                Log::error('❌ Error al enviar correo: ' . $e->getMessage());
+            }
+        }
+        // ============================================================
 
         return view('pago.success', [
             'pedido' => $pedido,
@@ -528,6 +545,8 @@ class PagoController extends Controller
             if ($payment->status === 'approved') {
                 $pagoPendiente->mp_payment_id = $payment->id;
                 $pagoPendiente->save();
+                
+                // ❌ CORREO ELIMINADO - Ya no se envía aquí
                 
                 return response()->json([
                     'success' => true,
