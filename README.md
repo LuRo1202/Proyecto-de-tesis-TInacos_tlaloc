@@ -1,5 +1,7 @@
----
+## Documentación
 
+* **[Wireframes](./docs/design/wireframes/)**
+* **[Mockups](./docs/design/mockups/)**
+* **[Manuales](./docs/manuales/)**
 
-* **[Wireframes](./docs/design/wireframes/):** Esquemas iniciales de la estructura y flujo de usuario (FigJam).
-* **[Mockups](./docs/design/mockups/):** Prototipos de alta fidelidad con la identidad visual del sistema.
+> Los archivos PDF están disponibles en sus respectivas carpetas.
