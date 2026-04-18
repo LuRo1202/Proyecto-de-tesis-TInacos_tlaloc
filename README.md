@@ -1,4 +1,4 @@
-# --Dopcumentación de tesis--
+# --Documentación de tesis--
 
 ##  Autores
 * **Lucas Cristobal Rogelio**
