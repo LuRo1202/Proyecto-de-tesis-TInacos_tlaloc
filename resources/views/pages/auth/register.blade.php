@@ -12,18 +12,50 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Registro - Tanques Tláloc</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
     <link rel="icon" href="{{ asset('assets/img/logo.jpeg') }}">
     
     <style>
+<<<<<<< HEAD
+        :root { --primary: #7fad39; --primary-dark: #5a8a20; --primary-light: #9fc957; --light: #f8f9fa; --light-gray: #e9ecef; --gray: #6c757d; --dark: #212529; }
+        body { background-color: var(--light); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; padding: 20px; background: linear-gradient(135deg, #f0f2f5 0%, #e9ecef 100%); }
+        .register-container { width: 100%; max-width: 450px; margin: 0 auto; }
+        .register-card { background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--light-gray); overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .register-card:hover { transform: translateY(-5px); box-shadow: 0 15px 50px rgba(0,0,0,0.2); }
+        .register-header { background: var(--primary); padding: 40px 30px 30px; text-align: center; color: white; position: relative; }
+        .register-header::after { content: ''; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 40px; background: var(--primary); border-radius: 50%; }
+        .logo-container { width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .logo-container img { width: 60px; height: 60px; object-fit: contain; }
+        .register-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 5px; letter-spacing: -0.5px; }
+        .register-subtitle { font-size: 0.95rem; opacity: 0.9; }
+        .register-body { padding: 40px 30px 30px; }
+        .form-label { font-weight: 500; color: var(--dark); margin-bottom: 8px; font-size: 0.95rem; }
+        .input-group { border-radius: 10px; overflow: hidden; margin-bottom: 5px; }
+        .input-group-text { background: var(--light-gray); border: 1px solid #dee2e6; color: var(--gray); padding: 12px 16px; border-right: none; }
+        .form-control { border: 1px solid #dee2e6; border-left: none; padding: 12px 16px; font-size: 1rem; transition: all 0.2s ease; }
+        .form-control:focus { box-shadow: 0 0 0 3px rgba(127,173,57,0.15); border-color: var(--primary); }
+        .form-control:focus + .input-group-text { border-color: var(--primary); }
+        .btn-register { background: var(--primary); border: none; color: white; padding: 14px; border-radius: 10px; font-weight: 600; font-size: 1rem; transition: all 0.2s ease; width: 100%; margin-top: 10px; }
+        .btn-register:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(127,173,57,0.3); }
+        .btn-register:active:not(:disabled) { transform: translateY(0); }
+        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; }
+        .login-link { display: block; text-align: center; margin-top: 25px; color: var(--primary); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: all 0.2s ease; padding: 8px 0; }
+        .login-link:hover { color: var(--primary-dark); text-decoration: underline; }
+        .login-link i { margin-right: 6px; }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: var(--gray); text-decoration: none; font-size: 0.9rem; transition: all 0.2s ease; }
+        .back-link:hover { color: var(--primary); }
+        .back-link i { margin-right: 5px; }
+        .form-text { color: var(--gray); font-size: 0.85rem; margin-top: 25px; text-align: center; padding-top: 20px; border-top: 1px solid var(--light-gray); }
+        .password-requirements { background: var(--light); border-radius: 8px; padding: 10px 15px; margin-top: 10px; font-size: 0.8rem; }
+        .password-requirements small { display: block; margin-bottom: 3px; }
+        .password-requirements i { width: 16px; margin-right: 5px; }
+        .password-requirements .valid { color: #28a745; }
+        .password-requirements .invalid { color: #6c757d; }
+        .strength-meter { height: 6px; background-color: #e9ecef; border-radius: 3px; overflow: hidden; }
+        .strength-meter-fill { height: 100%; width: 0%; transition: all 0.3s ease; border-radius: 3px; }
+=======
         :root {
             --primary: #7fad39;
             --primary-dark: #5a8a20;
@@ -376,11 +408,30 @@
             border-radius: 3px;
         }
 
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         .strength-meter-fill.weak { background-color: #dc3545; width: 20%; }
         .strength-meter-fill.fair { background-color: #ffc107; width: 40%; }
         .strength-meter-fill.good { background-color: #17a2b8; width: 60%; }
         .strength-meter-fill.strong { background-color: #28a745; width: 80%; }
         .strength-meter-fill.very-strong { background-color: #20c997; width: 100%; }
+<<<<<<< HEAD
+        .password-requirements .valid i { color: #28a745; }
+        .password-requirements .invalid i { color: #6c757d; }
+        .input-group .btn-outline-secondary { border-color: #dee2e6; background: white; padding: 12px 16px; z-index: 5; }
+        .input-group .btn-outline-secondary:hover { background-color: var(--primary); color: white; border-color: var(--primary); }
+        .input-group .btn-outline-secondary i { font-size: 1rem; }
+        @keyframes shake { 0%,100% { transform: rotate(0); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-15deg); } }
+        .input-group .btn-outline-secondary:active i { animation: shake 0.3s ease; }
+        @media (max-width: 576px) { body { padding: 15px; background: var(--light); } .register-container { max-width: 100%; } .register-header { padding: 30px 20px; } .register-body { padding: 30px 20px; } .logo-container { width: 70px; height: 70px; } .logo-container img { width: 50px; height: 50px; } .register-title { font-size: 1.5rem; } }
+        @media (max-width: 375px) { .register-header { padding: 25px 15px; } .register-body { padding: 25px 15px; } .form-control, .input-group-text { padding: 10px 14px; font-size: 0.95rem; } .btn-register { padding: 12px; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .register-card { animation: fadeIn 0.5s ease-out; }
+        .btn-loading { position: relative; color: transparent !important; }
+        .btn-loading::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        .is-invalid { border-color: #dc3545 !important; }
+        .invalid-feedback { display: block; color: #dc3545; font-size: 0.875rem; margin-top: 5px; }
+=======
 
         .password-requirements .valid i { color: #28a745; }
         .password-requirements .invalid i { color: #6c757d; }
@@ -411,6 +462,7 @@
         .input-group .btn-outline-secondary:active i {
             animation: shake 0.3s ease;
         }
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     </style>
 </head>
 <body>
@@ -425,17 +477,22 @@
             </div>
             
             <div class="register-body">
+<<<<<<< HEAD
+=======
                 <!-- ELIMINÉ EL BLOQUE DE ERRORES FEOS -->
                 
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 <form method="POST" action="{{ route('cliente.register.store') }}" id="formRegistro">
                     @csrf
                     <input type="hidden" name="redirect_to" value="{{ request()->get('redirect_to') }}">
                     
-                    <!-- Nombre -->
                     <div class="mb-3">
                         <label class="form-label">Nombre completo *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
+<<<<<<< HEAD
+                            <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Jose Pérez" value="{{ old('nombre') }}" required autofocus>
+=======
                             <input type="text" 
                                    name="nombre" 
                                    id="nombre"
@@ -444,14 +501,17 @@
                                    value="{{ old('nombre') }}"
                                    required
                                    autofocus>
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                         </div>
                     </div>
                     
-                    <!-- Email -->
                     <div class="mb-3">
                         <label class="form-label">Correo electrónico *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+<<<<<<< HEAD
+                            <input type="email" name="email" id="email" class="form-control" placeholder="correo@ejemplo.com" value="{{ old('email') }}" required>
+=======
                             <input type="email" 
                                    name="email" 
                                    id="email"
@@ -459,14 +519,21 @@
                                    placeholder="correo@ejemplo.com"
                                    value="{{ old('email') }}"
                                    required>
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                         </div>
                     </div>
                     
-                    <!-- Teléfono -->
                     <div class="mb-3">
                         <label class="form-label">Teléfono *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-phone"></i></span>
+<<<<<<< HEAD
+                            <input type="tel" name="telefono" id="telefono" class="form-control" placeholder="55 1234 5678" value="{{ old('telefono') }}" required maxlength="10" pattern="[0-9]{10}">
+                        </div>
+                        <small class="text-muted">10 dígitos, solo números</small>
+                    </div>
+                    
+=======
                             <input type="tel" 
                                    name="telefono" 
                                    id="telefono"
@@ -478,10 +545,15 @@
                     </div>
                     
                     <!-- Password -->
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                     <div class="mb-3">
                         <label class="form-label">Contraseña *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
+<<<<<<< HEAD
+                            <input type="password" name="password" id="password" class="form-control" placeholder="Crea una contraseña segura" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="generarContraseña()" title="Generar contraseña segura" style="border:1px solid #dee2e6; border-left:none; border-right:none; border-radius:0;">
+=======
                             <input type="password" 
                                 name="password" 
                                 id="password"
@@ -493,6 +565,7 @@
                                     onclick="generarContraseña()"
                                     title="Generar contraseña segura"
                                     style="border: 1px solid #dee2e6; border-left: none; border-right: none; border-radius: 0;">
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                                 <i class="fas fa-key"></i>
                             </button>
                             <span class="input-group-text password-toggle" onclick="togglePassword('password')">
@@ -501,6 +574,10 @@
                         </div>
                         
                         <div class="password-requirements" id="passwordRequirements">
+<<<<<<< HEAD
+                            <small class="fw-bold text-muted mb-2 d-block"><i class="fas fa-shield-alt me-1"></i>Tu contraseña debe tener:</small>
+                            <div class="strength-meter mb-3"><div class="strength-meter-fill" id="strengthFill"></div></div>
+=======
                             <small class="fw-bold text-muted mb-2 d-block">
                                 <i class="fas fa-shield-alt me-1"></i>
                                 Tu contraseña debe tener:
@@ -509,61 +586,33 @@
                             <div class="strength-meter mb-3">
                                 <div class="strength-meter-fill" id="strengthFill"></div>
                             </div>
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                             <small class="d-block text-center mb-2" id="strengthText">Ingresa una contraseña</small>
-                            
                             <div class="row g-2">
-                                <div class="col-6">
-                                    <small id="req-length" class="invalid">
-                                        <i class="fas fa-circle"></i> 8+ caracteres
-                                    </small>
-                                </div>
-                                <div class="col-6">
-                                    <small id="req-number" class="invalid">
-                                        <i class="fas fa-circle"></i> números
-                                    </small>
-                                </div>
-                                <div class="col-6">
-                                    <small id="req-uppercase" class="invalid">
-                                        <i class="fas fa-circle"></i> mayúsculas
-                                    </small>
-                                </div>
-                                <div class="col-6">
-                                    <small id="req-lowercase" class="invalid">
-                                        <i class="fas fa-circle"></i> minúsculas
-                                    </small>
-                                </div>
-                                <div class="col-6">
-                                    <small id="req-special" class="invalid">
-                                        <i class="fas fa-circle"></i> 1 carácter especial
-                                    </small>
-                                </div>
-                                <div class="col-6">
-                                    <small id="req-no-sequential" class="invalid">
-                                        <i class="fas fa-circle"></i> Sin secuencias (123, abc)
-                                    </small>
-                                </div>
+                                <div class="col-6"><small id="req-length" class="invalid"><i class="fas fa-circle"></i> 8+ caracteres</small></div>
+                                <div class="col-6"><small id="req-number" class="invalid"><i class="fas fa-circle"></i> números</small></div>
+                                <div class="col-6"><small id="req-uppercase" class="invalid"><i class="fas fa-circle"></i> mayúsculas</small></div>
+                                <div class="col-6"><small id="req-lowercase" class="invalid"><i class="fas fa-circle"></i> minúsculas</small></div>
+                                <div class="col-6"><small id="req-special" class="invalid"><i class="fas fa-circle"></i> 1 carácter especial</small></div>
+                                <div class="col-6"><small id="req-no-sequential" class="invalid"><i class="fas fa-circle"></i> Sin secuencias (123, abc)</small></div>
                             </div>
                         </div>
                     </div>
                     
+<<<<<<< HEAD
+=======
                     <!-- Confirm Password -->
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                     <div class="mb-4">
                         <label class="form-label">Confirmar contraseña *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" 
-                                   name="password_confirmation" 
-                                   id="password_confirmation"
-                                   class="form-control" 
-                                   placeholder="Repite tu contraseña"
-                                   required>
+                            <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Repite tu contraseña" required>
                             <span class="input-group-text password-toggle" onclick="togglePassword('password_confirmation')">
                                 <i class="fas fa-eye" id="toggleConfirmIcon"></i>
                             </span>
                         </div>
-                        <div id="passwordMatch" class="invalid-feedback" style="display: none;">
-                            Las contraseñas no coinciden
-                        </div>
+                        <div id="passwordMatch" class="invalid-feedback" style="display: none;">Las contraseñas no coinciden</div>
                     </div>
                     
                     <button type="submit" class="btn-register" id="btnRegistro">
@@ -591,12 +640,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
+<<<<<<< HEAD
+        window.togglePassword = function(inputId) {
+=======
         function togglePassword(inputId) {
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             const input = document.getElementById(inputId);
-            const icon = inputId === 'password' ? 
-                document.getElementById('togglePasswordIcon') : 
-                document.getElementById('toggleConfirmIcon');
-            
+            const icon = inputId === 'password' ? document.getElementById('togglePasswordIcon') : document.getElementById('toggleConfirmIcon');
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');
@@ -606,14 +656,46 @@
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
-        }
+        };
+
+        window.generarContraseña = function() {
+            const longitud = 12;
+            const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const minusculas = 'abcdefghijklmnopqrstuvwxyz';
+            const numeros = '0123456789';
+            const especiales = '!@#$%^&*_+-=';
+            let contraseña = '';
+            contraseña += mayusculas[Math.floor(Math.random() * mayusculas.length)];
+            contraseña += minusculas[Math.floor(Math.random() * minusculas.length)];
+            contraseña += numeros[Math.floor(Math.random() * numeros.length)];
+            contraseña += especiales[Math.floor(Math.random() * especiales.length)];
+            const todos = mayusculas + minusculas + numeros + especiales;
+            for (let i = contraseña.length; i < longitud; i++) {
+                contraseña += todos[Math.floor(Math.random() * todos.length)];
+            }
+            contraseña = contraseña.split('').sort(() => Math.random() - 0.5).join('');
+            document.getElementById('password').value = contraseña;
+            document.getElementById('password_confirmation').value = contraseña;
+            document.getElementById('password').dispatchEvent(new Event('input'));
+            document.getElementById('password_confirmation').dispatchEvent(new Event('input'));
+            Swal.fire({
+                icon: 'success',
+                title: '¡Contraseña generada!',
+                html: `<p>Hemos generado una contraseña segura para ti:</p><div style="font-family:monospace; font-size:1.2rem; padding:10px; background:#e9ecef; border-radius:5px;">${contraseña}</div><p class="text-muted small mt-2">La contraseña se ha copiado al portapapeles</p>`,
+                confirmButtonColor: '#7fad39',
+                confirmButtonText: 'Listo'
+            });
+            navigator.clipboard.writeText(contraseña).catch(() => {});
+        };
 
         function updateRequirement(elementId, isValid, validText, invalidText) {
             const element = document.getElementById(elementId);
             if (!element) return;
+<<<<<<< HEAD
+=======
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             element.classList.remove('valid', 'invalid');
-            
             if (isValid) {
                 element.classList.add('valid');
                 element.innerHTML = `<i class="fas fa-check-circle"></i> ${validText}`;
@@ -631,24 +713,40 @@
             if (validations.lowercase) score++;
             if (validations.special) score++;
             if (validations.noSequential) score++;
+<<<<<<< HEAD
+            let level = '', color = '';
+=======
             
             let level = '';
             let color = '';
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             if (score <= 1) { level = 'Muy débil'; color = '#dc3545'; }
             else if (score === 2) { level = 'Débil'; color = '#ff6b6b'; }
             else if (score === 3) { level = 'Regular'; color = '#ffc107'; }
             else if (score === 4) { level = 'Buena'; color = '#17a2b8'; }
             else if (score >= 5) { level = 'Excelente'; color = '#28a745'; }
+<<<<<<< HEAD
+=======
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             return { score, level, color };
         }
 
         function updateStrengthMeter(strength) {
             const fill = document.getElementById('strengthFill');
             const text = document.getElementById('strengthText');
-            
             if (!fill || !text) return;
+<<<<<<< HEAD
+            fill.className = 'strength-meter-fill';
+            if (strength.score <= 1) { fill.classList.add('weak'); text.innerHTML = `<span style="color: ${strength.color}">🔴 Contraseña ${strength.level}</span>`; }
+            else if (strength.score === 2) { fill.classList.add('fair'); text.innerHTML = `<span style="color: ${strength.color}">🟠 Contraseña ${strength.level}</span>`; }
+            else if (strength.score === 3) { fill.classList.add('good'); text.innerHTML = `<span style="color: ${strength.color}">🟡 Contraseña ${strength.level}</span>`; }
+            else if (strength.score === 4) { fill.classList.add('strong'); text.innerHTML = `<span style="color: ${strength.color}">🟢 Contraseña ${strength.level}</span>`; }
+            else if (strength.score >= 5) { fill.classList.add('very-strong'); text.innerHTML = `<span style="color: ${strength.color}">💚 Contraseña ${strength.level}</span>`; }
+        }
+
+=======
             
             fill.className = 'strength-meter-fill';
             
@@ -698,11 +796,11 @@
 
         document.getElementById('password_confirmation').addEventListener('input', validarCoincidencia);
         
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         function validarCoincidencia() {
             const password = document.getElementById('password').value;
             const confirm = document.getElementById('password_confirmation').value;
             const matchDiv = document.getElementById('passwordMatch');
-            
             if (confirm && password !== confirm) {
                 matchDiv.style.display = 'block';
                 return false;
@@ -712,6 +810,41 @@
             }
         }
 
+<<<<<<< HEAD
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const validations = {
+                length: password.length >= 8,
+                number: /\d/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]~`]/.test(password),
+                noSequential: !/(?:012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i.test(password)
+            };
+            updateRequirement('req-length', validations.length, '8+ caracteres ', '8+ caracteres');
+            updateRequirement('req-number', validations.number, 'números ', 'números');
+            updateRequirement('req-uppercase', validations.uppercase, 'mayúsculas ', 'mayúsculas');
+            updateRequirement('req-lowercase', validations.lowercase, 'minúsculas ', 'minúsculas');
+            updateRequirement('req-special', validations.special, '1 carácter especial ', '1 carácter especial');
+            updateRequirement('req-no-sequential', validations.noSequential, 'Sin secuencias ', 'Sin secuencias (123, abc)');
+            const strength = calculateStrength(validations);
+            updateStrengthMeter(strength);
+            const confirm = document.getElementById('password_confirmation').value;
+            if (confirm) validarCoincidencia();
+        });
+
+        document.getElementById('password_confirmation').addEventListener('input', validarCoincidencia);
+
+        document.getElementById('formRegistro').addEventListener('submit', function(e) {
+            const telefono = document.getElementById('telefono').value;
+            if (telefono && !/^\d{10}$/.test(telefono)) {
+                e.preventDefault();
+                Swal.fire({ icon: 'error', title: 'Teléfono inválido', text: 'El teléfono debe tener exactamente 10 dígitos numéricos', confirmButtonColor: '#7fad39' });
+                return false;
+            }
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('password_confirmation').value;
+=======
         // GENERAR CONTRASEÑA
         function generarContraseña() {
             const longitud = 12;
@@ -765,6 +898,7 @@
             const password = document.getElementById('password').value;
             const confirm = document.getElementById('password_confirmation').value;
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             const validations = {
                 length: password.length >= 8,
                 number: /\d/.test(password),
@@ -773,9 +907,7 @@
                 special: /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]~`]/.test(password),
                 noSequential: !/(?:012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)/i.test(password)
             };
-            
             const allValid = Object.values(validations).every(v => v === true);
-            
             if (!allValid) {
                 e.preventDefault();
                 let missingItems = [];
@@ -785,6 +917,11 @@
                 if (!validations.lowercase) missingItems.push('• 1 minúscula');
                 if (!validations.special) missingItems.push('• 1 carácter especial');
                 if (!validations.noSequential) missingItems.push('• Sin secuencias (123, abc)');
+<<<<<<< HEAD
+                Swal.fire({ title: 'Contraseña no segura', html: `<p>Tu contraseña necesita:</p><ul style="text-align:left;">${missingItems.map(item => `<li>${item}</li>`).join('')}</ul>`, icon: 'warning', confirmButtonColor: '#7fad39', confirmButtonText: 'Entendido' });
+                return false;
+            }
+=======
                 
                 Swal.fire({
                     title: 'Contraseña no segura',
@@ -796,16 +933,48 @@
                 return false;
             }
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             if (password !== confirm) {
                 e.preventDefault();
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Las contraseñas no coinciden',
-                    icon: 'error',
-                    confirmButtonColor: '#7fad39'
-                });
+                Swal.fire({ title: 'Error', text: 'Las contraseñas no coinciden', icon: 'error', confirmButtonColor: '#7fad39' });
                 return false;
             }
+<<<<<<< HEAD
+            document.getElementById('btnRegistro').classList.add('btn-loading');
+            document.getElementById('btnRegistro').disabled = true;
+        });
+
+        @if($errors->any())
+            document.addEventListener('DOMContentLoaded', function() {
+                let errorMessage = '';
+                let errores = @json($errors->all());
+                
+                if (errores && errores.length > 0) {
+                    errores.forEach(function(err) {
+                        if (err.includes('telefono') && err.includes('unique')) {
+                            errorMessage += '• El número de teléfono ya está registrado<br>';
+                        } else if (err.includes('email') && err.includes('unique')) {
+                            errorMessage += '• El correo electrónico ya está registrado<br>';
+                        } else if (err.includes('telefono')) {
+                            errorMessage += '• El número de teléfono ya está registrado<br>';
+                        } else if (err.includes('email')) {
+                            errorMessage += '• El correo electrónico ya está registrado<br>';
+                        } else if (err.includes('required')) {
+                            errorMessage += '• Todos los campos son obligatorios<br>';
+                        } else if (err.includes('min')) {
+                            errorMessage += '• La contraseña debe tener al menos 6 caracteres<br>';
+                        } else if (err.includes('confirmed')) {
+                            errorMessage += '• Las contraseñas no coinciden<br>';
+                        } else if (err.includes('max')) {
+                            errorMessage += '• El teléfono no puede tener más de 20 caracteres<br>';
+                        } else {
+                            errorMessage += '• ' + err + '<br>';
+                        }
+                    });
+                } else {
+                    errorMessage = '• Verifica los datos ingresados<br>';
+                }
+=======
             
             // Mostrar loading
             const btn = document.getElementById('btnRegistro');
@@ -838,6 +1007,7 @@
                         errorMessage += '• ' + errorText + '<br>';
                     }
                 @endforeach
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 
                 Swal.fire({
                     icon: 'error',
@@ -846,6 +1016,17 @@
                     confirmButtonColor: '#7fad39',
                     confirmButtonText: 'Intentar de nuevo'
                 });
+<<<<<<< HEAD
+            });
+        @endif
+
+        @if(session('success'))
+            Swal.fire({ icon: 'success', title: '¡Registro exitoso!', text: '{{ session('success') }}', timer: 3000, showConfirmButton: false });
+        @endif
+
+        @if(session('error'))
+            Swal.fire({ icon: 'error', title: 'Error', text: '{{ session('error') }}', confirmButtonColor: '#7fad39' });
+=======
             });
         @endif
 
@@ -866,6 +1047,7 @@
                 text: '{{ session('error') }}',
                 confirmButtonColor: '#7fad39'
             });
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         @endif
     </script>
 </body>

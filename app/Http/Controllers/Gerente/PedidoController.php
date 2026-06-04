@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Gerente;
 
 use App\Http\Controllers\Controller;
+<<<<<<< HEAD
+use App\Traits\NotificaPedidoTrait;
+=======
 use App\Traits\NotificaPedidoTrait;  // ← TRAIT PARA NOTIFICACIONES
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
 use Illuminate\Http\Request;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
@@ -21,7 +25,11 @@ use Carbon\Carbon;
 
 class PedidoController extends Controller
 {
+<<<<<<< HEAD
+    use NotificaPedidoTrait;
+=======
     use NotificaPedidoTrait;  // ← USA EL TRAIT
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
 
     protected $sucursal;
     protected $sucursalId;
@@ -30,16 +38,26 @@ class PedidoController extends Controller
     const ESTADOS_CON_STOCK = ['pendiente', 'confirmado', 'enviado', 'entregado'];
     const ESTADO_SIN_STOCK = 'cancelado';
     
+<<<<<<< HEAD
+=======
     // Mapa de transiciones de estado permitidas (solo avanzar)
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     const TRANSICIONES_ESTADO = [
         'pendiente' => ['confirmado', 'cancelado'],
         'confirmado' => ['enviado', 'cancelado'],
         'enviado' => ['entregado', 'cancelado'],
+<<<<<<< HEAD
+        'entregado' => [],
+        'cancelado' => []
+    ];
+    
+=======
         'entregado' => [],  // No puede cambiar desde entregado
         'cancelado' => []   // No puede cambiar desde cancelado
     ];
     
     // Mapa de acciones permitidas por estado
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     const ACCIONES_POR_ESTADO = [
         'pendiente' => ['confirmar', 'cancelar', 'confirmar_pago', 'tomar_control'],
         'confirmado' => ['enviar', 'cancelar', 'desconfirmar_pago', 'tomar_control'],
@@ -74,9 +92,12 @@ class PedidoController extends Controller
         ]);
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Verifica si el usuario autenticado es responsable del pedido
      */
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     private function esResponsableDelPedido($pedidoId)
     {
         return DB::table('pedido_responsables')
@@ -85,24 +106,36 @@ class PedidoController extends Controller
             ->exists();
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Verifica si el usuario autenticado es el vendedor responsable o gerente
      */
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     private function puedeEditarPedido($pedidoId)
     {
         $user = auth()->user();
         
+<<<<<<< HEAD
+=======
         // Los gerentes pueden editar si son responsables
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         if ($user->rol === 'gerente') {
             return $this->esResponsableDelPedido($pedidoId);
         }
         
+<<<<<<< HEAD
+=======
         // Los vendedores pueden editar si son responsables
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         if ($user->rol === 'vendedor') {
             return $this->esResponsableDelPedido($pedidoId);
         }
         
+<<<<<<< HEAD
+=======
         // Admin puede editar cualquier pedido de su sucursal
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         if ($user->rol === 'admin') {
             $pedido = Pedido::find($pedidoId);
             return $pedido && $pedido->sucursal_id == $this->sucursalId;
@@ -214,9 +247,12 @@ class PedidoController extends Controller
         }
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Valida que la transición de estado sea permitida (solo avanzar)
      */
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     private function validarTransicionEstado($estadoActual, $nuevoEstado)
     {
         if ($estadoActual == $nuevoEstado) {
@@ -232,9 +268,12 @@ class PedidoController extends Controller
         return in_array($nuevoEstado, $transiciones[$estadoActual]);
     }
 
+<<<<<<< HEAD
+=======
     /**
      * Generate a random password for new clients
      */
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     private function generateRandomPassword($length = 8)
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%&';
@@ -428,6 +467,9 @@ class PedidoController extends Controller
         ));
     }
 
+    /**
+     * STORE CORREGIDO - Solo bloquea pedidos EXACTAMENTE IGUALES
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -457,16 +499,43 @@ class PedidoController extends Controller
                 ]);
         }
 
-        $productos_data = [];
-        $total = 0;
-        $error_existencias = false;
-        $productosError = [];
+        try {
+            DB::beginTransaction();
 
-        foreach ($request->productos as $index => $producto_id) {
-            if (!empty($producto_id) && isset($request->cantidades[$index])) {
-                $cantidad = (int)$request->cantidades[$index];
-                
-                if ($cantidad > 0) {
+            // =========================================================
+            // VALIDACIÓN 1: Productos duplicados en el mismo pedido
+            // =========================================================
+            $productosIdsValidos = [];
+            foreach ($request->productos as $index => $pid) {
+                if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
+                    $productosIdsValidos[] = $pid;
+                }
+            }
+            
+            $duplicados = array_unique(array_diff_assoc($productosIdsValidos, array_unique($productosIdsValidos)));
+            
+            if (!empty($duplicados)) {
+                $nombresDuplicados = [];
+                foreach ($duplicados as $dupId) {
+                    $prod = Producto::find($dupId);
+                    if ($prod) {
+                        $nombresDuplicados[] = $prod->nombre;
+                    }
+                }
+                throw new \Exception("No se puede agregar el mismo producto múltiples veces: " . implode(', ', $nombresDuplicados));
+            }
+
+            // =========================================================
+            // VALIDACIÓN 2: Verificar stock de TODOS los productos
+            // =========================================================
+            $productos_data = [];
+            $total = 0;
+            $productosError = [];
+
+            foreach ($request->productos as $index => $producto_id) {
+                if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
+                    $cantidad = (int)$request->cantidades[$index];
+                    
                     $producto = Producto::with(['ofertas' => function($query) {
                             $query->where('activa', 1)
                                 ->where('fecha_inicio', '<=', now())
@@ -476,56 +545,158 @@ class PedidoController extends Controller
                         ->where('activo', true)
                         ->first();
                     
-                    if ($producto) {
-                        $existencias = DB::table('producto_sucursal')
-                            ->where('producto_id', $producto_id)
-                            ->where('sucursal_id', $this->sucursalId)
-                            ->value('existencias') ?? 0;
-                        
-                        if ($existencias < $cantidad) {
-                            $error_existencias = true;
-                            $productosError[] = "{$producto->nombre} (Disponibles: {$existencias})";
-                        }
-                        
-                        $precioUnitario = $producto->precio;
-                        
-                        if ($producto->ofertas->isNotEmpty()) {
-                            $oferta = $producto->ofertas->first();
-                            
-                            if ($oferta->tipo == 'porcentaje') {
-                                $precioUnitario = $producto->precio * (1 - $oferta->valor / 100);
-                            } else {
-                                $precioUnitario = $producto->precio - $oferta->valor;
-                            }
-                        }
-                        
-                        $subtotal = $precioUnitario * $cantidad;
-                        $total += $subtotal;
-                        
-                        $productos_data[] = [
-                            'producto_id' => $producto_id,
-                            'producto_nombre' => $producto->nombre,
-                            'cantidad' => $cantidad,
-                            'precio' => $precioUnitario,
-                            'precio_original' => $producto->precio,
-                            'subtotal' => $subtotal
-                        ];
+                    if (!$producto) {
+                        throw new \Exception("Producto no encontrado o inactivo");
                     }
+                    
+                    $existencias = DB::table('producto_sucursal')
+                        ->where('producto_id', $producto_id)
+                        ->where('sucursal_id', $this->sucursalId)
+                        ->lockForUpdate()
+                        ->value('existencias') ?? 0;
+                    
+                    if ($existencias < $cantidad) {
+                        $productosError[] = "{$producto->nombre} (Disponibles: {$existencias}, Solicitados: {$cantidad})";
+                    }
+                    
+                    $precioUnitario = $producto->precio;
+                    
+                    if ($producto->ofertas->isNotEmpty()) {
+                        $oferta = $producto->ofertas->first();
+                        
+                        if ($oferta->tipo == 'porcentaje') {
+                            $precioUnitario = $producto->precio * (1 - $oferta->valor / 100);
+                        } else {
+                            $precioUnitario = $producto->precio - $oferta->valor;
+                        }
+                    }
+                    
+                    $subtotal = $precioUnitario * $cantidad;
+                    $total += $subtotal;
+                    
+                    $productos_data[] = [
+                        'producto_id' => $producto_id,
+                        'producto_nombre' => $producto->nombre,
+                        'cantidad' => $cantidad,
+                        'precio' => $precioUnitario,
+                        'existencias' => $existencias,
+                        'producto' => $producto
+                    ];
                 }
             }
-        }
 
-        if ($error_existencias) {
-            $mensaje = 'No hay suficientes existencias para: ' . implode(', ', $productosError);
-            return redirect()->back()
-                ->withInput()
-                ->with('swal', [
-                    'type' => 'error',
-                    'title' => 'Error de inventario',
-                    'message' => $mensaje
+            if (!empty($productosError)) {
+                throw new \Exception("Stock insuficiente para: " . implode(', ', $productosError));
+            }
+
+            if (empty($productos_data)) {
+                throw new \Exception("Debe agregar al menos un producto válido");
+            }
+
+            // =========================================================
+            // VALIDACIÓN 3: Solo bloquear si el pedido es EXACTAMENTE IGUAL
+            // (NO bloquea si son productos diferentes o cantidades diferentes)
+            // =========================================================
+            $fechaHoy = Carbon::now('America/Mexico_City')->toDateString();
+            
+            // Construir array del nuevo pedido: [producto_id => cantidad_total]
+            $nuevoPedidoProductos = [];
+            foreach ($request->productos as $index => $producto_id) {
+                if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
+                    $cantidad = (int)$request->cantidades[$index];
+                    $nuevoPedidoProductos[$producto_id] = ($nuevoPedidoProductos[$producto_id] ?? 0) + $cantidad;
+                }
+            }
+            
+            // Ordenar para comparación consistente
+            ksort($nuevoPedidoProductos);
+            
+            // Buscar pedidos pendientes del mismo cliente hoy
+            $pedidosExistentes = Pedido::where('cliente_telefono', $request->cliente_telefono)
+                ->whereDate('fecha', $fechaHoy)
+                ->whereIn('estado', ['pendiente', 'confirmado'])
+                ->where('sucursal_id', $this->sucursalId)
+                ->get();
+            
+            foreach ($pedidosExistentes as $pedidoExistente) {
+                // Obtener productos del pedido existente
+                $itemsExistentes = PedidoItem::where('pedido_id', $pedidoExistente->id)
+                    ->get()
+                    ->mapWithKeys(function($item) {
+                        return [$item->producto_id => $item->cantidad];
+                    })
+                    ->toArray();
+                
+                ksort($itemsExistentes);
+                
+                // Solo bloquear si son EXACTAMENTE IGUALES
+                if ($itemsExistentes == $nuevoPedidoProductos) {
+                    throw new \Exception("Ya existe un pedido EXACTAMENTE IGUAL para este cliente hoy. Folio: {$pedidoExistente->folio}. Si necesita modificar el pedido, cancele el anterior o edítelo.");
+                }
+            }
+
+            // =========================================================
+            // Crear o buscar cliente
+            // =========================================================
+            $cliente = null;
+            $clienteCreado = false;
+
+            if (!empty($request->cliente_telefono) || !empty($request->cliente_email)) {
+                $cliente = Cliente::where('telefono', $request->cliente_telefono)
+                            ->orWhere('email', $request->cliente_email)
+                            ->first();
+            }
+
+            if (!$cliente && !empty($request->cliente_email)) {
+                $password = $this->generateRandomPassword();
+                
+                $cliente = Cliente::create([
+                    'nombre' => $request->cliente_nombre,
+                    'email' => $request->cliente_email,
+                    'password' => Hash::make($password),
+                    'telefono' => $request->cliente_telefono,
+                    'direccion' => $request->cliente_direccion,
+                    'ciudad' => $request->cliente_ciudad,
+                    'estado' => $request->cliente_estado,
+                    'codigo_postal' => $request->codigo_postal,
+                    'activo' => true,
+                    'email_verified_at' => now()
                 ]);
-        }
+                
+                $clienteCreado = true;
+                Log::info('Cliente creado desde pedido (gerente): ' . $cliente->id);
+                
+                try {
+                    $token = \Illuminate\Support\Facades\Password::broker('clientes')->createToken($cliente);
+                    $resetUrl = route('cliente.reset.form', ['token' => $token, 'email' => $cliente->email]);
+                    Mail::to($cliente->email)->send(new ClienteBienvenidaMail($cliente, $resetUrl));
+                } catch (\Exception $e) {
+                    Log::error('Error email bienvenida: ' . $e->getMessage());
+                }
+            }
 
+<<<<<<< HEAD
+            // =========================================================
+            // Generar folio único
+            // =========================================================
+            $fecha = Carbon::now('America/Mexico_City')->format('Ymd');
+            $folio = null;
+            $intentos = 0;
+            
+            while ($intentos < 10) {
+                $numero = rand(1000, 9999);
+                $folioTemp = 'PED-' . $fecha . '-' . $numero;
+                if (!Pedido::where('folio', $folioTemp)->exists()) {
+                    $folio = $folioTemp;
+                    break;
+                }
+                $intentos++;
+            }
+            
+            if (!$folio) {
+                throw new \Exception("No se pudo generar un folio único. Intente nuevamente.");
+            }
+=======
         if (empty($productos_data)) {
             return redirect()->back()
                 ->withInput()
@@ -594,9 +765,17 @@ class PedidoController extends Controller
                 }
             }
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
 
+            // =========================================================
+            // Crear pedido
+            // =========================================================
             $pedido = Pedido::create([
+<<<<<<< HEAD
+                'cliente_id' => $cliente ? $cliente->id : null,
+=======
                 'cliente_id' => $cliente ? $cliente->id : null,  // ← NUEVO: guardar cliente_id
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 'folio' => $folio,
                 'cliente_nombre' => $request->cliente_nombre,
                 'cliente_telefono' => $request->cliente_telefono,
@@ -615,17 +794,28 @@ class PedidoController extends Controller
                 'pago_confirmado' => false   // ← PAGO NO CONFIRMADO
             ]);
 
-            foreach ($productos_data as $producto) {
+            // =========================================================
+            // Crear items y descontar stock
+            // =========================================================
+            foreach ($productos_data as $item) {
                 PedidoItem::create([
                     'pedido_id' => $pedido->id,
-                    'producto_id' => $producto['producto_id'],
-                    'producto_nombre' => $producto['producto_nombre'],
-                    'cantidad' => $producto['cantidad'],
-                    'precio' => $producto['precio']
+                    'producto_id' => $item['producto_id'],
+                    'producto_nombre' => $item['producto_nombre'],
+                    'cantidad' => $item['cantidad'],
+                    'precio' => $item['precio']
                 ]);
-            }
 
-            $this->descontarStockSeguro($pedido);
+                $decrementadas = DB::table('producto_sucursal')
+                    ->where('producto_id', $item['producto_id'])
+                    ->where('sucursal_id', $this->sucursalId)
+                    ->where('existencias', '>=', $item['cantidad'])
+                    ->decrement('existencias', $item['cantidad']);
+                
+                if ($decrementadas === 0) {
+                    throw new \Exception("Error al descontar stock de '{$item['producto_nombre']}'. Stock insuficiente.");
+                }
+            }
 
             if ($request->filled('vendedor_responsable')) {
                 DB::table('pedido_responsables')->insert([
@@ -635,10 +825,9 @@ class PedidoController extends Controller
                 ]);
             }
 
-            $usuario_id = auth()->id();
             PedidoHistorial::create([
                 'pedido_id' => $pedido->id,
-                'usuario_id' => $usuario_id,
+                'usuario_id' => auth()->id(),
                 'accion' => 'creado',
                 'detalles' => 'Pedido creado por gerente en sucursal ' . $this->sucursalNombre,
                 'fecha' => now()
@@ -648,10 +837,16 @@ class PedidoController extends Controller
 
             session()->forget('cobertura_verificada');
 
+<<<<<<< HEAD
+            $mensaje = "Pedido {$folio} creado correctamente en tu sucursal. Queda pendiente de confirmación de pago.";
+            
+            if ($clienteCreado && $cliente) {
+=======
             // Mensaje personalizado
             $mensaje = "Pedido {$folio} creado correctamente en tu sucursal. Queda pendiente de confirmación de pago.";
             
             if ($clienteCreado) {
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 $mensaje .= " Se ha registrado al cliente con acceso al sistema. Email: {$cliente->email}";
             }
 
@@ -757,7 +952,10 @@ class PedidoController extends Controller
                 ]);
         }
 
+<<<<<<< HEAD
+=======
         // *** VALIDACIÓN: Solo el responsable puede editar ***
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         if (!$this->puedeEditarPedido($id)) {
             return redirect()->route('gerente.pedidos.ver', $id)
                 ->with('swal', [
@@ -798,7 +996,10 @@ class PedidoController extends Controller
         $usuario_id = auth()->id();
         $usuario_nombre = auth()->user()->nombre ?? 'Gerente';
         
+<<<<<<< HEAD
+=======
         // Estados siguientes permitidos para la vista
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         $estadosSiguientes = self::TRANSICIONES_ESTADO[$pedido->estado] ?? [];
 
         return view('gerente.pedidos.edit', compact(
@@ -829,7 +1030,10 @@ class PedidoController extends Controller
                 ]);
         }
 
+<<<<<<< HEAD
+=======
         // *** VALIDACIÓN: Solo el responsable puede editar ***
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         if (!$this->puedeEditarPedido($id)) {
             return redirect()->route('gerente.pedidos.ver', $id)
                 ->with('swal', [
@@ -852,7 +1056,10 @@ class PedidoController extends Controller
         $estadoActual = $pedido->estado;
         $nuevoEstado = $request->estado;
 
+<<<<<<< HEAD
+=======
         // *** VALIDACIÓN: Transición de estado permitida (solo avanzar) ***
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         if (!$this->validarTransicionEstado($estadoActual, $nuevoEstado)) {
             $estadosTexto = [
                 'pendiente' => 'Pendiente',
@@ -890,7 +1097,10 @@ class PedidoController extends Controller
 
             $this->sincronizarStockPorEstado($pedido, $request->estado);
 
+<<<<<<< HEAD
+=======
             // Guardar estado anterior ANTES de actualizar
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             $estadoAnterior = $pedido->estado;
             $pagoConfirmadoAnterior = $pedido->pago_confirmado;
 
@@ -904,17 +1114,26 @@ class PedidoController extends Controller
                 'fecha_confirmacion' => $fecha_confirmacion
             ]);
 
+<<<<<<< HEAD
+=======
             // ===== NOTIFICACIONES =====
             // Enviar notificación si cambió el estado
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             if ($estadoAnterior != $pedido->estado) {
                 $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
             }
             
+<<<<<<< HEAD
+            if ($request->has('pago_confirmado') && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
+                $this->enviarNotificacionPagoConfirmado($pedido);
+            }
+=======
             // Enviar notificación de pago confirmado SOLO si es pago en línea (no manual)
             if ($request->has('pago_confirmado') && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
                 $this->enviarNotificacionPagoConfirmado($pedido);
             }
             // ===== FIN NOTIFICACIONES =====
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
 
             $detalles = "Estado cambiado a: " . $request->estado . ". " . 
                        ($request->has('pago_confirmado') ? "Pago confirmado. " : "") . 
@@ -1028,7 +1247,10 @@ class PedidoController extends Controller
                 ]);
         }
 
+<<<<<<< HEAD
+=======
         // *** VALIDACIÓN: Verificar si es responsable para acciones críticas ***
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         $accionesCriticas = ['confirmar', 'enviar', 'entregar', 'cancelar', 'confirmar_pago', 'desconfirmar_pago'];
         
         if (in_array($accion, $accionesCriticas) && !$this->esResponsableDelPedido($id)) {
@@ -1040,7 +1262,10 @@ class PedidoController extends Controller
                 ]);
         }
 
+<<<<<<< HEAD
+=======
         // *** VALIDACIÓN: Acción permitida según estado actual ***
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         $accionesPermitidas = self::ACCIONES_POR_ESTADO[$pedido->estado] ?? [];
         
         if (!in_array($accion, $accionesPermitidas)) {
@@ -1057,7 +1282,10 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
 
+<<<<<<< HEAD
+=======
             // Guardar estado anterior ANTES de hacer cambios
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             $estadoAnterior = $pedido->estado;
             $pagoConfirmadoAnterior = $pedido->pago_confirmado;
 
@@ -1138,17 +1366,26 @@ class PedidoController extends Controller
 
             $pedido->save();
 
+<<<<<<< HEAD
+=======
             // ===== NOTIFICACIONES =====
             // Enviar notificación si cambió el estado
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             if ($estadoAnterior != $pedido->estado) {
                 $this->enviarNotificacionEstado($pedido, $estadoAnterior, $pedido->estado);
             }
             
+<<<<<<< HEAD
+            if ($accion == 'confirmar_pago' && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
+                $this->enviarNotificacionPagoConfirmado($pedido);
+            }
+=======
             // Enviar notificación de pago confirmado SOLO si es pago en línea (no manual)
             if ($accion == 'confirmar_pago' && $pagoConfirmadoAnterior == false && $pedido->metodo_pago != 'manual') {
                 $this->enviarNotificacionPagoConfirmado($pedido);
             }
             // ===== FIN NOTIFICACIONES =====
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
 
             PedidoHistorial::create([
                 'pedido_id' => $id,

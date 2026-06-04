@@ -841,6 +841,49 @@
         const productoPrecargado = null;
         @endif
 
+        // =========================================================
+        // FUNCIONES PARA EVITAR PRODUCTOS DUPLICADOS
+        // =========================================================
+        
+        function getProductosSeleccionados() {
+            const seleccionados = [];
+            document.querySelectorAll('.select-producto').forEach(select => {
+                if (select.value) {
+                    seleccionados.push(select.value);
+                }
+            });
+            return seleccionados;
+        }
+
+        function recalcularOpcionesProductos() {
+            const productosSeleccionados = getProductosSeleccionados();
+            
+            document.querySelectorAll('.select-producto').forEach(select => {
+                const valorActual = select.value;
+                
+                let nuevasOpciones = '<option value="">Seleccionar producto</option>';
+                
+                productos.forEach(p => {
+                    const yaSeleccionado = productosSeleccionados.includes(String(p.id)) && String(p.id) !== valorActual;
+                    if (!yaSeleccionado) {
+                        nuevasOpciones += `<option value="${p.id}" 
+                                                data-precio="${p.precio}" 
+                                                data-existencias="${p.existencias}" 
+                                                data-nombre="${p.nombre}"
+                                                data-codigo="${p.codigo}">
+                                            ${p.codigo} - ${p.nombre} (${p.litros > 0 ? p.litros + ' lts' : 'Accesorio'})
+                                        </option>`;
+                    }
+                });
+                
+                select.innerHTML = nuevasOpciones;
+                
+                if (valorActual) {
+                    select.value = valorActual;
+                }
+            });
+        }
+
         function initAutocomplete() {
             const direccionInput = document.getElementById('cliente_direccion');
             if (direccionInput) {
@@ -1060,12 +1103,28 @@
             $('input[name="distancia_km"]').remove();
         });
 
+        // =========================================================
+        // FUNCIÓN AGREGAR PRODUCTO CON VALIDACIÓN DE DUPLICADOS
+        // =========================================================
         function agregarProducto() {
+            const productosSeleccionados = getProductosSeleccionados();
+            const productosDisponibles = productos.filter(p => !productosSeleccionados.includes(String(p.id)));
+            
+            if (productosDisponibles.length === 0 && productosSeleccionados.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No hay más productos',
+                    text: 'Ya has agregado todos los productos disponibles',
+                    confirmButtonColor: '#7fad39'
+                });
+                return;
+            }
+            
             const container = document.getElementById('productos-container');
             const index = productoCount++;
             
             let options = '<option value="">Seleccionar producto</option>';
-            productos.forEach(p => {
+            productosDisponibles.forEach(p => {
                 options += `<option value="${p.id}" 
                                 data-precio="${p.precio}" 
                                 data-existencias="${p.existencias}" 
@@ -1208,12 +1267,24 @@
             
             if (option.value) {
                 const existencias = parseInt(option.dataset.existencias);
-                const cantidad = parseInt(cantidadInput.value) || 0;
+                let cantidad = parseInt(cantidadInput.value) || 0;
                 
                 if (cantidad < 1) {
                     cantidadInput.value = 1;
-                } else if (cantidad > existencias && existencias > 0) {
+                    cantidad = 1;
+                }
+                if (cantidad > existencias && existencias > 0) {
                     cantidadInput.value = existencias;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Stock insuficiente',
+                        text: `Solo hay ${existencias} unidades disponibles`,
+                        confirmButtonColor: '#7fad39',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
                 }
             }
             calcularSubtotal(index);
@@ -1251,6 +1322,7 @@
                     const productoDiv = document.getElementById(`producto-${index}`);
                     if (productoDiv) {
                         productoDiv.remove();
+                        recalcularOpcionesProductos();
                         calcularTotal();
                         Swal.fire({
                             icon: 'success',
@@ -1314,8 +1386,10 @@
                 initAutocomplete();
             }
             
-            // 🚨 IMPORTANTE: NO agregar productos automáticamente
-            // El usuario debe hacer clic en "Agregar Producto"
+            // Agregar primer producto automáticamente
+            if (productos.length > 0) {
+                agregarProducto();
+            }
             
             @if($errors->any())
                 Swal.fire({

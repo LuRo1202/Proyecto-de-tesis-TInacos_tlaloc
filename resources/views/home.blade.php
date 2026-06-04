@@ -473,7 +473,7 @@
             </div>
             
             <div class="text-center mt-4">
-                <a href="{{ route('tienda', ['en_oferta' => true]) }}" class="btn btn-danger">
+                <a href="{{ route('tienda', ['oferta' => 1]) }}" class="btn btn-danger">
                     <i class="fas fa-bolt me-2"></i>Ver Todas las Ofertas
                 </a>
             </div>

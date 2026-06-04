@@ -96,6 +96,9 @@ class PagoController extends Controller
         }
     }
 
+    /**
+     * 🔥 CREAR PREFERENCIA - CON TODOS LOS CAMPOS RECOMENDADOS POR MERCADOPAGO
+     */
     private function crearPreferencia($checkoutData, $folio)
     {
         try {
@@ -112,44 +115,169 @@ class PagoController extends Controller
                 $precio = is_array($item) ? $item['precio'] : $producto->precio;
                 $cantidad = is_array($item) ? $item['cantidad'] : $item;
                 
+<<<<<<< HEAD
+                // ✅ CAMBIOS IMPORTANTES: Agregar todos los campos recomendados
+                $items[] = [
+                    "id" => $producto->codigo,                          // ✅ Código del item (recomendado)
+                    "title" => $producto->nombre,                       // ✅ Nombre del item (recomendado)
+                    "description" => $producto->nombre . " - " . $producto->litros . " litros", // ✅ Descripción (recomendado)
+                    "quantity" => (int) $cantidad,                      // ✅ Cantidad (recomendado)
+                    "unit_price" => (float) $precio,                    // ✅ Precio unitario (recomendado)
+                    "currency_id" => "MXN",
+                    "category_id" => $this->getCategoryId($producto->categoria_id ?? 1), // ✅ Categoría (recomendado)
+                    "picture_url" => asset('assets/img/productos/' . $producto->codigo . '.jpg'), // Imagen opcional
+=======
                 $items[] = [
                     "title" => $producto->nombre,
                     "quantity" => (int) $cantidad,
                     "unit_price" => (float) $precio,
                     "currency_id" => "MXN"
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 ];
             }
 
             $emailCliente = auth()->user()->email ?? $checkoutData['datos']['email'] ?? 'cliente@tanquestlaloc.com';
+<<<<<<< HEAD
+            
+            // ✅ AGREGAR SHIPMENTS (envío) si aplica
+            $shipments = [];
+            if (isset($checkoutData['cobertura']['distancia']) && $checkoutData['cobertura']['distancia'] > 0) {
+                $costoEnvio = $this->calcularCostoEnvio($checkoutData['cobertura']['distancia']);
+                if ($costoEnvio > 0) {
+                    $shipments = [
+                        "cost" => $costoEnvio,
+                        "mode" => "not_specified",
+                    ];
+                    // Agregar item de envío
+                    $items[] = [
+                        "id" => "ENVIO",
+                        "title" => "Costo de Envío",
+                        "description" => "Envío a domicilio",
+                        "quantity" => 1,
+                        "unit_price" => (float) $costoEnvio,
+                        "currency_id" => "MXN",
+                        "category_id" => "services",
+                    ];
+                }
+            }
+=======
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     
             $preferenceData = [
                 "items" => $items,
                 "payer" => [
                     "email" => $emailCliente,
                     "name" => $checkoutData['datos']['nombre'] ?? 'Cliente',
+<<<<<<< HEAD
+                    "surname" => "",
+                    "phone" => [
+                        "number" => $checkoutData['datos']['telefono'] ?? '',
+                        "area_code" => ""
+                    ],
+                    "address" => [
+                        "zip_code" => $checkoutData['datos']['codigo_postal'] ?? '00000',
+                        "street_name" => $checkoutData['datos']['direccion'] ?? '',
+                        "street_number" => ""
+                    ]
                 ],
+                "shipments" => $shipments,
+=======
+                ],
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 "back_urls" => [
                     "success" => route('pago.success'),
                     "failure" => route('pago.failure'),
                     "pending" => route('pago.pending')
                 ],
+<<<<<<< HEAD
+                "auto_return" => "approved",
+                "external_reference" => $folio,
+                "statement_descriptor" => "TANQUES TLALOC",
+                "expires" => true,
+                "expiration_date_to" => date('c', strtotime('+1 day')),
+                // ✅ NOTIFICACIONES: importante para webhook
+                "notification_url" => route('pago.webhook'),
+                // ✅ METADATOS adicionales
+                "metadata" => [
+                    "folio" => $folio,
+                    "cliente_id" => $checkoutData['cliente_id'] ?? null,
+                    "sucursal_id" => $checkoutData['cobertura']['sucursal_id'] ?? null
+                ]
+=======
                 "external_reference" => $folio,
                 "statement_descriptor" => "TANQUES TLALOC",
                 "expires" => true,
                 "expiration_date_to" => date('c', strtotime('+1 day'))
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             ];
 
             $preference = $client->create($preferenceData);
 
+<<<<<<< HEAD
+            Log::info('Preferencia creada correctamente', [
+                'preference_id' => $preference->id,
+                'folio' => $folio,
+                'items_count' => count($items)
+            ]);
+
+            return ['id' => $preference->id];
+
+        } catch (MPApiException $e) {
+            Log::error('Error API en crearPreferencia:', [
+                'folio' => $folio, 
+                'message' => $e->getMessage(),
+                'response' => $e->getApiResponse() ? $e->getApiResponse()->getContent() : null
+            ]);
+=======
             return ['id' => $preference->id];
 
         } catch (MPApiException $e) {
             Log::error('Error API en crearPreferencia:', ['folio' => $folio, 'message' => $e->getMessage()]);
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             throw $e;
         } catch (\Exception $e) {
             Log::error('Error general en crearPreferencia:', ['folio' => $folio, 'message' => $e->getMessage()]);
             throw $e;
         }
+<<<<<<< HEAD
+    }
+
+    /**
+     * Mapear categoría de producto a las categorías aceptadas por MercadoPago
+     */
+    private function getCategoryId($categoriaId)
+    {
+        // Categorías aceptadas por MercadoPago:
+        // "home_appliances", "electronics", "furniture", "toys", 
+        // "games", "musical_instruments", "sports", "collectibles", 
+        // "art", "baby", "mobile", "computing", "cameras", "other"
+        
+        $categories = [
+            1 => "home_appliances",      // Tinacos
+            2 => "home_appliances",      // Tinacos Bala
+            3 => "home_appliances",      // Cisternas
+            4 => "home_appliances",      // Accesorios
+        ];
+        
+        return $categories[$categoriaId] ?? "home_appliances";
+    }
+
+    /**
+     * Calcular costo de envío basado en distancia (opcional)
+     */
+    private function calcularCostoEnvio($distanciaKm)
+    {
+        if ($distanciaKm <= 5) {
+            return 0; // Envío gratis dentro de 5km
+        } elseif ($distanciaKm <= 15) {
+            return 150;
+        } elseif ($distanciaKm <= 30) {
+            return 250;
+        } else {
+            return 400;
+        }
+=======
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     }
 
     public function webhook(Request $request)
@@ -437,7 +565,11 @@ class PagoController extends Controller
     }
 
     /**
+<<<<<<< HEAD
+     * 🔥 PROCESAR PAGO DESDE EL BRICK - Con campos mejorados
+=======
      * 🔥 PROCESAR PAGO DESDE EL BRICK
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
      */
     public function processPayment(Request $request)
     {
@@ -505,10 +637,29 @@ class PagoController extends Controller
                 $emailCliente = $telefono . '@tanquestlaloc.com';
             }
             
+<<<<<<< HEAD
+            // ✅ CONSTRUIR DESCRIPCIÓN COMPLETA DE LOS ITEMS
+            $descripcionItems = "";
+            $totalItems = 0;
+            foreach ($checkoutData['carrito'] as $id => $item) {
+                $producto = Producto::find($id);
+                if ($producto) {
+                    $cantidad = is_array($item) ? $item['cantidad'] : $item;
+                    $descripcionItems .= ($descripcionItems ? ", " : "") . $producto->nombre . " x" . $cantidad;
+                    $totalItems += $cantidad;
+                }
+            }
+            
+            $paymentData = [
+                "transaction_amount" => (float) $request->input('amount'),
+                "token" => $token,
+                "description" => "Pedido " . $folio . " - " . $descripcionItems,  // ✅ Descripción completa
+=======
             $paymentData = [
                 "transaction_amount" => (float) $request->input('amount'),
                 "token" => $token,
                 "description" => "Pedido " . $folio,
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 "installments" => (int) $installments,
                 "payment_method_id" => $paymentMethodId,
                 "external_reference" => $folio,
@@ -517,11 +668,43 @@ class PagoController extends Controller
                     "first_name" => $checkoutData['datos']['nombre'] ?? 'Cliente',
                     "last_name" => "",
                     "phone" => [
+<<<<<<< HEAD
+                        "number" => $checkoutData['datos']['telefono'] ?? null,
+                        "area_code" => ""
+                    ],
+                    "address" => [
+                        "zip_code" => $checkoutData['datos']['codigo_postal'] ?? '00000',
+                        "street_name" => $checkoutData['datos']['direccion'] ?? null,
+                        "street_number" => ""
+                    ]
+                ],
+                // ✅ METADATOS ADICIONALES para mejorar aprobación
+                "additional_info" => [
+                    "items" => $this->getItemsForAdditionalInfo($checkoutData['carrito']),
+                    "payer" => [
+                        "first_name" => $checkoutData['datos']['nombre'] ?? 'Cliente',
+                        "phone" => [
+                            "number" => $checkoutData['datos']['telefono'] ?? null
+                        ],
+                        "address" => [
+                            "zip_code" => $checkoutData['datos']['codigo_postal'] ?? '00000',
+                            "street_name" => $checkoutData['datos']['direccion'] ?? null
+                        ]
+                    ],
+                    "shipments" => [
+                        "receiver_address" => [
+                            "zip_code" => $checkoutData['datos']['codigo_postal'] ?? '00000',
+                            "street_name" => $checkoutData['datos']['direccion'] ?? null,
+                            "city_name" => $checkoutData['datos']['ciudad'] ?? null,
+                            "state_name" => $checkoutData['datos']['estado'] ?? null
+                        ]
+=======
                         "number" => $checkoutData['datos']['telefono'] ?? null
                     ],
                     "address" => [
                         "zip_code" => $checkoutData['datos']['codigo_postal'] ?? null,
                         "street_name" => $checkoutData['datos']['direccion'] ?? null
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                     ]
                 ]
             ];
@@ -546,8 +729,11 @@ class PagoController extends Controller
                 $pagoPendiente->mp_payment_id = $payment->id;
                 $pagoPendiente->save();
                 
+<<<<<<< HEAD
+=======
                 // ❌ CORREO ELIMINADO - Ya no se envía aquí
                 
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 return response()->json([
                     'success' => true,
                     'payment_id' => $payment->id,
@@ -587,5 +773,30 @@ class PagoController extends Controller
                 'message' => 'Error al procesar el pago: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Obtener items formateados para additional_info
+     */
+    private function getItemsForAdditionalInfo($carrito)
+    {
+        $items = [];
+        foreach ($carrito as $id => $item) {
+            $producto = Producto::find($id);
+            if ($producto) {
+                $cantidad = is_array($item) ? $item['cantidad'] : $item;
+                $precio = is_array($item) ? $item['precio'] : $producto->precio;
+                
+                $items[] = [
+                    "id" => $producto->codigo,
+                    "title" => $producto->nombre,
+                    "description" => $producto->nombre . " - " . $producto->litros . " litros",
+                    "quantity" => (int) $cantidad,
+                    "unit_price" => (float) $precio,
+                    "category_id" => $this->getCategoryId($producto->categoria_id ?? 1)
+                ];
+            }
+        }
+        return $items;
     }
 }

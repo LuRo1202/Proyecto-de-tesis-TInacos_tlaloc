@@ -21,7 +21,7 @@
         </div>
         
         <div class="header-actions">
-            <a href="{{ route('vendedor.pedidos.hoy') }}" class="btn-custom btn-secondary-custom">
+            <a href="{{ route('vendedor.pedidos.index') }}" class="btn-custom btn-secondary-custom">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
@@ -648,7 +648,6 @@
         font-size: 0.85rem;
     }
 
-    /* Estilos para resultados de búsqueda */
     .list-group-item {
         cursor: pointer;
         transition: all 0.2s ease;
@@ -735,7 +734,7 @@
     const sucursalNombre = '{{ $sucursal->nombre }}';
     const radioCobertura = {{ $sucursal->radio_cobertura_km }};
 
-    // VARIABLES PARA PRODUCTO PRECARGADO CON OFERTA
+    // Variables para producto precargado
     @if(isset($producto_precargado) && $producto_precargado)
         const productoPrecargado = {
             id: {{ $producto_precargado->id }},
@@ -750,7 +749,254 @@
         const productoPrecargado = null;
     @endif
 
-    // Inicializar autocomplete de Google Maps
+    // Obtener productos ya seleccionados
+    function getProductosSeleccionados() {
+        const seleccionados = [];
+        document.querySelectorAll('.select-producto').forEach(select => {
+            if (select.value) {
+                seleccionados.push(select.value);
+            }
+        });
+        return seleccionados;
+    }
+
+    // Recalcular opciones de todos los selects (evita duplicados)
+    function recalcularOpcionesProductos() {
+        const productosSeleccionados = getProductosSeleccionados();
+        
+        document.querySelectorAll('.select-producto').forEach(select => {
+            const valorActual = select.value;
+            
+            let nuevasOpciones = '<option value="">Seleccionar producto</option>';
+            
+            productos.forEach(p => {
+                const yaSeleccionado = productosSeleccionados.includes(String(p.id)) && String(p.id) !== valorActual;
+                if (!yaSeleccionado) {
+                    nuevasOpciones += `<option value="${p.id}" 
+                                            data-precio="${p.precio}" 
+                                            data-existencias="${p.existencias}" 
+                                            data-nombre="${p.nombre}"
+                                            data-codigo="${p.codigo}">
+                                        ${p.codigo} - ${p.nombre} (${p.litros > 0 ? p.litros + ' lts' : 'Accesorio'})
+                                    </option>`;
+                }
+            });
+            
+            select.innerHTML = nuevasOpciones;
+            
+            if (valorActual) {
+                select.value = valorActual;
+            }
+        });
+    }
+
+    // Agregar producto
+    function agregarProducto() {
+        const productosSeleccionados = getProductosSeleccionados();
+        const productosDisponibles = productos.filter(p => !productosSeleccionados.includes(String(p.id)));
+        
+        if (productosDisponibles.length === 0 && productosSeleccionados.length > 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No hay más productos',
+                text: 'Ya has agregado todos los productos disponibles',
+                confirmButtonColor: '#7fad39'
+            });
+            return;
+        }
+        
+        const container = document.getElementById('productos-container');
+        const index = productoCount++;
+        
+        let options = '<option value="">Seleccionar producto</option>';
+        productosDisponibles.forEach(p => {
+            options += `<option value="${p.id}" 
+                            data-precio="${p.precio}" 
+                            data-existencias="${p.existencias}" 
+                            data-nombre="${p.nombre}"
+                            data-codigo="${p.codigo}">
+                        ${p.codigo} - ${p.nombre} (${p.litros > 0 ? p.litros + ' lts' : 'Accesorio'})
+                    </option>`;
+        });
+        
+        const productoDiv = document.createElement('div');
+        productoDiv.className = 'producto-item';
+        productoDiv.id = `producto-${index}`;
+        productoDiv.innerHTML = `
+            <button type="button" class="btn-remove-producto" onclick="eliminarProducto(${index})" title="Eliminar producto">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-6 col-md-12">
+                    <label class="form-label">Producto *</label>
+                    <select name="productos[${index}]" 
+                            class="form-select select-producto" 
+                            required
+                            onchange="actualizarProducto(${index})" 
+                            data-index="${index}">
+                        ${options}
+                    </select>
+                    <small class="existencias-info" id="existencias-info-${index}"></small>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label">Cantidad *</label>
+                    <input type="number" 
+                           name="cantidades[${index}]" 
+                           class="form-control cantidad" 
+                           id="cantidad-${index}"
+                           value="1" 
+                           min="1" 
+                           onchange="calcularSubtotal(${index})" 
+                           oninput="validarCantidad(${index})" 
+                           required>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label">Precio Unitario</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="text" class="form-control precio-unitario" id="precio-${index}" readonly value="0.00">
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <label class="form-label">Subtotal</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="text" class="form-control subtotal-display" id="subtotal-${index}" readonly value="0.00">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(productoDiv);
+        calcularTotal();
+    }
+
+    // Eliminar producto
+    function eliminarProducto(index) {
+        Swal.fire({
+            title: '¿Eliminar producto?',
+            text: '¿Está seguro de eliminar este producto del pedido?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const productoDiv = document.getElementById(`producto-${index}`);
+                if (productoDiv) {
+                    productoDiv.remove();
+                    recalcularOpcionesProductos();
+                    calcularTotal();
+                }
+            }
+        });
+    }
+
+    // Actualizar producto (precio, oferta, stock)
+    function actualizarProducto(index) {
+        const select = document.querySelector(`#producto-${index} .select-producto`);
+        const precioInput = document.getElementById(`precio-${index}`);
+        const existenciasInfo = document.getElementById(`existencias-info-${index}`);
+        const option = select.options[select.selectedIndex];
+        
+        if (option && option.value) {
+            const productoId = option.value;
+            const precioOriginal = parseFloat(option.dataset.precio);
+            const existencias = parseInt(option.dataset.existencias);
+            
+            precioInput.value = precioOriginal.toFixed(2);
+            
+            $.ajax({
+                url: '{{ route("vendedor.productos.verificar-oferta") }}',
+                method: 'POST',
+                data: {
+                    _token: csrfToken,
+                    producto_id: productoId
+                },
+                success: function(response) {
+                    if (response.en_oferta) {
+                        precioInput.value = response.precio_final.toFixed(2);
+                        existenciasInfo.innerHTML = `
+                            <span class="badge bg-danger">-${Math.round(response.porcentaje)}% OFERTA</span>
+                            <span class="ms-2">${existencias} disponibles</span>
+                        `;
+                    } else {
+                        if (existencias <= 5) {
+                            existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
+                        } else {
+                            existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
+                        }
+                    }
+                    validarCantidad(index);
+                    calcularSubtotal(index);
+                },
+                error: function() {
+                    if (existencias <= 5) {
+                        existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
+                    } else {
+                        existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
+                    }
+                    calcularSubtotal(index);
+                }
+            });
+        } else {
+            precioInput.value = '0.00';
+            existenciasInfo.textContent = '';
+            document.getElementById(`subtotal-${index}`).value = '0.00';
+            calcularTotal();
+        }
+    }
+
+    // Validar cantidad contra stock
+    function validarCantidad(index) {
+        const select = document.querySelector(`#producto-${index} .select-producto`);
+        const cantidadInput = document.getElementById(`cantidad-${index}`);
+        const option = select.options[select.selectedIndex];
+        
+        if (option && option.value) {
+            const existencias = parseInt(option.dataset.existencias);
+            let cantidad = parseInt(cantidadInput.value) || 0;
+            
+            if (cantidad < 1) {
+                cantidadInput.value = 1;
+                cantidad = 1;
+            }
+            if (cantidad > existencias && existencias > 0) {
+                cantidadInput.value = existencias;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Stock insuficiente',
+                    text: `Solo hay ${existencias} unidades disponibles`,
+                    confirmButtonColor: '#7fad39',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+        }
+        calcularSubtotal(index);
+    }
+
+    function calcularSubtotal(index) {
+        const precio = parseFloat(document.getElementById(`precio-${index}`).value) || 0;
+        const cantidad = parseInt(document.getElementById(`cantidad-${index}`).value) || 0;
+        document.getElementById(`subtotal-${index}`).value = (precio * cantidad).toFixed(2);
+        calcularTotal();
+    }
+
+    function calcularTotal() {
+        let total = 0;
+        for (let i = 0; i < productoCount; i++) {
+            const subtotal = parseFloat(document.getElementById(`subtotal-${i}`)?.value) || 0;
+            total += subtotal;
+        }
+        document.getElementById('total-pedido').textContent = '$' + total.toFixed(2);
+    }
+
+    // Inicializar autocomplete
     function initAutocomplete() {
         const direccionInput = document.getElementById('cliente_direccion');
         if (direccionInput) {
@@ -759,12 +1005,10 @@
                 componentRestrictions: {country: 'mx'},
                 fields: ['address_components', 'formatted_address']
             });
-            
             autocomplete.addListener('place_changed', function() {
                 const place = autocomplete.getPlace();
                 if (place.formatted_address) {
                     direccionInput.value = place.formatted_address;
-                    
                     if (place.address_components) {
                         place.address_components.forEach(component => {
                             if (component.types.includes('locality')) {
@@ -792,30 +1036,22 @@
     // Buscar cliente
     $('#btn-buscar-cliente').click(function() {
         const busqueda = $('#buscador-cliente').val();
-        
         if (busqueda.length < 3) {
             Swal.fire('Error', 'Ingrese al menos 3 caracteres', 'error');
             return;
         }
-        
         $.ajax({
             url: '{{ route("vendedor.clientes.buscar") }}',
             method: 'POST',
-            data: {
-                _token: csrfToken,
-                busqueda: busqueda
-            },
+            data: { _token: csrfToken, busqueda: busqueda },
             success: function(response) {
                 if (response.length > 0) {
                     let html = '<div class="list-group">';
                     response.forEach(cliente => {
-                        html += `
-                            <a href="#" class="list-group-item list-group-item-action" 
-                               onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre}', '${cliente.telefono}', '${cliente.email}', '${cliente.direccion}', '${cliente.ciudad}', '${cliente.estado}', '${cliente.codigo_postal}')">
-                                <strong>${cliente.nombre}</strong><br>
-                                <small>📞 ${cliente.telefono} | ✉️ ${cliente.email}</small>
-                            </a>
-                        `;
+                        html += `<a href="#" class="list-group-item list-group-item-action" onclick="seleccionarCliente(${cliente.id}, '${cliente.nombre}', '${cliente.telefono}', '${cliente.email}', '${cliente.direccion}', '${cliente.ciudad}', '${cliente.estado}', '${cliente.codigo_postal}')">
+                                    <strong>${cliente.nombre}</strong><br>
+                                    <small>📞 ${cliente.telefono} | ✉️ ${cliente.email}</small>
+                                </a>`;
                     });
                     html += '</div>';
                     $('#resultados-busqueda').html(html).show();
@@ -834,16 +1070,8 @@
         $('#cliente_ciudad').val(ciudad);
         $('#cliente_estado').val(estado);
         $('#codigo_postal').val(cp);
-        
         $('#resultados-busqueda').hide();
-        
-        Swal.fire({
-            icon: 'success',
-            title: 'Cliente seleccionado',
-            text: `Datos de ${nombre} cargados`,
-            timer: 2000,
-            showConfirmButton: false
-        });
+        Swal.fire({ icon: 'success', title: 'Cliente seleccionado', text: `Datos de ${nombre} cargados`, timer: 2000, showConfirmButton: false });
     }
 
     // Verificar cobertura
@@ -853,12 +1081,7 @@
         const estado = $('#cliente_estado').val().trim();
         
         if (!direccion || !ciudad || !estado) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Campos requeridos',
-                text: 'Complete dirección, ciudad y estado antes de verificar cobertura',
-                confirmButtonColor: '#7fad39'
-            });
+            Swal.fire({ icon: 'error', title: 'Campos requeridos', text: 'Complete dirección, ciudad y estado', confirmButtonColor: '#7fad39' });
             return;
         }
         
@@ -868,70 +1091,28 @@
         $.ajax({
             url: '{{ route("vendedor.cobertura.verificar") }}',
             type: 'POST',
-            data: {
-                _token: csrfToken,
-                direccion: direccion,
-                ciudad: ciudad,
-                estado: estado
-            },
+            data: { _token: csrfToken, direccion: direccion, ciudad: ciudad, estado: estado },
             success: function(response) {
-                console.log('Respuesta:', response);
-                
                 if (response.valido) {
                     coberturaVerificada = true;
                     $('#btn-crear-pedido').prop('disabled', false);
-                    
-                    // Mostrar información de cobertura
                     $('#sucursal-nombre').text(response.sucursal_nombre);
                     $('#sucursal-direccion').text(response.sucursal_direccion);
                     $('#distancia').text(response.distancia);
                     $('#cobertura-verificada-box').show();
-                    
-                    // Eliminar campo oculto anterior si existe
                     $('input[name="distancia_km"]').remove();
-                    
-                    // Agregar nuevo campo oculto
-                    $('#form-pedido').append(`
-                        <input type="hidden" name="distancia_km" value="${response.distancia}">
-                    `);
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Cobertura verificada!',
-                        html: `
-                            <p><strong>Sucursal asignada:</strong> ${response.sucursal_nombre}</p>
-                            <p><strong>Distancia:</strong> ${response.distancia} km</p>
-                            <p><strong>Dirección sucursal:</strong> ${response.sucursal_direccion}</p>
-                        `,
-                        confirmButtonColor: '#7fad39'
-                    });
+                    $('#form-pedido').append(`<input type="hidden" name="distancia_km" value="${response.distancia}">`);
+                    Swal.fire({ icon: 'success', title: '¡Cobertura verificada!', confirmButtonColor: '#7fad39' });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Sin cobertura',
-                        text: response.message,
-                        confirmButtonColor: '#7fad39'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Sin cobertura', text: response.message, confirmButtonColor: '#7fad39' });
                 }
             },
-            error: function(xhr, status, error) {
-                console.error('Error:', xhr.responseJSON);
-                
+            error: function(xhr) {
                 let errorMessage = 'No se pudo verificar la cobertura';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: errorMessage,
-                    confirmButtonColor: '#7fad39'
-                });
+                if (xhr.responseJSON && xhr.responseJSON.message) errorMessage = xhr.responseJSON.message;
+                Swal.fire({ icon: 'error', title: 'Error', text: errorMessage, confirmButtonColor: '#7fad39' });
             },
-            complete: function() {
-                btn.removeClass('loading').html('<i class="fas fa-search-location"></i> Verificar Cobertura de Envío');
-            }
+            complete: function() { btn.removeClass('loading').html('<i class="fas fa-search-location"></i> Verificar Cobertura de Envío'); }
         });
     });
 
@@ -940,380 +1121,51 @@
         coberturaVerificada = false;
         $('#btn-crear-pedido').prop('disabled', true);
         $('#cobertura-verificada-box').hide();
-        
-        // Eliminar campos ocultos
         $('input[name="distancia_km"]').remove();
-        
-        // Limpiar sesión
-        $.ajax({
-            url: '{{ route("vendedor.cobertura.limpiar") }}',
-            type: 'POST',
-            data: { _token: csrfToken },
-            success: function() {
-                console.log('Cobertura limpiada');
-            }
-        });
+        $.ajax({ url: '{{ route("vendedor.cobertura.limpiar") }}', type: 'POST', data: { _token: csrfToken } });
     });
 
-    // Funciones de productos
-    function agregarProducto() {
-        const container = document.getElementById('productos-container');
-        const index = productoCount++;
-        
-        let options = '<option value="">Seleccionar producto</option>';
-        productos.forEach(p => {
-            options += `<option value="${p.id}" 
-                            data-precio="${p.precio}" 
-                            data-existencias="${p.existencias}" 
-                            data-nombre="${p.nombre}"
-                            data-codigo="${p.codigo}">
-                        ${p.codigo} - ${p.nombre} (${p.litros > 0 ? p.litros + ' lts' : 'Accesorio'})
-                    </option>`;
-        });
-        
-        const productoDiv = document.createElement('div');
-        productoDiv.className = 'producto-item';
-        productoDiv.id = `producto-${index}`;
-        productoDiv.innerHTML = `
-            <button type="button" class="btn-remove-producto" onclick="eliminarProducto(${index})" title="Eliminar producto">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <div class="row g-3 align-items-end">
-                <div class="col-lg-6 col-md-12">
-                    <label class="form-label">Producto *</label>
-                    <select name="productos[${index}]" 
-                            class="form-select select-producto" 
-                            required
-                            onchange="actualizarProducto(${index})" 
-                            data-index="${index}">
-                        ${options}
-                    </select>
-                    <small class="existencias-info" id="existencias-info-${index}"></small>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 col-sm-6">
-                    <label class="form-label">Cantidad *</label>
-                    <input type="number" 
-                           name="cantidades[${index}]" 
-                           class="form-control cantidad" 
-                           id="cantidad-${index}"
-                           value="1" 
-                           min="1" 
-                           onchange="calcularSubtotal(${index})" 
-                           oninput="validarCantidad(${index})" 
-                           required>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 col-sm-6">
-                    <label class="form-label">Precio Unitario</label>
-                    <div class="input-group">
-                        <span class="input-group-text">$</span>
-                        <input type="text" 
-                               class="form-control precio-unitario" 
-                               id="precio-${index}" 
-                               readonly 
-                               value="0.00">
-                    </div>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 col-sm-6">
-                    <label class="form-label">Subtotal</label>
-                    <div class="input-group">
-                        <span class="input-group-text">$</span>
-                        <input type="text" 
-                               class="form-control subtotal-display" 
-                               id="subtotal-${index}" 
-                               readonly 
-                               value="0.00">
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        container.appendChild(productoDiv);
-        calcularTotal();
-    }
-
-    // Función mejorada para actualizar producto con VERIFICACIÓN DE OFERTAS
-    function actualizarProducto(index) {
-        const select = document.querySelector(`#producto-${index} .select-producto`);
-        const precioInput = document.getElementById(`precio-${index}`);
-        const existenciasInfo = document.getElementById(`existencias-info-${index}`);
-        const cantidadInput = document.getElementById(`cantidad-${index}`);
-        const option = select.options[select.selectedIndex];
-        
-        if (option.value) {
-            const productoId = option.value;
-            const precioOriginal = parseFloat(option.dataset.precio);
-            const existencias = parseInt(option.dataset.existencias);
-            const nombre = option.dataset.nombre;
-            
-            // Mostrar precio original mientras se verifica
-            precioInput.value = precioOriginal.toFixed(2);
-            
-            // VERIFICAR SI TIENE OFERTA VÍA AJAX
-            $.ajax({
-                url: '{{ route("vendedor.productos.verificar-oferta") }}',
-                method: 'POST',
-                data: {
-                    _token: csrfToken,
-                    producto_id: productoId
-                },
-                success: function(response) {
-                    if (response.en_oferta) {
-                        // USAR PRECIO CON OFERTA
-                        precioInput.value = response.precio_final.toFixed(2);
-                        
-                        // MOSTRAR BADGE DE OFERTA
-                        existenciasInfo.innerHTML = `
-                            <span class="badge bg-danger" style="font-size: 0.75rem;">
-                                <i class="fas fa-tag"></i> -${Math.round(response.porcentaje)}% OFERTA
-                            </span>
-                            <span class="ms-2 ${existencias <= 5 ? 'existencias-baja' : 'existencias-normal'}">
-                                ${existencias} disponibles
-                            </span>
-                        `;
-                    } else {
-                        // SIN OFERTA, mostrar precio normal
-                        precioInput.value = precioOriginal.toFixed(2);
-                        
-                        if (existencias <= 5) {
-                            existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
-                        } else {
-                            existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
-                        }
-                    }
-                    
-                    // Validar cantidad después de actualizar
-                    validarCantidad(index);
-                    calcularSubtotal(index);
-                },
-                error: function() {
-                    // Si hay error, usar precio original
-                    precioInput.value = precioOriginal.toFixed(2);
-                    
-                    if (existencias <= 5) {
-                        existenciasInfo.innerHTML = `<span class="existencias-baja">⚠️ Solo ${existencias} disponibles</span>`;
-                    } else {
-                        existenciasInfo.innerHTML = `<span class="existencias-normal">${existencias} disponibles</span>`;
-                    }
-                    
-                    calcularSubtotal(index);
-                }
-            });
-        } else {
-            precioInput.value = '0.00';
-            existenciasInfo.textContent = '';
-            document.getElementById(`subtotal-${index}`).value = '0.00';
-            calcularTotal();
-        }
-    }
-
-    function validarCantidad(index) {
-        const select = document.querySelector(`#producto-${index} .select-producto`);
-        const cantidadInput = document.getElementById(`cantidad-${index}`);
-        const option = select.options[select.selectedIndex];
-        
-        if (option.value) {
-            const existencias = parseInt(option.dataset.existencias);
-            const cantidad = parseInt(cantidadInput.value) || 0;
-            const nombre = option.dataset.nombre;
-            
-            if (cantidad < 1) {
-                cantidadInput.value = 1;
-            } else if (cantidad > existencias && existencias > 0) {
-                cantidadInput.value = existencias;
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Existencia insuficiente',
-                    text: `Solo hay ${existencias} unidades disponibles de ${nombre}`,
-                    confirmButtonColor: '#7fad39',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-            }
-        }
-        
-        calcularSubtotal(index);
-    }
-
-    function calcularSubtotal(index) {
-        const precio = parseFloat(document.getElementById(`precio-${index}`).value) || 0;
-        const cantidad = parseInt(document.getElementById(`cantidad-${index}`).value) || 0;
-        const subtotal = precio * cantidad;
-        
-        document.getElementById(`subtotal-${index}`).value = subtotal.toFixed(2);
-        calcularTotal();
-    }
-
-    function calcularTotal() {
-        let total = 0;
-        
-        for (let i = 0; i < productoCount; i++) {
-            const subtotal = parseFloat(document.getElementById(`subtotal-${i}`)?.value) || 0;
-            total += subtotal;
-        }
-        
-        document.getElementById('total-pedido').textContent = '$' + total.toFixed(2);
-    }
-
-    function eliminarProducto(index) {
-        Swal.fire({
-            title: '¿Eliminar producto?',
-            text: '¿Está seguro de eliminar este producto del pedido?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const productoDiv = document.getElementById(`producto-${index}`);
-                if (productoDiv) {
-                    productoDiv.remove();
-                    calcularTotal();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Eliminado',
-                        text: 'El producto ha sido eliminado del pedido',
-                        confirmButtonColor: '#7fad39',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                }
-            }
-        });
-    }
-
-    // Validación del formulario antes de enviar
+    // Validar formulario antes de enviar
     $('#form-pedido').on('submit', function(e) {
         if (!coberturaVerificada) {
             e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Cobertura no verificada',
-                text: 'Debe verificar la cobertura antes de crear el pedido',
-                confirmButtonColor: '#7fad39'
-            });
+            Swal.fire({ icon: 'error', title: 'Cobertura no verificada', text: 'Debe verificar la cobertura antes de crear el pedido', confirmButtonColor: '#7fad39' });
             return;
         }
         
-        // Verificar que haya al menos un producto
-        const productosSeleccionados = $('.select-producto').filter(function() {
-            return $(this).val() !== '';
-        }).length;
-        
+        const productosSeleccionados = $('.select-producto').filter(function() { return $(this).val() !== ''; }).length;
         if (productosSeleccionados === 0) {
             e.preventDefault();
-            Swal.fire({
-                icon: 'error',
-                title: 'Sin productos',
-                text: 'Debe agregar al menos un producto al pedido',
-                confirmButtonColor: '#7fad39'
-            });
+            Swal.fire({ icon: 'error', title: 'Sin productos', text: 'Debe agregar al menos un producto', confirmButtonColor: '#7fad39' });
             return;
         }
     });
 
-    // Auto-seleccionar producto desde URL
+    // Mostrar errores del servidor
+    @if($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al crear el pedido',
+            html: '{!! implode('<br>', $errors->all()) !!}',
+            confirmButtonColor: '#7fad39'
+        });
+    @endif
+
+    // Mostrar error de stock desde sesión
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('error') }}',
+            confirmButtonColor: '#7fad39'
+        });
+    @endif
+
+    // Inicializar
     $(document).ready(function() {
-        if (typeof google !== 'undefined') {
-            initAutocomplete();
-        }
-        
-        // Agregar primer producto automáticamente
+        if (typeof google !== 'undefined') initAutocomplete();
         agregarProducto();
         
-        // Verificar si viene un producto desde detalles
-        const urlParams = new URLSearchParams(window.location.search);
-        const productoId = urlParams.get('producto_id');
-        const cantidad = urlParams.get('cantidad');
-        
-        if (productoId && productoPrecargado) {
-            setTimeout(() => {
-                const primerSelect = document.querySelector('.select-producto');
-                if (primerSelect) {
-                    for (let i = 0; i < primerSelect.options.length; i++) {
-                        if (primerSelect.options[i].value == productoId) {
-                            primerSelect.selectedIndex = i;
-                            
-                            // Si el producto tiene oferta, actualizar el precio
-                            if (productoPrecargado.en_oferta) {
-                                const precioInput = document.getElementById('precio-0');
-                                if (precioInput) {
-                                    precioInput.value = productoPrecargado.precio_final.toFixed(2);
-                                }
-                                
-                                // Mostrar badge de oferta
-                                const existenciasInfo = document.getElementById('existencias-info-0');
-                                if (existenciasInfo) {
-                                    existenciasInfo.innerHTML = `
-                                        <span class="badge bg-danger" style="font-size: 0.75rem;">
-                                            <i class="fas fa-tag"></i> -${productoPrecargado.descuento}% OFERTA
-                                        </span>
-                                        <span class="ms-2">${productoPrecargado.existencias} disponibles</span>
-                                    `;
-                                }
-                            }
-                            
-                            const event = new Event('change', { bubbles: true });
-                            primerSelect.dispatchEvent(event);
-                            break;
-                        }
-                    }
-                }
-                
-                if (cantidad) {
-                    setTimeout(() => {
-                        const primerCantidad = document.getElementById('cantidad-0');
-                        if (primerCantidad) {
-                            primerCantidad.value = cantidad;
-                            const event = new Event('change', { bubbles: true });
-                            primerCantidad.dispatchEvent(event);
-                        }
-                    }, 100);
-                }
-                
-                // Mostrar alerta personalizada
-                if (productoPrecargado.en_oferta) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Producto con OFERTA precargado!',
-                        html: `
-                            <p><strong>${productoPrecargado.nombre}</strong></p>
-                            <p>Cantidad: ${cantidad || 1}</p>
-                            <p>
-                                Precio normal: <span style="text-decoration: line-through; color: #999;">
-                                    $${productoPrecargado.precio.toFixed(2)}
-                                </span><br>
-                                <span style="color: #dc3545; font-weight: bold;">
-                                    Precio oferta: $${productoPrecargado.precio_final.toFixed(2)}
-                                </span>
-                                <span class="badge bg-danger ms-2">-${productoPrecargado.descuento}%</span>
-                            </p>
-                        `,
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Producto precargado',
-                        text: 'El producto seleccionado ha sido cargado automáticamente',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }
-            }, 500);
-        }
-        
-        // Si hay cobertura en sesión, mostrarla
         @if(session('cobertura_verificada_vendedor'))
             const cobertura = @json(session('cobertura_verificada_vendedor'));
             coberturaVerificada = true;
@@ -1325,15 +1177,21 @@
             $('#form-pedido').append(`<input type="hidden" name="distancia_km" value="${cobertura.distancia}">`);
         @endif
         
-        // Si hay errores de validación del servidor, mostrar alerta
-        @if($errors->any())
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de validación',
-                html: '{!! implode('<br>', $errors->all()) !!}',
-                confirmButtonColor: '#7fad39'
-            });
-        @endif
+        if (productoPrecargado) {
+            setTimeout(() => {
+                const primerSelect = document.querySelector('.select-producto');
+                if (primerSelect) {
+                    for (let i = 0; i < primerSelect.options.length; i++) {
+                        if (primerSelect.options[i].value == productoPrecargado.id) {
+                            primerSelect.selectedIndex = i;
+                            const event = new Event('change', { bubbles: true });
+                            primerSelect.dispatchEvent(event);
+                            break;
+                        }
+                    }
+                }
+            }, 500);
+        }
     });
 </script>
 @endsection

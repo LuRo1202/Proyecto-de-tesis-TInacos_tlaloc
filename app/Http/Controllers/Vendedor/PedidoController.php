@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Vendedor;
 
 use App\Http\Controllers\Controller;
@@ -173,6 +174,13 @@ class PedidoController extends Controller
         ));
     }
 
+<<<<<<< HEAD
+    /**
+     * STORE CORREGIDO
+     * Validaciones: productos duplicados, stock suficiente, SOLO pedidos EXACTAMENTE IGUALES
+     */
+=======
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
     public function store(Request $request)
     {
         $usuario = Auth::user();
@@ -204,10 +212,149 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
             
+<<<<<<< HEAD
+            // =========================================================
+            // VALIDACIÓN 1: Productos duplicados en el mismo pedido
+            // =========================================================
+            $productosIds = $request->productos;
+            $productosIdsValidos = [];
+            
+            foreach ($productosIds as $index => $pid) {
+                if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
+                    $productosIdsValidos[] = $pid;
+                }
+            }
+            
+            $duplicados = array_unique(array_diff_assoc($productosIdsValidos, array_unique($productosIdsValidos)));
+            
+            if (!empty($duplicados)) {
+                $nombresDuplicados = [];
+                foreach ($duplicados as $dupId) {
+                    $prod = Producto::find($dupId);
+                    if ($prod) {
+                        $nombresDuplicados[] = $prod->nombre;
+                    }
+                }
+                throw new \Exception("No se puede agregar el mismo producto múltiples veces: " . implode(', ', $nombresDuplicados));
+            }
+            
+            // =========================================================
+            // VALIDACIÓN 2: Verificar stock de TODOS los productos
+            // =========================================================
+            $productosData = [];
+            $total = 0;
+            
+            foreach ($request->productos as $index => $producto_id) {
+                if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
+                    $cantidad = (int)$request->cantidades[$index];
+                    
+                    $producto = Producto::with(['ofertas' => function($query) {
+                            $query->where('activa', 1)
+                                ->where('fecha_inicio', '<=', now())
+                                ->where('fecha_fin', '>=', now());
+                        }])
+                        ->findOrFail($producto_id);
+                    
+                    // Obtener existencias con LOCK FOR UPDATE
+                    $existencias = DB::table('producto_sucursal')
+                        ->where('producto_id', $producto_id)
+                        ->where('sucursal_id', $sucursal->id)
+                        ->lockForUpdate()
+                        ->value('existencias') ?? 0;
+                    
+                    if ($existencias < $cantidad) {
+                        throw new \Exception("Stock insuficiente para '{$producto->nombre}'. Disponible: {$existencias}, Solicitado: {$cantidad}");
+                    }
+                    
+                    // Calcular precio con oferta
+                    $precioUnitario = $producto->precio;
+                    $descuento = 0;
+                    
+                    if ($producto->ofertas->isNotEmpty()) {
+                        $oferta = $producto->ofertas->first();
+                        if ($oferta->tipo == 'porcentaje') {
+                            $precioUnitario = $producto->precio * (1 - $oferta->valor / 100);
+                            $descuento = $oferta->valor;
+                        } else {
+                            $precioUnitario = $producto->precio - $oferta->valor;
+                            $descuento = $oferta->valor;
+                        }
+                    }
+                    
+                    $subtotal = $precioUnitario * $cantidad;
+                    $total += $subtotal;
+                    
+                    $productosData[] = [
+                        'producto_id' => $producto_id,
+                        'producto' => $producto,
+                        'cantidad' => $cantidad,
+                        'precio_unitario' => $precioUnitario,
+                        'descuento' => $descuento,
+                        'existencias' => $existencias
+                    ];
+                }
+            }
+            
+            if (empty($productosData)) {
+                throw new \Exception("Debe agregar al menos un producto al pedido.");
+            }
+            
+            // =========================================================
+            // VALIDACIÓN 3: Solo bloquear si el pedido es EXACTAMENTE IGUAL
+            // (NO bloquea si son productos diferentes o cantidades diferentes)
+            // =========================================================
+            $fechaHoy = Carbon::now('America/Mexico_City')->toDateString();
+            
+            // Construir array del nuevo pedido: [producto_id => cantidad_total]
+            $nuevoPedidoProductos = [];
+            foreach ($request->productos as $index => $producto_id) {
+                if (isset($request->cantidades[$index]) && $request->cantidades[$index] > 0) {
+                    $cantidad = (int)$request->cantidades[$index];
+                    $nuevoPedidoProductos[$producto_id] = ($nuevoPedidoProductos[$producto_id] ?? 0) + $cantidad;
+                }
+            }
+            
+            // Ordenar para comparación consistente
+            ksort($nuevoPedidoProductos);
+            
+            // Buscar pedidos pendientes del mismo cliente hoy
+            $pedidosExistentes = Pedido::where('cliente_telefono', $request->cliente_telefono)
+                ->whereDate('fecha', $fechaHoy)
+                ->whereIn('estado', ['pendiente', 'confirmado'])
+                ->where('sucursal_id', $sucursal->id)
+                ->get();
+            
+            foreach ($pedidosExistentes as $pedidoExistente) {
+                // Obtener productos del pedido existente
+                $itemsExistentes = PedidoItem::where('pedido_id', $pedidoExistente->id)
+                    ->get()
+                    ->mapWithKeys(function($item) {
+                        return [$item->producto_id => $item->cantidad];
+                    })
+                    ->toArray();
+                
+                ksort($itemsExistentes);
+                
+                // Solo bloquear si son EXACTAMENTE IGUALES
+                if ($itemsExistentes == $nuevoPedidoProductos) {
+                    throw new \Exception("Ya existe un pedido EXACTAMENTE IGUAL para este cliente hoy. Folio: {$pedidoExistente->folio}. Si necesita modificar el pedido, cancele el anterior o edítelo.");
+                }
+            }
+            
+            // =========================================================
+            // Crear o actualizar cliente
+            // =========================================================
+=======
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             $cliente = Cliente::where('telefono', $request->cliente_telefono)
                         ->orWhere('email', $request->cliente_email)
                         ->first();
             
+<<<<<<< HEAD
+            $clienteNuevo = false;
+            
+=======
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             if (!$cliente && !empty($request->cliente_email)) {
                 $password = $this->generateRandomPassword();
                 
@@ -224,12 +371,48 @@ class PedidoController extends Controller
                     'email_verified_at' => now()
                 ]);
                 
+<<<<<<< HEAD
+                $clienteNuevo = true;
+                \Log::info('Cliente creado desde pedido: ' . $cliente->id);
+=======
                 \Log::info('Cliente creado automáticamente desde pedido: ' . $cliente->id . ' - Email: ' . $cliente->email);
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 
                 try {
                     $token = \Illuminate\Support\Facades\Password::broker('clientes')->createToken($cliente);
                     $resetUrl = route('cliente.reset.form', ['token' => $token, 'email' => $cliente->email]);
                     Mail::to($cliente->email)->send(new ClienteBienvenidaMail($cliente, $resetUrl));
+<<<<<<< HEAD
+                } catch (\Exception $e) {
+                    \Log::error('Error email bienvenida: ' . $e->getMessage());
+                }
+            }
+            
+            // =========================================================
+            // Generar folio único
+            // =========================================================
+            $fecha = Carbon::now('America/Mexico_City')->format('ymd');
+            $folio = null;
+            $intentos = 0;
+            
+            while ($intentos < 10) {
+                $numero = str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                $folioTemp = 'PED-' . $fecha . '-' . $numero;
+                if (!Pedido::where('folio', $folioTemp)->exists()) {
+                    $folio = $folioTemp;
+                    break;
+                }
+                $intentos++;
+            }
+            
+            if (!$folio) {
+                throw new \Exception("No se pudo generar un folio único. Intente nuevamente.");
+            }
+            
+            // =========================================================
+            // Crear pedido
+            // =========================================================
+=======
                     \Log::info('Email de bienvenida enviado a: ' . $cliente->email);
                 } catch (\Exception $e) {
                     \Log::error('Error al enviar email de bienvenida: ' . $e->getMessage());
@@ -288,6 +471,7 @@ class PedidoController extends Controller
                 }
             }
             
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             $pedido = Pedido::create([
                 'cliente_id' => $cliente ? $cliente->id : null,
                 'folio' => $folio,
@@ -308,19 +492,38 @@ class PedidoController extends Controller
                 'cobertura_verificada' => 1
             ]);
             
+<<<<<<< HEAD
+            // =========================================================
+            // Crear items y descontar stock
+            // =========================================================
+            foreach ($productosData as $item) {
+=======
             foreach ($productos_data as $item) {
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                 PedidoItem::create([
                     'pedido_id' => $pedido->id,
                     'producto_id' => $item['producto_id'],
-                    'producto_nombre' => $item['producto_nombre'],
+                    'producto_nombre' => $item['producto']->nombre,
                     'cantidad' => $item['cantidad'],
+<<<<<<< HEAD
+                    'precio' => $item['precio_unitario']
+                ]);
+                
+                $decrementadas = DB::table('producto_sucursal')
+=======
                     'precio' => $item['precio']
                 ]);
                 
                 DB::table('producto_sucursal')
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
                     ->where('producto_id', $item['producto_id'])
                     ->where('sucursal_id', $sucursal->id)
+                    ->where('existencias', '>=', $item['cantidad'])
                     ->decrement('existencias', $item['cantidad']);
+                
+                if ($decrementadas === 0) {
+                    throw new \Exception("Error al descontar stock de '{$item['producto']->nombre}'. Stock insuficiente.");
+                }
             }
             
             PedidoResponsable::create([
@@ -329,6 +532,10 @@ class PedidoController extends Controller
                 'fecha_asignacion' => now()
             ]);
             
+<<<<<<< HEAD
+            // Historial
+=======
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             PedidoHistorial::create([
                 'pedido_id' => $pedido->id,
                 'usuario_id' => $usuario_id,
@@ -341,10 +548,16 @@ class PedidoController extends Controller
             
             session()->forget('cobertura_verificada_vendedor');
             
+<<<<<<< HEAD
+            $mensaje = "¡Pedido #{$folio} creado exitosamente!";
+            if ($clienteNuevo && $cliente) {
+                $mensaje .= " Se ha registrado al cliente con acceso al sistema. Email: {$cliente->email}";
+=======
             if ($cliente && $cliente->wasRecentlyCreated) {
                 $mensaje = "¡Pedido #{$folio} creado exitosamente! Se ha registrado al cliente con acceso al sistema. Email: {$cliente->email}";
             } else {
                 $mensaje = "¡Pedido #{$folio} creado exitosamente!";
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             }
             
             return redirect()->route('vendedor.pedidos.hoy')
@@ -352,7 +565,6 @@ class PedidoController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-            
             \Log::error('Error al crear pedido: ' . $e->getMessage());
             
             return redirect()->back()
@@ -410,7 +622,10 @@ class PedidoController extends Controller
 
         $esResponsable = $responsables->contains('usuario_id', $usuario_id);
         
+<<<<<<< HEAD
+=======
         // ===== CORREGIDO: estados siguientes como ARRAY DIRECTO para el estado actual =====
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
         $mapaEstados = [
             'pendiente' => ['confirmado', 'cancelado'],
             'confirmado' => ['enviado', 'cancelado'],
@@ -419,7 +634,10 @@ class PedidoController extends Controller
             'cancelado' => []
         ];
         $estadosSiguientes = $mapaEstados[$pedido->estado] ?? [];
+<<<<<<< HEAD
+=======
         // ===== FIN CORRECCIÓN =====
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
 
         if (!$esResponsable && $responsables->isEmpty()) {
             try {
@@ -500,7 +718,10 @@ class PedidoController extends Controller
             $nuevo_pago = $request->has('pago_confirmado') ? 1 : 0;
             $nueva_fecha = $request->fecha_entrega;
 
+<<<<<<< HEAD
+=======
             // Validar transición de estado
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             $mapaEstados = [
                 'pendiente' => ['confirmado', 'cancelado'],
                 'confirmado' => ['enviado', 'cancelado'],
@@ -520,7 +741,11 @@ class PedidoController extends Controller
                 
                 return redirect()->back()
                     ->withInput()
+<<<<<<< HEAD
+                    ->with('error', "No puedes cambiar el estado de '{$estadosTexto[$estado_actual]}' a '{$estadosTexto[$nuevo_estado]}'.");
+=======
                     ->with('error', "No puedes cambiar el estado de '{$estadosTexto[$estado_actual]}' a '{$estadosTexto[$nuevo_estado]}'. Solo puedes avanzar en el flujo del pedido.");
+>>>>>>> 85af045c5f0b497a0abb1ea6f580b495fe7bbb90
             }
 
             $items = PedidoItem::where('pedido_id', $pedido->id)->get();
@@ -862,6 +1087,39 @@ class PedidoController extends Controller
         }
     }
 
+    public function verificarOferta(Request $request)
+    {
+        $producto = Producto::with(['ofertas' => function($query) {
+                $query->where('activa', 1)
+                    ->where('fecha_inicio', '<=', now())
+                    ->where('fecha_fin', '>=', now());
+            }])
+            ->find($request->producto_id);
+        
+        if ($producto && $producto->ofertas->isNotEmpty()) {
+            $oferta = $producto->ofertas->first();
+            $precioFinal = $producto->precio;
+            
+            if ($oferta->tipo == 'porcentaje') {
+                $precioFinal = $producto->precio * (1 - $oferta->valor / 100);
+            } else {
+                $precioFinal = $producto->precio - $oferta->valor;
+            }
+            
+            return response()->json([
+                'en_oferta' => true,
+                'precio_final' => $precioFinal,
+                'porcentaje' => $oferta->valor
+            ]);
+        }
+        
+        return response()->json(['en_oferta' => false]);
+    }
+
+    // =========================================================
+    // MÉTODOS PRIVADOS AUXILIARES
+    // =========================================================
+
     private function getPedidos($usuario_id, $sucursal_id, $disponibles, $estado, $desde, $hasta)
     {
         $query = Pedido::query();
@@ -926,34 +1184,5 @@ class PedidoController extends Controller
             ->whereIn('estado', ['pendiente', 'confirmado'])
             ->whereDoesntHave('responsables')
             ->count();
-    }
-
-    public function verificarOferta(Request $request)
-    {
-        $producto = Producto::with(['ofertas' => function($query) {
-                $query->where('activa', 1)
-                    ->where('fecha_inicio', '<=', now())
-                    ->where('fecha_fin', '>=', now());
-            }])
-            ->find($request->producto_id);
-        
-        if ($producto && $producto->ofertas->isNotEmpty()) {
-            $oferta = $producto->ofertas->first();
-            $precioFinal = $producto->precio;
-            
-            if ($oferta->tipo == 'porcentaje') {
-                $precioFinal = $producto->precio * (1 - $oferta->valor / 100);
-            } else {
-                $precioFinal = $producto->precio - $oferta->valor;
-            }
-            
-            return response()->json([
-                'en_oferta' => true,
-                'precio_final' => $precioFinal,
-                'porcentaje' => $oferta->valor
-            ]);
-        }
-        
-        return response()->json(['en_oferta' => false]);
     }
 }
